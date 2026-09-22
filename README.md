@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**目前進行 Phase 0 基礎環境建置。** 截至 2026-09-23，已建立 Sites 本機預覽、測試與 GitHub repository。Google OAuth 設定與登入實測依使用者指示暫緩；尚無正式 schema、學生資料或 Sites Production 部署。下列業務功能仍為規劃，不代表已可使用。
+**Phase 0 基礎環境已建立；Google OAuth 依指示暫緩。** 截至 2026-09-23，已建立 Sites 本機預覽、測試與 GitHub repository。Google OAuth 設定與登入實測依使用者指示暫緩；尚無正式 schema、學生資料或 Sites Production 部署。下列業務功能仍為規劃，不代表已可使用。
 
 ## 文件入口
 
@@ -43,7 +43,7 @@
 | 檔案儲存 | R2，binding `FILES` | 本機測試；雲端尚未配置 |
 | AI | OpenAI API、Google Gemini API adapter | 尚未整合 |
 | 參考資料搜尋 | D1 FTS 優先 | 本機 FTS5 smoke test；RAG 尚未實作 |
-| 文件與版本入口 | GitHub Repository、GitHub Pages | Repository 已建立；Pages 驗證中 |
+| 文件與版本入口 | GitHub Repository、GitHub Pages | Repository／Pages 已部署並驗證 |
 
 平台欄位、驗證能力、背景執行及復原方式都須依實際環境確認；[官方文件查核紀錄](PROJECT_SPEC.md#spec-73-8) 不代表本專案實測成功。
 
@@ -74,7 +74,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Markdown 文件修訂 | 規格版本 v1.6-draft；同步 Phase 0 決策與證據 |
 | 管理員認證決策 | 已確認僅 Google OAuth／OIDC；取消 ChatGPT／Gemini 認證條件，AI 建議功能維持獨立 |
 | 業務待決策 | D-01～D-11 的剩餘事項依主規格；D-01 縮為 Recovery，D-09 縮為 Google 登入實作政策 |
-| Phase 0 | 基礎環境執行中；Google OAuth 實測依使用者指示暫緩 |
+| Phase 0 | 基礎環境、預覽、測試與 Pages 完成；Google OAuth 實測依使用者指示暫緩 |
 | Phase 1～19（含 3A／3B） | 尚未開始 |
 | 測試 | 已建立隔離 D1／R2 smoke test、文件與敏感資料檢查；無正式 migration |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
@@ -88,7 +88,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Latest Production Release | 尚無已驗證紀錄 |
 | Deployment Date | 尚無已驗證紀錄 |
 | ChatGPT Sites | 尚無已驗證正式網址 |
-| GitHub Pages | workflow 與靜態文件頁已建立，部署驗證中 |
+| GitHub Pages | [專案文件頁](https://kisaraki.github.io/classroom-aigrade-tzk/)（HTTP 200，2026-09-23） |
 | Repository | [kisaraki/classroom-aigrade-tzk](https://github.com/kisaraki/classroom-aigrade-tzk) |
 
 只填入實際取得並驗證的 URL。每次 Sites 正式部署成功後，必須依 [同步流程](PROJECT_SPEC.md#spec-41-9) 更新本區、Pages、CHANGELOG／Release，完成 Commit／Push 與三網址驗證。
@@ -99,7 +99,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 
 ## GitHub Pages
 
-只作專案首頁、文件與版本／部署資訊入口。不得承載成績查詢表單、管理員登入、後端 API、Secret 或真實個資。Pages URL 待部署成功後驗證，不能以預期格式代替。
+只作專案首頁、文件與版本／部署資訊入口。不得承載成績查詢表單、管理員登入、後端 API、Secret 或真實個資。已部署並驗證 [專案文件頁](https://kisaraki.github.io/classroom-aigrade-tzk/)。
 
 ## Repository
 

@@ -2138,7 +2138,7 @@ Phase 0 的 Sites 原始碼位於 `site/`，GitHub Pages 原始碼位於 `pages/
 - Login／Logout、Session timeout／revoke。
 - 登入與 AI 提供者／API Key 獨立的驗收案例。
 
-Phase 0 必須先確認 Google OAuth 在 Sites 的實作方式、callback、Cookie、Secret 與平台存取設定，確保管理員僅需 Google 認證即可到達管理端；若平台無法符合，回報限制，不自行恢復已取消的認證條件。
+Google OAuth 在 Sites 的實作方式、callback、Cookie、Secret 與平台存取設定原列於 Phase 0 驗證；使用者於 2026-09-23 指示暫緩 OAuth 設定與實測，因此須在 Phase 3A 實作前先補齊，確保管理員僅需 Google 認證即可到達管理端。若平台無法符合，回報限制，不自行恢復已取消的認證條件。
 
 一般首次 Bootstrap 不依賴人工核驗。Emergency Recovery 與受控 Rebind 依 D-01、Phase 3B 的授權模組銜接。
 
@@ -3024,7 +3024,7 @@ Codex 不得：
 | D-06 | Purge 與未滿 30 天復原承諾、歷史排名、稽核紀錄、物件副本及備份的關係 | 建議有未到期復原承諾時阻擋 Purge；評估保留不可回推個人的統計快照或凍結既有他人成績排名。所有可識別副本的刪除／到期機制須逐一確認 | Phase 9；Production Purge 前 |
 | D-07 | 匯入後已有手動修改、再次匯入或發布時的 Rollback；批次錯誤時整批或部分提交 | 建議整批原子提交；回復遇版本衝突時阻擋並預覽差異。可另選逐項核准，但不得靜默覆蓋後續修改 | Phase 6；Phase 9 整合 |
 | D-08 | 段考先發布、全部 NOT_HELD、未完整發布時 PROVISIONAL／FINAL 的轉換；修改重算失敗時的公開版本 | 建議以明確發布完成條件區分暫時／正式，與缺分數分開；失敗時繼續提供上一完整發布版本，不能混用新舊成績與排名 | Phase 7 |
-| D-09 | Google OAuth／OIDC 的平台 callback／Cookie 相容性、Email 正規化與允許的 Google 帳號政策 | Google sub 作綁定識別鍵已定義；Email 用於授權比對，不自行去除點號或加號別名。確認 Google-only 登入不被平台額外認證門檻阻擋；不能以訪客可偽造的 Email 標頭授權 | Phase 0 能力證據；Phase 3A 驗證契約 |
+| D-09 | Google OAuth／OIDC 的平台 callback／Cookie 相容性、Email 正規化與允許的 Google 帳號政策 | Google sub 作綁定識別鍵已定義；Email 用於授權比對，不自行去除點號或加號別名。確認 Google-only 登入不被平台額外認證門檻阻擋；不能以訪客可偽造的 Email 標頭授權。2026-09-23 使用者指示暫緩 OAuth 設定與登入實測，尚未通過 | Phase 0 保存文件／存取選項證據；Phase 3A 前補實測與驗證契約 |
 | D-10 | 預設角色對各項操作的權限矩陣、多任教範圍組合，以及教師異動後歷史資料 Scope | 依最小權限建立 Role × Permission × Scope × 時間範圍矩陣；未授權預設拒絕。導師／任課教師既有班級與科目限制不可放寬 | Phase 3B |
 | D-11 | 日期時區、有效區間端點、兩個月稽核保存的曆月／天數定義；查詢、上傳、重試、容量門檻與復原目標 | 建議業務日期使用 Asia/Taipei、技術時間戳使用 UTC，但須確認保存期限與端點語意。門檻依平台驗證及學校需求定稿，不任填數值 | 日期於 Phase 1；其餘於對應功能 Phase，最晚 Phase 18 |
 
@@ -3172,7 +3172,7 @@ Codex 不得：
 
 | Phase | Recommended / Minimum | 主要交付與驗收關卡 |
 |---|---|---|
-| [0](#spec-46) | MEDIUM / MEDIUM | 平台能力證據、GitHub Owner／可見性／授權人確認、環境與預覽檢查；D-09 Google-only 登入相容性；不得部署 Sites Production |
+| [0](#spec-46) | MEDIUM / MEDIUM | 平台能力證據、GitHub Owner／可見性／授權人確認、環境與預覽檢查；D-09 Google-only 登入實測依 2026-09-23 指示暫緩；不得部署 Sites Production |
 | [1](#spec-47) | HIGH / HIGH | 核心 schema、約束、migration 與 recovery 設計；虛構資料 migration tests；確認影響模型的 D-03／D-11 |
 | [2](#spec-48) | HIGH / HIGH | 學年度與學籍領域服務、生命週期測試；Phase 3A／3B 完成前，管理寫入功能只在隔離測試環境驗證，不對外開放 |
 | [3A](#spec-49) | HIGH / HIGH | Google OAuth／OIDC、授權與綁定、Session、一次性 Bootstrap；D-09；通過 §67.1 適用案例，Recovery 跨 Phase 邊界依 D-01 |
