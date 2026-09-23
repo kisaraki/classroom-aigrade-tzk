@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 0 基礎環境已建立；Google OAuth 依指示暫緩。** 截至 2026-09-23，已建立 Sites 本機預覽、測試與 GitHub repository。Google OAuth 設定與登入實測依使用者指示暫緩；尚無正式 schema、學生資料或 Sites Production 部署。下列業務功能仍為規劃，不代表已可使用。
+**Phase 1 資料模型與 migration 已建立；Google OAuth 依指示暫緩。** 截至 2026-09-23，已建立 29 張關聯表、FTS5、歷史快照與資料約束，並在隔離本機 D1 驗證。沒有真實學生資料或 Sites Production 部署；下列業務功能仍待後續 Phase 實作。
 
 ## 文件入口
 
@@ -14,6 +14,8 @@
 | [AGENTS.md](AGENTS.md) | Codex 執行紀律、安全邊界與 Phase 回報方式 |
 | [CHANGELOG.md](CHANGELOG.md) | 文件及後續軟體變更紀錄 |
 | [Phase 0 驗證紀錄](docs/PHASE_0.md) | 工具、平台、本機測試證據與待驗證項目 |
+| [Phase 1 驗證紀錄](docs/PHASE_1.md) | 資料庫、邊界、安全與復原測試證據 |
+| [資料模型與 ER 圖](docs/DATABASE.md) | 資料表對照、migration、加密輪替與復原方式 |
 | [Sites 開發說明](site/README.md) | 安裝、預覽、建置、測試與環境設定 |
 | [待決策清單](PROJECT_SPEC.md#spec-72-2) | 尚未定案的業務選擇與確認關卡 |
 | [Phase 順序與驗收](PROJECT_SPEC.md#spec-74) | 0 → 1 → 2 → 3A → 3B → 4 → … → 19，共 21 階段 |
@@ -38,11 +40,11 @@
 |---|---|---|
 | 正式執行平台 | ChatGPT Sites | 專案已建立，尚未發布 |
 | 後端 | Vinext／Cloudflare Workers | 已建立 health route；僅本機預覽 |
-| 前端 | React／HTML／CSS | 已建立 Hello World 環境頁 |
-| 關聯式資料庫 | D1／SQLite，binding `DB` | 本機測試；正式 schema 留待 Phase 1 |
+| 前端 | React／HTML／CSS | 已建立開發進度預覽頁 |
+| 關聯式資料庫 | D1／SQLite，binding `DB` | 初版 schema 與 migration 已通過隔離本機測試 |
 | 檔案儲存 | R2，binding `FILES` | 本機測試；雲端尚未配置 |
 | AI | OpenAI API、Google Gemini API adapter | 尚未整合 |
-| 參考資料搜尋 | D1 FTS 優先 | 本機 FTS5 smoke test；RAG 尚未實作 |
+| 參考資料搜尋 | D1 FTS 優先 | FTS5 索引同步及篩選驗證；RAG 尚未實作 |
 | 文件與版本入口 | GitHub Repository、GitHub Pages | Repository／Pages 已部署並驗證 |
 
 平台欄位、驗證能力、背景執行及復原方式都須依實際環境確認；[官方文件查核紀錄](PROJECT_SPEC.md#spec-73-8) 不代表本專案實測成功。
@@ -59,9 +61,9 @@ npm run dev
 
 Windows PowerShell 可使用 `npm.cmd`。預覽僅監聽本機；以終端顯示 URL 為準。建置使用 `npm run build`，建置後本機預覽使用 `npm start`。不會自動部署。
 
-驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。實際結果見 [Phase 0 紀錄](docs/PHASE_0.md)。
+驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；實際結果見 [Phase 1 紀錄](docs/PHASE_1.md)。
 
-環境欄位見 [site/.env.example](site/.env.example)，真實值只填入忽略提交的 `.env` 或 Sites Settings；本次預覽與測試不需要真實 Secret。正式 migration 尚未建立。
+環境欄位見 [site/.env.example](site/.env.example)，真實值只填入忽略提交的 `.env` 或 Sites Settings；本次預覽與測試不需要真實 Secret。migration 位於 `site/drizzle/`，不由應用程式啟動時自動套用，未套用至雲端。
 
 需要安裝元件時：Windows 優先 winget；macOS 優先 Homebrew；Python 優先 uv、其次 pip。先檢查既有工具，避免不必要安裝。
 
@@ -71,12 +73,13 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 
 | 項目 | 目前狀態 |
 |---|---|
-| Markdown 文件修訂 | 規格版本 v1.6-draft；同步 Phase 0 決策與證據 |
+| Markdown 文件修訂 | 規格版本 v1.6-draft；同步 Phase 1 與 D-03／D-11 日期決策 |
 | 管理員認證決策 | 已確認僅 Google OAuth／OIDC；取消 ChatGPT／Gemini 認證條件，AI 建議功能維持獨立 |
-| 業務待決策 | D-01～D-11 的剩餘事項依主規格；D-01 縮為 Recovery，D-09 縮為 Google 登入實作政策 |
+| 業務待決策 | D-03 已核准；D-11 日期已核准，其餘事項依主規格各 Phase 關卡 |
 | Phase 0 | 基礎環境、預覽、測試與 Pages 完成；Google OAuth 實測依使用者指示暫緩 |
-| Phase 1～19（含 3A／3B） | 尚未開始 |
-| 測試 | 已建立隔離 D1／R2 smoke test、文件與敏感資料檢查；無正式 migration |
+| Phase 1 | 初版資料模型、migration、FTS、虛構 seed、加密輪替與復原驗證完成 |
+| Phase 2～19（含 3A／3B） | 尚未開始 |
+| 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
 
 文件版本與軟體 Release 分開維護；v1.6-draft 不是正式系統版本。

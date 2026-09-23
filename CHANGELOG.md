@@ -2,6 +2,18 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 1 資料模型與 Migration — 2026-09-23
+
+本次是本機開發交付，不是正式軟體 Release 或 Sites 部署。詳細證據見 [Phase 1 紀錄](docs/PHASE_1.md)；資料表示及復原方式見 [DATABASE.md](docs/DATABASE.md)。
+
+- 使用者確認 HIGH 以上推理強度，接受 D-03 的單次／學期／學生預設優先序、名冊快照及晚轉入規則；接受 D-11 的台北業務日期、UTC 技術時間、半開區間與曆月／曆年運算。
+- 新增 29 張關聯表、FTS5、索引、外鍵、CHECK 與跨列 trigger；兩份 Drizzle migration 保留 journal／snapshots，應用啟動不自動套用。
+- 保存學籍與評量快照，拒絕重疊學籍／座號、跨年關聯、特殊成績數值與原校排名；提供不可改寫的歷程、結果與 AI 內容版本。
+- 新增 AES-256-GCM、獨立 HMAC-SHA-256、key 版本、輪替準備及遮罩；測試含竄改、錯綁定、遺失 key、跨版本查重及原子回復。
+- 新增一次性本機 DB 驗證、虛構 seed、migration／domain／identity 測試，以及 ER 圖和 recovery 設計；測試不建立外部資源，不呼叫真實 AI。
+- 管理員資料只含 Google 綁定；Session 保存 hash，資料約束保護保留帳號、最後一位 super_admin、一次性 Bootstrap 與 Session 撤銷。登入與完整 Permission／Scope 仍待 Phase 3A／3B。
+- D-03 已定案，D-11 只完成日期決策；其他待決策保持未定。Google OAuth 實測仍依先前指示暫緩。
+
 ## Phase 0 基礎環境 — 2026-09-23
 
 本次為開發基礎建置，不是正式軟體 Release 或 Sites 部署。

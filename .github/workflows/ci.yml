@@ -1,4 +1,4 @@
-name: Verify Phase 0
+name: Verify project
 
 on:
   push:

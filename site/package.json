@@ -12,10 +12,11 @@
     "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
+    "db:verify": "node --import ./scripts/sites-env.mjs scripts/db-local.mjs",
     "test": "node --import ./scripts/sites-env.mjs --test tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write app tests .openai cloudflare-env.d.ts vite.config.ts package.json .prettierrc.json README.md ../pages ../docs ../scripts ../.github",
-    "format:check": "prettier --check app tests .openai cloudflare-env.d.ts vite.config.ts package.json .prettierrc.json README.md ../pages ../docs ../scripts ../.github"
+    "format": "prettier --write app db lib tests scripts/db-local.mjs .openai cloudflare-env.d.ts vite.config.ts package.json .prettierrc.json README.md ../pages ../docs ../scripts ../.github",
+    "format:check": "prettier --check app db lib tests scripts/db-local.mjs .openai cloudflare-env.d.ts vite.config.ts package.json .prettierrc.json README.md ../pages ../docs ../scripts ../.github"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

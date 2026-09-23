@@ -1,6 +1,6 @@
 # Sites 應用程式
 
-此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；進度及限制見 [Phase 0 驗證紀錄](../docs/PHASE_0.md)。
+此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；進度及限制見 [Phase 1 驗證紀錄](../docs/PHASE_1.md)。
 
 ## 本機開發
 
@@ -14,6 +14,7 @@ npm run dev
 npm run lint
 npm run format:check
 npm test
+npm run db:verify
 npm run build
 npm start
 ```
@@ -28,8 +29,10 @@ Windows PowerShell 可使用 `npm.cmd`。若 npm shim 找不到自身模組，�
 - 複製 [.env.example](.env.example) 為本機 `.env`；真實值不提交 Git。雲端 Secret 由 Sites Settings 管理，變更不代表已套用至執行中的版本。
 - Phase 0 的首頁與測試不需要真實 OAuth／AI／Bootstrap Secret。
 - 管理員僅使用 Google OAuth／OIDC；未啟用 starter 的 ChatGPT 登入模擬，未建立任何正式登入流程。
-- `db/schema.ts` 保持空白；尚無正式 migration。不得執行範例 migration。
-- `tests` 中的 D1／R2 smoke test 使用暫時 Miniflare 實例與虛構資料；不接觸雲端資料庫。
+- [db/schema.ts](db/schema.ts) 已定義初版資料表；`drizzle/` 保存兩份 migration、journal 與 snapshots。ER 圖、欄位表示及復原計畫見 [DATABASE.md](../docs/DATABASE.md)。
+- `npm run db:verify` 僅建立一次性 Miniflare D1，套用 migration、虛構 seed 並檢查重跑；結束即銷毀，不寫入本機預覽 DB 或雲端。伺服器不自動 migration。
+- 姓名與生日可重複；分數以百分之一分整數儲存。身分證只儲存密文、key 版本與 HMAC，key 在測試程序中隨機產生；不得將測試 key 當成正式 key。
+- `tests` 中的 migration、日期、身分證加密與 D1／R2 測試 使用暫時 Miniflare 實例與虛構資料；不接觸雲端資料庫。
 - `.wrangler`、`.sites-runtime`、`.vinext`、`node_modules` 與建置輸出均不進 Git。
 
 ## 部署邊界
