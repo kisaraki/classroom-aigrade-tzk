@@ -1,4 +1,7 @@
 import { addCalendarMonths, taipeiBusinessDate } from "../../domain/dates.ts";
+import { AdminManagementService } from "./admin-management.ts";
+import { assertRecentGoogle, googleAuthenticationTime } from "./policy.ts";
+import { SESSION_COOKIE } from "./cookies.ts";
 import {
   clearOAuthStateCookie,
   clearSessionCookie,
@@ -44,6 +47,7 @@ export type AuthDependencies = {
   idleTimeoutMs?: number;
   absoluteTimeoutMs?: number;
   idFactory?: (prefix: string) => string;
+  identityRequests?: AdminManagementService;
 };
 
 function normalizeEmail(value: string): string {
@@ -78,9 +82,11 @@ export class AuthService {
   private readonly idleTimeoutMs: number;
   private readonly absoluteTimeoutMs: number;
   private readonly idFactory: (prefix: string) => string;
+  private readonly identityRequests?: AdminManagementService;
 
   constructor(dependencies: AuthDependencies) {
     this.db = dependencies.db;
+    this.identityRequests = dependencies.identityRequests;
     this.oidc = dependencies.oidc;
     this.bootstrapSecret = dependencies.bootstrapSecret;
     this.now = dependencies.now ?? (() => Date.now());
@@ -100,7 +106,9 @@ export class AuthService {
   }
 
   async beginGoogleLogin(
-    purpose: "login" | "bootstrap" = "login",
+    purpose: "login" | "bootstrap" | "reauth" | "identity" = "login",
+    adminSessionId: string | null = null,
+    identityRequestId: string | null = null,
   ): Promise<OAuthStart> {
     const now = this.now();
     const state = randomBase64Url();
@@ -115,16 +123,18 @@ export class AuthService {
     const stateId = this.idFactory("oauth-state");
     await this.db
       .prepare(
-        "INSERT INTO auth_oauth_states (id, state_hash, purpose, nonce_hash, code_verifier_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO auth_oauth_states (id, state_hash, purpose, admin_session_id, nonce_hash, code_verifier_hash, expires_at, created_at, identity_request_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       )
       .bind(
         stateId,
         stateHash,
         purpose,
+        adminSessionId,
         nonceHash,
         codeVerifierHash,
         now + STATE_TTL_MS,
         now,
+        identityRequestId,
       )
       .run();
     const authorizationUrl = await this.oidc.authorizationUrl({
@@ -145,6 +155,19 @@ export class AuthService {
     };
   }
 
+  async beginGoogleReauthentication(token: string | null): Promise<OAuthStart> {
+    const session = await this.validateSession(token);
+    if (!session) throw new AuthError("AUTHENTICATION_REQUIRED");
+    return this.beginGoogleLogin("reauth", session.sessionId);
+  }
+
+  async beginIdentityVerification(requestToken: string): Promise<OAuthStart> {
+    if (!this.identityRequests)
+      throw new AuthError("IDENTITY_FLOW_UNAVAILABLE", 503);
+    const request = await this.identityRequests.requestForToken(requestToken);
+    return this.beginGoogleLogin("identity", null, request.id);
+  }
+
   async beginGoogleBootstrap(input: { secret: string }): Promise<OAuthStart> {
     if (!equalSecret(input.secret, this.bootstrapSecret))
       throw new AuthError("BOOTSTRAP_SECRET_INVALID");
@@ -155,16 +178,101 @@ export class AuthService {
     code: string;
     state: string;
     cookieHeader: string | null;
-  }): Promise<AuthResult> {
+  }): Promise<AuthResult | null> {
     const state = await this.consumeOAuthState(input.state, input.cookieHeader);
     const idToken = await this.oidc.exchangeCode(
       input.code,
       state.codeVerifier,
     );
     const identity = await this.oidc.verifyIdToken(idToken, state.nonce);
-    return state.purpose === "bootstrap"
-      ? this.bootstrap({ secret: this.bootstrapSecret, identity })
-      : this.loginVerifiedGoogle(identity);
+    if (state.purpose === "identity") {
+      if (!this.identityRequests || !state.identityRequestId)
+        throw new AuthError("IDENTITY_FLOW_UNAVAILABLE", 503);
+      await this.identityRequests.completeIdentityRequest(
+        state.identityRequestId,
+        identity,
+      );
+      return null;
+    }
+    if (state.purpose === "bootstrap")
+      return this.bootstrap({ secret: this.bootstrapSecret, identity });
+    if (state.purpose === "reauth") {
+      if (!state.adminSessionId) throw new AuthError("OAUTH_STATE_MISMATCH");
+      const browserSession = await this.validateSession(
+        parseCookieHeader(input.cookieHeader)[SESSION_COOKIE] ?? null,
+      );
+      if (!browserSession || browserSession.sessionId !== state.adminSessionId)
+        throw new AuthError("OAUTH_STATE_MISMATCH");
+      await this.reauthenticateGoogle({
+        sessionId: state.adminSessionId,
+        identity,
+      });
+      const session = await this.sessionById(state.adminSessionId);
+      if (!session) throw new AuthError("AUTHENTICATION_REQUIRED");
+      return { ...session, token: "", isFirstBinding: false };
+    }
+    return this.loginVerifiedGoogle(identity);
+  }
+
+  async reauthenticateGoogle(input: {
+    sessionId: string;
+    identity: GoogleIdentity;
+  }): Promise<void> {
+    this.assertVerifiedIdentity(input.identity);
+    const recentAuthAt = assertRecentGoogle(input.identity, this.now());
+    const email = normalizeEmail(input.identity.email);
+    const row = await this.db
+      .prepare(
+        "SELECT s.id, s.admin_user_id, a.authorized_email, a.google_subject_id, a.status, s.revoked_at, s.auth_version, a.auth_version AS admin_auth_version, s.expires_at, s.last_seen_at FROM admin_sessions s JOIN admin_users a ON a.id = s.admin_user_id WHERE s.id = ?",
+      )
+      .bind(input.sessionId)
+      .first<{
+        id: string;
+        admin_user_id: string;
+        authorized_email: string;
+        google_subject_id: string | null;
+        status: string;
+        revoked_at: number | null;
+        auth_version: number;
+        admin_auth_version: number;
+        expires_at: number;
+        last_seen_at: number;
+      }>();
+    if (
+      !row ||
+      row.revoked_at !== null ||
+      row.status !== "active" ||
+      row.google_subject_id !== input.identity.subject ||
+      normalizeEmail(row.authorized_email) !== email ||
+      Number(row.auth_version) !== Number(row.admin_auth_version) ||
+      Number(row.expires_at) <= this.now() ||
+      this.now() - Number(row.last_seen_at) >= this.idleTimeoutMs
+    )
+      throw new AuthError("RECENT_AUTHENTICATION_REQUIRED");
+    const now = this.now();
+    await this.db.batch([
+      this.db
+        .prepare(
+          "UPDATE admin_sessions SET recent_auth_at = CASE WHEN revoked_at IS NULL AND expires_at > ? AND auth_version = ? AND EXISTS (SELECT 1 FROM admin_users WHERE id = admin_sessions.admin_user_id AND status = 'active' AND auth_version = ? AND google_subject_id = ? AND lower(authorized_email) = ?) THEN ? ELSE NULL END, last_seen_at = ? WHERE id = ?",
+        )
+        .bind(
+          now,
+          row.auth_version,
+          row.auth_version,
+          input.identity.subject,
+          email,
+          recentAuthAt,
+          now,
+          row.id,
+        ),
+      this.audit(
+        this.idFactory("auth-operation"),
+        row.admin_user_id,
+        "ADMIN_REAUTHENTICATED",
+        row.admin_user_id,
+        now,
+      ),
+    ]);
   }
 
   async bootstrap(input: {
@@ -188,7 +296,13 @@ export class AuthService {
     const now = this.now();
     const email = normalizeEmail(input.identity.email);
     const adminId = this.idFactory("admin");
-    const session = await this.newSession(adminId, 1, "super_admin", now);
+    const session = await this.newSession(
+      adminId,
+      1,
+      "super_admin",
+      now,
+      googleAuthenticationTime(input.identity, now),
+    );
     const operationId = this.idFactory("auth-operation");
     try {
       await this.db.batch([
@@ -213,7 +327,7 @@ export class AuthService {
           .bind(adminId, now),
         this.db
           .prepare(
-            "INSERT INTO admin_sessions (id, admin_user_id, token_hash, auth_version, authenticated_at, last_seen_at, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO admin_sessions (id, admin_user_id, token_hash, auth_version, authenticated_at, recent_auth_at, last_seen_at, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
           )
           .bind(
             session.sessionId,
@@ -221,6 +335,7 @@ export class AuthService {
             session.tokenHash,
             1,
             now,
+            session.result.recentAuthenticatedAt,
             now,
             session.expiresAt,
             now,
@@ -267,6 +382,7 @@ export class AuthService {
       Number(admin.auth_version),
       admin.role,
       now,
+      googleAuthenticationTime(identity, now),
     );
     const operationId = this.idFactory("auth-operation");
     const statements: D1PreparedStatement[] = [];
@@ -289,14 +405,19 @@ export class AuthService {
     statements.push(
       this.db
         .prepare(
-          "INSERT INTO admin_sessions (id, admin_user_id, token_hash, auth_version, authenticated_at, last_seen_at, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO admin_sessions (id, admin_user_id, token_hash, auth_version, authenticated_at, recent_auth_at, last_seen_at, expires_at, created_at) VALUES (CASE WHEN EXISTS (SELECT 1 FROM admin_users WHERE id = ? AND google_subject_id = ? AND lower(authorized_email) = ? AND status = 'active' AND auth_version = ?) THEN ? ELSE NULL END, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(
+          admin.id,
+          identity.subject,
+          email,
+          admin.auth_version,
           session.sessionId,
           admin.id,
           session.tokenHash,
           admin.auth_version,
           now,
+          session.result.recentAuthenticatedAt,
           now,
           session.expiresAt,
           now,
@@ -320,7 +441,7 @@ export class AuthService {
     const tokenHash = await sha256Hex(token);
     const row = await this.db
       .prepare(
-        "SELECT s.id, s.admin_user_id, s.auth_version AS session_auth_version, s.authenticated_at, s.last_seen_at, s.expires_at, s.revoked_at, a.role, a.status, a.auth_version FROM admin_sessions s JOIN admin_users a ON a.id = s.admin_user_id WHERE s.token_hash = ?",
+        "SELECT s.id, s.admin_user_id, s.auth_version AS session_auth_version, s.authenticated_at, s.recent_auth_at, s.last_seen_at, s.expires_at, s.revoked_at, a.role, a.status, a.auth_version FROM admin_sessions s JOIN admin_users a ON a.id = s.admin_user_id WHERE s.token_hash = ?",
       )
       .bind(tokenHash)
       .first<{
@@ -328,6 +449,7 @@ export class AuthService {
         admin_user_id: string;
         session_auth_version: number;
         authenticated_at: number;
+        recent_auth_at: number;
         last_seen_at: number;
         expires_at: number;
         revoked_at: number | null;
@@ -342,7 +464,8 @@ export class AuthService {
       row.status !== "active" ||
       Number(row.session_auth_version) !== Number(row.auth_version) ||
       now >= Number(row.expires_at) ||
-      now - Number(row.last_seen_at) > this.idleTimeoutMs;
+      Number(row.last_seen_at) > now ||
+      now - Number(row.last_seen_at) >= this.idleTimeoutMs;
     if (invalid) {
       if (row.revoked_at === null)
         await this.db
@@ -365,8 +488,38 @@ export class AuthService {
       sessionId: row.id,
       role: row.role,
       authenticatedAt: Number(row.authenticated_at),
+      recentAuthenticatedAt: Number(row.recent_auth_at),
       lastSeenAt,
       expiresAt: Number(row.expires_at),
+    };
+  }
+
+  private async sessionById(sessionId: string): Promise<AuthResult | null> {
+    const row = await this.db
+      .prepare(
+        "SELECT s.id, s.admin_user_id, s.authenticated_at, s.recent_auth_at, s.last_seen_at, s.expires_at, a.role FROM admin_sessions s JOIN admin_users a ON a.id = s.admin_user_id WHERE s.id = ? AND s.revoked_at IS NULL AND a.status = 'active' AND s.auth_version = a.auth_version AND s.expires_at > ?",
+      )
+      .bind(sessionId, this.now())
+      .first<{
+        id: string;
+        admin_user_id: string;
+        authenticated_at: number;
+        recent_auth_at: number;
+        last_seen_at: number;
+        expires_at: number;
+        role: string;
+      }>();
+    if (!row) return null;
+    return {
+      adminId: row.admin_user_id,
+      sessionId: row.id,
+      role: row.role,
+      authenticatedAt: Number(row.authenticated_at),
+      recentAuthenticatedAt: Number(row.recent_auth_at),
+      lastSeenAt: Number(row.last_seen_at),
+      expiresAt: Number(row.expires_at),
+      token: "",
+      isFirstBinding: false,
     };
   }
 
@@ -411,7 +564,9 @@ export class AuthService {
   ): Promise<{
     nonce: string;
     codeVerifier: string;
-    purpose: "login" | "bootstrap";
+    purpose: "login" | "bootstrap" | "reauth" | "identity";
+    adminSessionId: string | null;
+    identityRequestId: string | null;
   }> {
     const cookieValue = parseCookieHeader(cookieHeader)[OAUTH_STATE_COOKIE];
     if (!cookieValue || !state) throw new AuthError("OAUTH_STATE_MISMATCH");
@@ -433,7 +588,9 @@ export class AuthService {
       cookie.state !== state ||
       typeof cookie.nonce !== "string" ||
       typeof cookie.codeVerifier !== "string" ||
-      (cookie.purpose !== "login" && cookie.purpose !== "bootstrap") ||
+      !["login", "bootstrap", "reauth", "identity"].includes(
+        String(cookie.purpose),
+      ) ||
       typeof cookie.issuedAt !== "number"
     )
       throw new AuthError("OAUTH_STATE_MISMATCH");
@@ -443,13 +600,15 @@ export class AuthService {
     const stateHash = await sha256Hex(state);
     const row = await this.db
       .prepare(
-        "SELECT purpose, nonce_hash, code_verifier_hash, expires_at, used_at FROM auth_oauth_states WHERE state_hash = ?",
+        "SELECT purpose, admin_session_id, identity_request_id, nonce_hash, code_verifier_hash, expires_at, used_at FROM auth_oauth_states WHERE state_hash = ?",
       )
       .bind(stateHash)
       .first<{
         nonce_hash: string;
         code_verifier_hash: string;
-        purpose: "login" | "bootstrap";
+        purpose: "login" | "bootstrap" | "reauth" | "identity";
+        admin_session_id: string | null;
+        identity_request_id: string | null;
         expires_at: number;
         used_at: number | null;
       }>();
@@ -457,6 +616,7 @@ export class AuthService {
       !row ||
       row.used_at !== null ||
       row.purpose !== cookie.purpose ||
+      (row.purpose === "reauth" && !row.admin_session_id) ||
       Number(row.expires_at) <= now ||
       row.nonce_hash !== (await sha256Hex(cookie.nonce)) ||
       row.code_verifier_hash !== (await sha256Hex(cookie.codeVerifier))
@@ -473,7 +633,9 @@ export class AuthService {
     return {
       nonce: cookie.nonce,
       codeVerifier: cookie.codeVerifier,
-      purpose: cookie.purpose,
+      purpose: row.purpose,
+      adminSessionId: row.admin_session_id,
+      identityRequestId: row.identity_request_id,
     };
   }
 
@@ -492,6 +654,7 @@ export class AuthService {
     authVersion: number,
     role: string,
     now: number,
+    recentAuthenticatedAt: number,
   ) {
     const token = randomBase64Url(48);
     const expiresAt = now + this.absoluteTimeoutMs;
@@ -506,6 +669,7 @@ export class AuthService {
         sessionId,
         role,
         authenticatedAt: now,
+        recentAuthenticatedAt,
         lastSeenAt: now,
         expiresAt,
       },
@@ -561,7 +725,7 @@ function encodeOAuthCookie(value: {
   state: string;
   nonce: string;
   codeVerifier: string;
-  purpose: "login" | "bootstrap";
+  purpose: "login" | "bootstrap" | "reauth" | "identity";
   issuedAt: number;
 }): string {
   const bytes = new TextEncoder().encode(JSON.stringify(value));

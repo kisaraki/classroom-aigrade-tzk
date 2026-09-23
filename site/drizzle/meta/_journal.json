@@ -43,6 +43,13 @@
       "when": 1790165201392,
       "tag": "0005_phase_03a_bootstrap_state_purpose",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790182864213,
+      "tag": "0006_phase_03b_authorization",
+      "breakpoints": true
     }
   ]
 }

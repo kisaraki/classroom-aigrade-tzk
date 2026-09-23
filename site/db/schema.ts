@@ -472,6 +472,7 @@ export const adminSessions = sqliteTable(
     expiresAt: integer("expires_at").notNull(),
     revokedAt: integer("revoked_at"),
     createdAt: createdAt(),
+    recentAuthAt: integer("recent_auth_at").notNull().default(0),
   },
   (t) => [
     index("sessions_admin_expiry").on(t.adminUserId, t.expiresAt),
@@ -541,16 +542,60 @@ export const authOauthStates = sqliteTable(
     usedAt: integer("used_at"),
     createdAt: createdAt(),
     purpose: text("purpose").notNull().default("login"),
+    adminSessionId: text("admin_session_id"),
+    identityRequestId: text("identity_request_id"),
   },
   (t) => [
     index("oauth_state_expiry").on(t.expiresAt),
     check("oauth_state_hash", hexHash(t.stateHash)),
     check("oauth_nonce_hash", hexHash(t.nonceHash)),
     check("oauth_verifier_hash", hexHash(t.codeVerifierHash)),
-    check("oauth_state_purpose", sql`${t.purpose} IN ('login', 'bootstrap')`),
+    // Purpose/actor/request constraints are maintained by migration triggers
+    // so upgrading Phase 3A never rebuilds the existing OAuth state table.
     check(
       "oauth_state_times",
       sql`${t.expiresAt} > ${t.createdAt} AND (${t.usedAt} IS NULL OR ${t.usedAt} >= ${t.createdAt})`,
+    ),
+  ],
+);
+
+export const authIdentityRequests = sqliteTable(
+  "auth_identity_requests",
+  {
+    id: id(),
+    targetAdminId: text("target_admin_id")
+      .notNull()
+      .references(() => adminUsers.id),
+    authorizedEmail: text("authorized_email").notNull(),
+    approvalHash: text("approval_hash").notNull(),
+    status: text("status").notNull().default("approved"),
+    expiresAt: integer("expires_at").notNull(),
+    approvedAt: integer("approved_at").notNull(),
+    consumedAt: integer("consumed_at"),
+    createdAt: createdAt(),
+    kind: text("kind").notNull(),
+    targetAuthVersion: integer("target_auth_version").notNull(),
+    actorSessionId: text("actor_session_id").references(() => adminSessions.id),
+    approvedBy: text("approved_by").notNull(),
+    evidenceReference: text("evidence_reference").notNull(),
+  },
+  (t) => [
+    index("recovery_target_status").on(t.targetAdminId, t.status),
+    index("recovery_expiry").on(t.expiresAt),
+    check("recovery_approval_hash", hexHash(t.approvalHash)),
+    uniqueIndex("identity_request_token").on(t.approvalHash),
+    check("identity_request_version", positiveVersion(t.targetAuthVersion)),
+    check(
+      "identity_request_kind",
+      sql`(${t.kind} = 'rebind' AND ${t.actorSessionId} IS NOT NULL) OR (${t.kind} = 'recovery' AND ${t.actorSessionId} IS NULL)`,
+    ),
+    check(
+      "recovery_status",
+      sql`${t.status} IN ('approved', 'consumed', 'expired', 'rejected')`,
+    ),
+    check(
+      "recovery_times",
+      sql`${t.expiresAt} > ${t.approvedAt} AND (${t.consumedAt} IS NULL OR ${t.consumedAt} >= ${t.approvedAt})`,
     ),
   ],
 );

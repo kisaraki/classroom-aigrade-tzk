@@ -93,6 +93,7 @@ type JwtClaims = {
   azp?: unknown;
   exp?: unknown;
   iat?: unknown;
+  auth_time?: unknown;
   nonce?: unknown;
   email?: unknown;
   email_verified?: unknown;
@@ -182,6 +183,7 @@ export class GoogleOidcClient {
       code_challenge: parameters.codeChallenge,
       code_challenge_method: "S256",
       prompt: "select_account",
+      claims: JSON.stringify({ id_token: { auth_time: { essential: true } } }),
     }).toString();
     return url.toString();
   }
@@ -327,6 +329,10 @@ export class GoogleOidcClient {
       nonce: claims.nonce,
       issuedAt: claims.iat,
       expiresAt: claims.exp,
+      ...(typeof claims.auth_time === "number" &&
+      Number.isSafeInteger(claims.auth_time)
+        ? { authTime: claims.auth_time }
+        : {}),
       ...(typeof claims.name === "string" ? { name: claims.name } : {}),
     };
   }

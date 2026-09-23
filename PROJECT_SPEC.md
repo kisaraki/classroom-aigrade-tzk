@@ -4,7 +4,7 @@ Software Requirements Specification（SRS）暨 Codex 分階段開發規格
 
 > 文件用途：本文件為本專案之主要規格來源（Single Source of Truth），供 Codex 進行後續設計、實作、測試、部署與維護。  
 > 文件版本：v1.6-draft  
-> 最後修訂：2026-09-23  
+> 最後修訂：2026-09-24  
 > 文件狀態：文件修訂已核准；待決策事項尚未定案，不代表任何開發 Phase 已完成。  
 > 目標平台：ChatGPT Sites（正式能力於 Phase 0 再驗證）  
 > 主要開發工具：Codex  
@@ -1042,7 +1042,7 @@ verified_google_sub = AdminUsers.google_subject_id
 4. 更新授權與 Google 綁定，保存必要 Audit。
 5. 撤銷舊 Sessions。
 
-`admin` 保留帳號與最後一位 super_admin 的保護依 §35.3；Emergency Recovery 的核准程序仍依 D-01 定案。不得因 Rebind 或 Recovery 而新增其他外部服務認證。
+`admin` 保留帳號與最後一位 super_admin 的保護依 §35.3；Emergency Recovery 的核准程序依已核准 D-01 執行。不得因 Rebind 或 Recovery 而新增其他外部服務認證。
 
 <a id="spec-34-3"></a>
 
@@ -1183,7 +1183,7 @@ pending_identity_binding 只允許合法的首次綁定流程，完成前不授�
 
 建立／修改／停權 super_admin、重新綁定 Google 身分、全年段封存、Purge，以及修改安全／OAuth 設定，須 Recent Authentication。
 
-重新驗證只使用 Google re-authentication，並檢查其結果與目前操作人身分一致；有效窗口依 D-11 定案。不得退回本地密碼，亦不新增其他外部服務認證。Rebind 的新帳號驗證與操作人的重新驗證須分開檢查。
+重新驗證只使用 Google re-authentication，並檢查其結果與目前操作人身分一致。2026-09-24 使用者核准 D-11：Google 重新驗證有效 5 分鐘，以已驗證 ID token 的 `auth_time` 判定，滿 5 分鐘即失效；缺少或未來的驗證時間不得視為 Recent Authentication。一次性 Recovery 核准同樣有效 5 分鐘，到期或使用後不可重放。不得退回本地密碼，亦不新增其他外部服務認證。Rebind 的新帳號驗證與操作人的重新驗證須分開檢查；Google `auth_time` 與 Sites callback 的真實平台驗證仍依 D-09 暫緩，不以 mock 當作平台實測。
 
 <a id="spec-35-9"></a>
 
@@ -1211,7 +1211,19 @@ archive_admin
 viewer
 ```
 
-授權使用 Permission＋Scope，不能只靠 Role 判斷；詳細矩陣依 D-10 確認。
+授權使用 Permission＋Scope，不能只靠 Role 判斷。依已核准 D-10 最小權限方向，Phase 3B 矩陣如下；未列出的操作一律拒絕，尚未實作的功能只有權限契約，不表示該功能完成。
+
+| 角色 | Permission | Scope |
+|---|---|---|
+| super_admin | 全部已定義 Permission；管理員新增／修改／停權／啟用、Scope 變更、Rebind、強制登出只限此角色 | 全校；管理異動仍須 Recent Authentication、目標版本及確認 |
+| system_admin | system.manage、academic.read、score.read、ai.read、archive.read | 指定有效範圍；system.manage 須全校 Scope 與 Recent Authentication |
+| academic_admin | academic.read、academic.write | 指定學籍範圍 |
+| score_admin | score.read、score.write | 導師班可全科；任課教師限班級與任教科目 |
+| ai_admin | ai.read、ai.manage | 指定範圍 |
+| archive_admin | archive.read、archive.manage | 指定範圍；高風險操作另驗 Recent Authentication |
+| viewer | academic.read、score.read、ai.read、archive.read | 指定範圍，無修改及管理員名單權限 |
+
+Permission 與 Scope 取自資料庫，不接受前端 role、Email、Google identity 或資源快照作授權憑據。混合批次的每個目標都須通過；科目與班級必須由同一筆或完整各自符合的 Assignment 覆蓋，不可交叉拼接。
 
 ---
 
@@ -1239,6 +1251,10 @@ viewer
 - 只能修改自己任教科目。
 
 建議以 AdminAssignments 保存任教範圍。
+
+Phase 3B 以學期、業務日期及半開區間檢查 Assignment；缺少必要資源範圍時拒絕。學生範圍由相符學期／日期的學籍解析，既有評量範圍由評量參與快照解析，不採目前班級替代。歷史讀取依該次日期的有效 Assignment；歷史寫入仍受 §5 的 super_admin、Recent Authentication 與原因限制。
+
+帳號與 Assignment 修改使用目標 `auth_version`、明確確認及原子交易；交易內重驗操作人的 Session／權限與目標版本，衝突不留下部分更新。Role／Scope／綁定變更撤銷既有 Sessions。Rebind 先核准新授權 Email，再由一次性 OAuth 流程驗證新身分並重驗操作人；Recovery 核准只提供給受控伺服器維護程序，保存核准者與證據的非敏感參照，不提供公開核准 API。Google 新身分須符合核准 Email，完成時原子消費 request、更新綁定、撤銷舊 Sessions 及 Audit；不重開 Bootstrap。
 
 ---
 
@@ -2204,6 +2220,8 @@ Google OAuth 在 Sites 的實作方式、callback、Cookie、Secret 與平台存
 - Revoke Sessions。
 - Last super_admin protection。
 
+Phase 3B 本機授權實作與驗證紀錄見 [PHASE_3B.md](docs/PHASE_3B.md)。2026-09-24 核准的 5 分鐘時窗已同步至 §35.8、D-11 與測試；正式 Google／Sites 驗證仍維持 D-09 的暫緩狀態。
+
 ---
 
 <a id="spec-51"></a>
@@ -2885,7 +2903,7 @@ DEPLOYED_WITH_DOC_SYNC_ERROR
 21. 管理員沒有 ChatGPT／Gemini 帳號，或 AI API Key 缺少／錯誤、AI 服務故障 → 合法 Google 登入仍成功。
 22. 切換 AI 提供者不撤銷管理員 Session，也不觸發任何 AI 帳號綁定或資格驗證。
 
-以上是後續 Phase 3A／3B 的驗收要求，本次文件修訂未執行應用程式認證測試。
+以上案例以 [Phase 3A](docs/PHASE_3A.md) 與 [Phase 3B](docs/PHASE_3B.md) 紀錄區分本機契約測試與尚未執行的真實 Google／Sites 實測。
 
 ---
 
@@ -3040,11 +3058,11 @@ Codex 不得：
 
 ### 72.2 待決策事項
 
-下列項目依各列狀態追蹤。D-03 及 D-11 日期部分已於 2026-09-23 由使用者核准，其餘建議仍不是已核准規則；實作到所列關卡前，必須先確認並回寫本節與相關正文。平台能力不足時保留實際證據，不可用模擬結果宣稱 Production 可用。
+下列項目依各列狀態追蹤。D-01、D-03、D-10 及 D-11 日期部分已於 2026-09-23 由使用者核准；D-11 的 Recent Authentication／Recovery 時窗於 2026-09-24 核准，其餘建議仍不是已核准規則；實作到所列關卡前，必須先確認並回寫本節與相關正文。平台能力不足時保留實際證據，不可用模擬結果宣稱 Production 可用。
 
 | ID | 待決定事項及影響 | 建議方案／可選方案 | 最遲確認關卡 |
 |---|---|---|---|
-| D-01 | 失去全部可用管理身分時的 Emergency Recovery 核准者、流程與必要證據 | 首次 Bootstrap 已依 Google＋Bootstrap Secret 定義；Recovery 建議由受控維護程序核准，新 Google 帳號仍須驗證，不能只憑 Recovery Secret 登入或重新開啟 Bootstrap | Recovery／緊急 Rebind 實作前；最晚 Phase 3B 完成前 |
+| D-01 | **已核准（2026-09-23）**：失去全部可用管理身分時的 Emergency Recovery 核准者、流程與必要證據 | 由受控維護程序核准一次性 Recovery request；新 Google 身分仍須完成伺服器驗證及 authorized email 檢查。Recovery 只可受控重新綁定既有保留管理員、撤銷舊 Sessions 並留下 Audit；Recovery Secret 不得單獨登入、不得建立本地密碼、不得重新開啟 Bootstrap。 | Phase 3B |
 | D-02 | 同班同名同生日的公開查詢無法唯一識別 | 目前一律一般查詢失敗；建議交由校方受控協助。若改採額外識別條件，須明確核准新增欄位，不能自行增加身分證、查詢碼或帳號 | Phase 13 |
 | D-03 | **已核准（2026-09-23）**：排名資格優先序與快照 | 單次 → 學期 → 學生預設，空值繼承，學生預設納入；名單確認時固定來源與最終資格快照。開始後轉入自下一次參加；撤銷轉班不改既有快照。原校成績仍不排名 | Phase 1 模型與約束；Phase 5 計算驗證 |
 | D-04 | 無有效分數時的總分／排名、同分比序科目缺值，以及班級人數與各項統計母體 | 建議無有效分數不排名、無數值顯示「—」；統計明確區分在籍、實際參與、排名合格及有效分數人數。另定排除排名者、原校成績是否進入各統計，不得以 NULL＝0 解決 | Phase 5 |
@@ -3053,8 +3071,8 @@ Codex 不得：
 | D-07 | 匯入後已有手動修改、再次匯入或發布時的 Rollback；批次錯誤時整批或部分提交 | 建議整批原子提交；回復遇版本衝突時阻擋並預覽差異。可另選逐項核准，但不得靜默覆蓋後續修改 | Phase 6；Phase 9 整合 |
 | D-08 | 段考先發布、全部 NOT_HELD、未完整發布時 PROVISIONAL／FINAL 的轉換；修改重算失敗時的公開版本 | 建議以明確發布完成條件區分暫時／正式，與缺分數分開；失敗時繼續提供上一完整發布版本，不能混用新舊成績與排名 | Phase 7 |
 | D-09 | Google OAuth／OIDC 的平台 callback／Cookie 相容性、Email 正規化與允許的 Google 帳號政策 | Google sub 作綁定識別鍵已定義；Email 用於授權比對，不自行去除點號或加號別名。確認 Google-only 登入不被平台額外認證門檻阻擋；不能以訪客可偽造的 Email 標頭授權。2026-09-23 使用者指示暫緩 OAuth 設定與登入實測，尚未通過 | Phase 0 保存文件／存取選項證據；Phase 3A 前補實測與驗證契約 |
-| D-10 | 預設角色對各項操作的權限矩陣、多任教範圍組合，以及教師異動後歷史資料 Scope | 依最小權限建立 Role × Permission × Scope × 時間範圍矩陣；未授權預設拒絕。導師／任課教師既有班級與科目限制不可放寬 | Phase 3B |
-| D-11 | **日期部分已核准（2026-09-23）**；其餘門檻待決策 | 業務日期 Asia/Taipei；技術時間戳 UTC；含起不含迄；月／年期限依曆月／曆年，無對應日期時取該月最後一天。查詢、上傳、重試、容量與復原目標仍待各功能 Phase 確認 | 日期於 Phase 1；其餘於對應功能 Phase，最晚 Phase 18 |
+| D-10 | **已核准（2026-09-23）**：預設角色對各項操作的權限矩陣、多任教範圍組合，以及教師異動後歷史資料 Scope | 採最小權限 Role × Permission × Scope × 時間範圍矩陣；未授權預設拒絕。導師限自己的班級但可操作全科；任課教師限任教班級與任教科目；Scope 變更立即撤銷既有 Sessions，歷史資料依有效日期與既有快照判定。 | Phase 3B |
+| D-11 | **日期已核准（2026-09-23）；Recent Authentication 與 Recovery 時窗已核准（2026-09-24）**；其餘門檻待決策 | 業務日期 Asia/Taipei；技術時間戳 UTC；含起不含迄；月／年期限依曆月／曆年，無對應日期時取該月最後一天。Google Recent Authentication 與一次性 Recovery 核准均為 5 分鐘，滿時失效。查詢、上傳、重試、容量與復原目標仍待各功能 Phase 確認 | 日期於 Phase 1；認證時窗於 Phase 3B；其餘於對應功能 Phase，最晚 Phase 18 |
 
 <a id="spec-72-3"></a>
 
@@ -3153,7 +3171,7 @@ Codex 不得：
 - 已授權、首次綁定、active、disabled、locked 及 rebind 狀態有獨立轉換條件；帳號停權及權限縮限立即生效。
 - 每個管理端 API、檔案下載、報表、背景工作與批次操作都必須檢查 Permission＋Scope；拒絕時不能先洩漏目標資料。
 - Phase 3B 交付 D-10 核准後的權限矩陣。導師限自己的班且可操作全科；任課教師限任教班及任教科目。
-- 高風險操作驗證 Recent Authentication、操作者資格、目標版本與確認內容；Recent Authentication 的有效窗口依 D-11 定案。
+- 高風險操作驗證 Recent Authentication、操作者資格、目標版本與確認內容；Recent Authentication 與一次性 Recovery 核准有效窗口依 D-11 均為 5 分鐘，滿時、缺少驗證時間或時間在未來時拒絕。
 - Session 使用 HttpOnly、Secure 及適當 SameSite Cookie，D1 僅存 token hash；SameSite 不能取代完整 CSRF 防護。
 - Bootstrap 必須一次性且防止併發初始化；Recovery 不得重新開啟 Bootstrap 或創造本地密碼備援。
 

@@ -31,6 +31,7 @@ function identity(overrides = {}) {
     audience: "fictional-client",
     nonce: "fictional-nonce",
     issuedAt: Math.floor(now / 1000) - 30,
+    authTime: Math.floor(now / 1000),
     expiresAt: Math.floor(now / 1000) + 300,
     name: "虛構 Google 管理員",
     ...overrides,
@@ -159,6 +160,7 @@ test("Phase 3A Google OIDC validation enforces issuer, audience, nonce, signatur
     sub: "fictional-sub",
     aud: "fictional-client",
     iat: Math.floor(now / 1000) - 30,
+    auth_time: Math.floor(now / 1000),
     exp: Math.floor(now / 1000) + 300,
     nonce: "fictional-nonce",
     email: "admin@example.test",
@@ -170,6 +172,7 @@ test("Phase 3A Google OIDC validation enforces issuer, audience, nonce, signatur
   );
   assert.equal(result.subject, "fictional-sub");
   assert.equal(result.emailVerified, true);
+  assert.equal(result.authTime, validClaims.auth_time);
   await rejectsCode(
     client.verifyIdToken(
       await sign({ ...validClaims, iss: "https://evil.example" }),

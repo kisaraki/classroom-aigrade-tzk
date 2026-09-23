@@ -2,6 +2,17 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 3B 管理員授權核心 — 2026-09-24
+
+接續使用者已核准的 Phase 3B、D-01／D-10，新增 D-11 決策：Google Recent Authentication 及一次性 Recovery 核准均為 5 分鐘。驗證結果見 [Phase 3B 紀錄](docs/PHASE_3B.md)；不是正式軟體 Release 或 Sites 部署。
+
+- 新增最小權限矩陣、學期／日期／班級／科目 Scope、批次全目標檢查、學生學籍解析與歷史評量快照授權；缺少範圍預設拒絕。
+- 管理員新增／異動、Role／Scope 變更、強制登出要求伺服器 super_admin、Google Recent Authentication、明確確認與目標版本；交易內重驗操作人及版本，連同 Audit 原子提交。
+- 新增 Google reauthentication、一次性 Rebind／Recovery 核准與 callback；核准 Email、新 Google 身分、原操作人、到期、版本與重放皆驗證。Recovery 核准不提供公開 HTTP API。
+- Recent Authentication 使用已驗證 Google ID token 的 auth_time；缺失、未來或超過窗口即拒絕高風險操作，不把新發 token 或選擇帳號當作重新驗證證據。
+- 新增 0006 migration 與認證／授權／HTTP／併發／升級測試。保留已提交 0000～0005，Phase 3A OAuth state 以新增欄位及替換 trigger 升級。
+- Google OAuth Client、auth_time 啟用與 Sites callback／Cookie 實測依 D-09 暫緩；管理 UI 及後續學籍／成績 API 不在此階段提前開放。
+
 ## Phase 3A 管理員 Google 認證核心 — 2026-09-23
 
 依使用者批准實作 Phase 3A，僅在隔離本機驗證；OAuth Client 與 Sites callback 實測仍依先前指示暫緩，不是正式軟體 Release 或 Sites 部署。

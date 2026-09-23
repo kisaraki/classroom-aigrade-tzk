@@ -4,7 +4,7 @@
 
 ## 模型入口
 
-- [Drizzle schema](../site/db/schema.ts)：34 張關聯表的欄位、外鍵、CHECK 與索引。
+- [Drizzle schema](../site/db/schema.ts)：35 張關聯表的欄位、外鍵、CHECK 與索引。
 - [核心 migration](../site/drizzle/0000_phase_01_core.sql)：建立關聯表及索引。
 - [跨列約束與 FTS migration](../site/drizzle/0001_phase_01_invariants.sql)：學籍、快照、管理員與版本約束，及 FTS 邏輯表 `ai_reference_chunks_fts`。FTS 內部 shadow tables 不另算業務表。
 - [Migration journal](../site/drizzle/meta/_journal.json)：Drizzle 的順序與時間戳；snapshot 記錄可生成的關聯 schema，FTS／trigger 保存在 custom migration。
@@ -12,7 +12,7 @@
 
 ## Phase 2 擴充
 
-目前共有 34 張關聯表加 FTS5。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
+Phase 2 擴充學籍命令表；目前含 Phase 3B 共 35 張關聯表加 FTS5。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
 
 ```mermaid
 erDiagram
@@ -25,11 +25,21 @@ erDiagram
     academic_operations o|--o| academic_operations : undoes
 ```
 
-內部服務只接受 server-created Preview；Confirm 在同一 batch 保存變更、操作與 Audit，並清空已提交 Preview 的建檔 payload。未確認資料的保存／Purge、真實授權 adapter 及雲端部署依後續 Phase 關卡；詳細欄位與限制見 [Phase 2 紀錄](PHASE_2.md)。`npm run db:verify` 現在套用六份 migration；下文的既有 Phase 1 模型與安全契約仍適用。
+內部服務只接受 server-created Preview；Confirm 在同一 batch 保存變更、操作與 Audit，並清空已提交 Preview 的建檔 payload。未確認資料的保存／Purge、真實授權 adapter 及雲端部署依後續 Phase 關卡；詳細欄位與限制見 [Phase 2 紀錄](PHASE_2.md)。`npm run db:verify` 現在套用七份 migration；下文的既有 Phase 1 模型與安全契約仍適用。
 
 ## Phase 3A 認證狀態
 
-`auth_oauth_states` 保存 state、nonce 與 PKCE verifier 的 SHA-256 hash、用途、到期與消費時間；瀏覽器短期 HttpOnly cookie 才帶回原值。用途只有 `login`／`bootstrap`，migration trigger 拒絕其他值。OAuth code、ID token、Session 原值與 Bootstrap Secret 不進 D1 或 Audit；管理員登入後只保存 Session token hash。OIDC 驗證與服務邊界見 [Phase 3A 紀錄](PHASE_3A.md)。
+`auth_oauth_states` 保存 state、nonce 與 PKCE verifier 的 SHA-256 hash、用途、到期與消費時間；瀏覽器短期 HttpOnly cookie 才帶回原值。Phase 3A 的用途為 `login`／`bootstrap`；Phase 3B 另加入 `reauth`／`identity`，migration trigger 檢查對應 Session／核准 request，禁止改換已建立 state 的用途。OAuth code、ID token、Session 原值與 Bootstrap Secret 不進 D1 或 Audit；管理員登入後只保存 Session token hash。OIDC 驗證與服務邊界見 [Phase 3A 紀錄](PHASE_3A.md)。
+
+## Phase 3B 授權與身分異動
+
+[0006 migration](../site/drizzle/0006_phase_03b_authorization.sql) 新增 auth_identity_requests，保存一次性 request token hash、核准 Email、kind、目標 auth_version、操作人 Session 或受控維護核准參照、5 分鐘效期與消費狀態；不保存 Recovery Secret。管理員 Session 新增 recent_auth_at（UTC 毫秒），取自已驗證 Google auth_time；既有 Session 升級後預設 0，必須重新驗證才能做高風險操作。
+
+OAuth state 新增 admin_session_id／identity_request_id。升級只新增欄位並替換用途 trigger，不重建或刪除舊 state；生成 snapshot 與實際 schema 欄位一致，跨表／用途規則由 migration trigger 管理。已提交 migration 0000～0005 不變。
+
+帳號及 Scope 異動先在同一 D1 batch 的 Audit insert 驗證操作者與目標版本，失敗使整筆交易回滾；唯一索引及既有最後管理員／Session 撤銷 trigger 維持生效。Recovery 完成在相同交易驗證尚未消費 request、更新綁定、撤銷 Sessions、消費 request 與 Audit。
+
+本機驗證從 Phase 3A 六份 migration 升級，保留既有 OAuth state、外鍵及完整性；若應用版本回退，不刪除已套用 migration，回退程式仍須使用相容的新增欄位。Production 備份／復原與 migration 仍須另行 preflight 及人工確認。
 
 ## ER 圖
 
@@ -129,7 +139,7 @@ D-03 的來源是 `students.ranking_eligible_default`、`student_term_ranking_po
 
 ### 管理與資料保護
 
-管理員沒有 ChatGPT、Gemini 身分驗證欄位或本地密碼。active 帳號需有 Google subject 與綁定時間；這是資料形狀約束，不能取代 Phase 3A 的 OIDC token／email_verified 驗證。Email 正規化依 D-09，目前不做大小寫、點號或別名合併。Session 只接受 64 字元十六進位 token hash；停權、角色／綁定／Email 或 Scope 異動會撤銷既有 Session。Recent Authentication、Permission＋Scope／IDOR 與 Rebind／Recovery 仍待 Phase 3B。
+管理員沒有 ChatGPT、Gemini 身分驗證欄位或本地密碼。active 帳號需有 Google subject 與綁定時間；這是資料形狀約束，不能取代 Phase 3A 的 OIDC token／email_verified 驗證。Email 比對使用 trim、NFC 及小寫，不移除點號或加號別名；Google 帳號政策與平台實測仍依 D-09。Session 只接受 64 字元十六進位 token hash；停權、角色／綁定／Email 或 Scope 異動會撤銷既有 Session。Recent Authentication、Permission＋Scope／IDOR 與 Rebind／Recovery 的本機契約見 [Phase 3B 紀錄](PHASE_3B.md)。
 
 `admin` 代號不可改名或刪除；最後一位 active super_admin 不可停權、降級或刪除。Bootstrap 使用 singleton、唯一鍵與不可更新／刪除 trigger；測試驗證併發只成功一次，沒有實作 Bootstrap HTTP 流程或 Recovery 政策。
 
@@ -182,4 +192,4 @@ Preflight 比對完整已套用 journal 前綴與 SHA-256、確認應存在的 s
 
 ## 留待後續 Phase
 
-D-03 已定案；D-11 僅日期語意已定案。D-01、D-02、D-04～D-10 與 D-11 其餘閾值仍依 [待決策表](../PROJECT_SPEC.md#spec-72-2) 處理。本階段沒有設定 Recovery 核准人數、Session TTL、匯入原子性政策、發布狀態機、Purge 邊界、角色權限矩陣或 AI 重試上限；狀態／版本欄位提供後續 migration 擴充點。
+D-01／D-03／D-10 已核准；D-11 日期及 5 分鐘 Recent Authentication／Recovery 時窗已定案。D-02、D-04～D-09 與 D-11 其餘閾值依 [待決策表](../PROJECT_SPEC.md#spec-72-2) 處理。匯入原子性、發布狀態機、Purge 邊界與 AI 重試上限仍待後續 Phase；狀態／版本欄位提供 migration 擴充點。

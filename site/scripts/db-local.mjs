@@ -60,7 +60,7 @@ export async function migrationPreflight(db) {
           statement,
         );
       if (match && !objects.has(match[1]))
-        throw new Error("MIGRATION_SCHEMA_OBJECT_MISSING");
+        throw new Error(`MIGRATION_SCHEMA_OBJECT_MISSING:${match[1]}`);
     }
   }
   const fk = await db.prepare("PRAGMA foreign_key_check").all();

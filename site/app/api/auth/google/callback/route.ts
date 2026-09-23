@@ -1,4 +1,7 @@
-import { clearOAuthStateCookie } from "../../../../../lib/server/auth/cookies.ts";
+import {
+  clearOAuthStateCookie,
+  clearSessionCookie,
+} from "../../../../../lib/server/auth/cookies.ts";
 import { authService } from "../../../../../lib/server/auth/runtime.ts";
 import { AuthError } from "../../../../../lib/server/auth/types.ts";
 
@@ -28,7 +31,9 @@ export async function GET(request: Request): Promise<Response> {
       Location: "/admin",
       "Cache-Control": "no-store",
     });
-    headers.append("Set-Cookie", service.cookieForSession(result.token));
+    if (result?.token)
+      headers.append("Set-Cookie", service.cookieForSession(result.token));
+    if (!result) headers.append("Set-Cookie", clearSessionCookie());
     headers.append("Set-Cookie", clearOAuthStateCookie());
     return new Response(null, {
       status: 302,
