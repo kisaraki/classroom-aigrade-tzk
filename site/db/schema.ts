@@ -940,3 +940,103 @@ export const auditLogs = sqliteTable(
     check("audit_retention_date", date(t.retentionUntil)),
   ],
 );
+
+// Phase 2 command boundary. Domain services are internal until Phase 3A/3B.
+export const academicState = sqliteTable(
+  "academic_state",
+  {
+    id: integer("id").primaryKey(),
+    currentYearId: text("current_year_id").references(() => academicYears.id),
+    revision: integer("revision").notNull().default(0),
+  },
+  (t) => [
+    check("academic_state_singleton", sql`${t.id} = 1`),
+    check(
+      "academic_revision",
+      sql`typeof(${t.revision}) = 'integer' AND ${t.revision} >= 0`,
+    ),
+  ],
+);
+
+export const academicPreviews = sqliteTable(
+  "academic_previews",
+  {
+    id: id(),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => adminUsers.id),
+    kind: text("kind").notNull(),
+    baseRevision: integer("base_revision").notNull(),
+    payloadJson: text("payload_json").notNull(),
+    resourcesJson: text("resources_json").notNull(),
+    historyReason: text("history_reason"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("academic_preview_actor").on(t.actorId, t.createdAt),
+    check(
+      "academic_preview_json",
+      sql`${json(t.payloadJson)} AND ${json(t.resourcesJson)}`,
+    ),
+    check(
+      "academic_preview_revision",
+      sql`typeof(${t.baseRevision}) = 'integer' AND ${t.baseRevision} >= 0`,
+    ),
+  ],
+);
+
+export const academicOperations = sqliteTable(
+  "academic_operations",
+  {
+    id: id(),
+    previewId: text("preview_id")
+      .notNull()
+      .unique()
+      .references(() => academicPreviews.id),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => adminUsers.id),
+    authSessionId: text("auth_session_id")
+      .notNull()
+      .references(() => adminSessions.id),
+    kind: text("kind").notNull(),
+    beforeRevision: integer("before_revision").notNull(),
+    afterRevision: integer("after_revision"),
+    changesJson: text("changes_json").notNull(),
+    resultJson: text("result_json").notNull(),
+    undoOf: text("undo_of")
+      .unique()
+      .references((): AnySQLiteColumn => academicOperations.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("academic_operation_actor").on(t.actorId, t.createdAt),
+    check(
+      "academic_operation_json",
+      sql`${json(t.changesJson)} AND ${json(t.resultJson)}`,
+    ),
+    check(
+      "academic_operation_revision",
+      sql`typeof(${t.beforeRevision}) = 'integer' AND ${t.beforeRevision} >= 0 AND (${t.afterRevision} IS NULL OR (typeof(${t.afterRevision}) = 'integer' AND ${t.afterRevision} >= ${t.beforeRevision}))`,
+    ),
+  ],
+);
+
+export const academicOperationStudents = sqliteTable(
+  "academic_operation_students",
+  {
+    operationId: text("operation_id")
+      .notNull()
+      .references(() => academicOperations.id),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => students.id),
+  },
+  (t) => [
+    uniqueIndex("academic_operation_student_unique").on(
+      t.operationId,
+      t.studentId,
+    ),
+    index("academic_operations_by_student").on(t.studentId),
+  ],
+);

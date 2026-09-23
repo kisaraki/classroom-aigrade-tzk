@@ -15,6 +15,20 @@
       "when": 1790144410484,
       "tag": "0001_phase_01_invariants",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790162240199,
+      "tag": "0002_phase_02_academic_commands",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790162245327,
+      "tag": "0003_phase_02_academic_guards",
+      "breakpoints": true
     }
   ]
 }

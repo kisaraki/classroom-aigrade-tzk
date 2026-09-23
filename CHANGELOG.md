@@ -2,6 +2,17 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 2 學年度與學籍核心 — 2026-09-23
+
+依使用者批准實作 Phase 2，僅在隔離本機驗證；完整結果見 [Phase 2 紀錄](docs/PHASE_2.md)，不是正式軟體 Release 或 Sites 部署。
+
+- 建立內部學年度／兩學期、班級、新生單筆／批次基礎、學籍與座號、升班預覽／調班、轉班、轉入／轉出及撤銷服務。
+- 所有業務寫入先 Preview／Confirm，保存 revision 與 receipt，重驗 actor／Session／Scope，重送不重複；資料與 Audit 同批提交，失敗可重試。
+- 新增四張 academic 命令／revision 表與 0002／0003 migration，保留 Phase 1 migration；測試既有資料升級不改歷史紀錄。
+- 轉班保存原快照，禁止評量期間及後續凍結名冊衝突；轉出依曆年設定 3 年期限，撤銷不覆蓋後續修改；D-05 跨事件期限仍待決策。
+- 歷史年度預設唯讀；單次歷史寫入要求 super_admin、可信 Google Recent Authentication 與原因，沒有永久解鎖旗標。
+- 授權預設拒絕，尚未對外開放管理路由；Google OAuth 實測仍暫緩。Excel／CSV 完整匯入流程留待 Phase 6。
+
 ## Phase 1 資料模型與 Migration — 2026-09-23
 
 本次是本機開發交付，不是正式軟體 Release 或 Sites 部署。詳細證據見 [Phase 1 紀錄](docs/PHASE_1.md)；資料表示及復原方式見 [DATABASE.md](docs/DATABASE.md)。

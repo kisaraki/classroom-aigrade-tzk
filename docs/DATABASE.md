@@ -1,14 +1,31 @@
-# Phase 1 資料模型與 Migration
+# 資料模型與 Migration
 
-本文件記錄已實作的資料表示與本機驗證方式。業務規則仍以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；本文件不授權 Production migration、部署或下一 Phase。完成證據見 [Phase 1 紀錄](PHASE_1.md)。
+本文件記錄已實作的資料表示與本機驗證方式。業務規則仍以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；本文件不授權 Production migration、部署或下一 Phase。基底證據見 [Phase 1 紀錄](PHASE_1.md)，現行學籍服務及升級證據見 [Phase 2 紀錄](PHASE_2.md)。
 
 ## 模型入口
 
-- [Drizzle schema](../site/db/schema.ts)：29 張關聯表的欄位、外鍵、CHECK 與索引。
+- [Drizzle schema](../site/db/schema.ts)：33 張關聯表的欄位、外鍵、CHECK 與索引。
 - [核心 migration](../site/drizzle/0000_phase_01_core.sql)：建立關聯表及索引。
-- [跨列約束與 FTS migration](../site/drizzle/0001_phase_01_invariants.sql)：學籍、快照、管理員與版本約束，及第 30 張邏輯表 `ai_reference_chunks_fts`。FTS 內部 shadow tables 不另算業務表。
+- [跨列約束與 FTS migration](../site/drizzle/0001_phase_01_invariants.sql)：學籍、快照、管理員與版本約束，及 FTS 邏輯表 `ai_reference_chunks_fts`。FTS 內部 shadow tables 不另算業務表。
 - [Migration journal](../site/drizzle/meta/_journal.json)：Drizzle 的順序與時間戳；snapshot 記錄可生成的關聯 schema，FTS／trigger 保存在 custom migration。
 - [虛構 seed](../site/db/seed-fictional.ts)：四名虛構學生、同名同生日案例、轉班、晚轉入、原校成績、0 分與缺考。只供隔離測試使用，不隨 migration 執行，也不建立管理員、登入 Session 或 Bootstrap 完成紀錄。
+
+## Phase 2 擴充
+
+目前共有 33 張關聯表加 FTS5。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
+
+```mermaid
+erDiagram
+    academic_years o|--|| academic_state : current
+    admin_users ||--o{ academic_previews : prepares
+    academic_previews ||--o| academic_operations : confirms
+    admin_sessions ||--o{ academic_operations : verifies
+    academic_operations ||--o{ academic_operation_students : affects
+    students ||--o{ academic_operation_students : tracks
+    academic_operations o|--o| academic_operations : undoes
+```
+
+內部服務只接受 server-created Preview；Confirm 在同一 batch 保存變更、操作與 Audit，並清空已提交 Preview 的建檔 payload。未確認資料的保存／Purge、真實授權 adapter 及雲端部署依後續 Phase 關卡；詳細欄位與限制見 [Phase 2 紀錄](PHASE_2.md)。`npm run db:verify` 現在套用四份 migration；下文的既有 Phase 1 模型與安全契約仍適用。
 
 ## ER 圖
 
@@ -132,7 +149,7 @@ FTS5 使用 external content，insert／update／delete trigger 同步片段，m
 4. 全量驗證沒有缺少新 hash 的學生、密文可用新 key 解密、唯一性與版本一致，並完成隔離備份復原演練。
 5. 確認所有寫入者、在途工作與需保留的備份不再依賴舊 key 後，另行安排退休舊 key／hash。不能只因某筆輪替成功就刪除舊 key。
 
-輸入在本階段視為已由未來 server-side 驗證的字串，primitive 不自行 trim、大小寫轉換或驗證真實身分證格式。後續學生功能必須統一正規化後再加密與計算 HMAC，避免同一識別值用不同字串繞過查重。
+primitive 將輸入視為已由呼叫端驗證的字串，不自行 trim、大小寫轉換或驗證真實身分證格式。Phase 2 學生服務已統一 trim／NFC／大寫後再呼叫 primitive，並保存所有有效 HMAC 版本，避免同一識別值用不同字串繞過查重。既有真實資料若採不同正規化方式，必須先規劃重算與去重；本專案沒有真實資料，Phase 1 seed 僅供獨立測試。
 
 解密失敗、密文竄改、錯 Student ID、錯誤／遺失 key 一律回報 `IDENTITY_UNAVAILABLE`，不輸出原文、不回退到明文或未加 key 的 hash。若原 key 備份仍可復原，恢復該版本後重新驗證；若所有對應 key 都遺失，既有密文無法解密，停止受影響作業，不可捏造重建。輪替進度、Secret 版本配置與正式 key 備份流程尚未建立，須在真實資料寫入前完成。
 
