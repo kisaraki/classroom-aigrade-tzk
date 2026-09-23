@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 2 學年度與學籍領域服務已建立；Google OAuth 依指示暫緩。** 截至 2026-09-23，學年度、班級、新生、升班、轉班、轉入／轉出及撤銷已在隔離 D1 驗證。管理寫入尚未對外開放，沒有真實學生資料或 Sites Production 部署；完整介面及其他業務功能仍待後續 Phase。
+**Phase 3A Google-only 管理員認證核心已建立。** 截至 2026-09-23，Phase 2 學籍服務與 Phase 3A OIDC／PKCE／Bootstrap／Session 核心已在隔離 D1 驗證。OAuth Client 與 Sites callback 實測依使用者指示暫緩；沒有真實學生資料或 Sites Production 部署，完整權限矩陣與管理 UI 仍待後續 Phase。
 
 ## 文件入口
 
@@ -16,6 +16,7 @@
 | [Phase 0 驗證紀錄](docs/PHASE_0.md) | 工具、平台、本機測試證據與待驗證項目 |
 | [Phase 1 驗證紀錄](docs/PHASE_1.md) | 資料庫、邊界、安全與復原測試證據 |
 | [Phase 2 驗證紀錄](docs/PHASE_2.md) | 學籍服務、Preview／Confirm、撤銷與權限介面驗證 |
+| [Phase 3A 驗證紀錄](docs/PHASE_3A.md) | Google OIDC、Bootstrap、Session 與 callback 安全契約 |
 | [資料模型與 ER 圖](docs/DATABASE.md) | 資料表對照、migration、加密輪替與復原方式 |
 | [Sites 開發說明](site/README.md) | 安裝、預覽、建置、測試與環境設定 |
 | [待決策清單](PROJECT_SPEC.md#spec-72-2) | 尚未定案的業務選擇與確認關卡 |
@@ -40,9 +41,9 @@
 | 項目 | 規劃 | 狀態 |
 |---|---|---|
 | 正式執行平台 | ChatGPT Sites | 專案已建立，尚未發布 |
-| 後端 | Vinext／Cloudflare Workers | 已建立 health route；僅本機預覽 |
+| 後端 | Vinext／Cloudflare Workers | 已建立 Google-only auth routes 與 health route；僅本機預覽 |
 | 前端 | React／HTML／CSS | 已建立開發進度預覽頁 |
-| 關聯式資料庫 | D1／SQLite，binding `DB` | 33 張關聯表、FTS5 與四份 migration；隔離本機驗證 |
+| 關聯式資料庫 | D1／SQLite，binding `DB` | 34 張關聯表、FTS5 與六份 migration；隔離本機驗證 |
 | 檔案儲存 | R2，binding `FILES` | 本機測試；雲端尚未配置 |
 | AI | OpenAI API、Google Gemini API adapter | 尚未整合 |
 | 參考資料搜尋 | D1 FTS 優先 | FTS5 索引同步及篩選驗證；RAG 尚未實作 |
@@ -74,13 +75,14 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 
 | 項目 | 目前狀態 |
 |---|---|
-| Markdown 文件修訂 | 規格版本 v1.6-draft；同步 Phase 2 契約；D-03／D-11 日期決策維持 |
+| Markdown 文件修訂 | 規格版本 v1.6-draft；同步 Phase 2／3A 契約；D-03／D-11 日期決策維持 |
 | 管理員認證決策 | 已確認僅 Google OAuth／OIDC；取消 ChatGPT／Gemini 認證條件，AI 建議功能維持獨立 |
 | 業務待決策 | D-03 已核准；D-11 日期已核准，其餘事項依主規格各 Phase 關卡 |
 | Phase 0 | 基礎環境、預覽、測試與 Pages 完成；Google OAuth 實測依使用者指示暫緩 |
 | Phase 1 | 初版資料模型、migration、FTS、虛構 seed、加密輪替與復原驗證完成 |
 | Phase 2 | 學年度、班級、學生與學籍服務；Preview／Confirm、升班、轉出與撤銷完成隔離測試 |
-| Phase 3A～19（含 3B） | 尚未開始 |
+| Phase 3A | OIDC 驗證、PKCE、一次性 Bootstrap、登入／登出與 Session 核心完成；OAuth Client／Sites callback 實測暫緩 |
+| Phase 3B～19 | 尚未開始 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
 

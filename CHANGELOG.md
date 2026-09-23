@@ -2,6 +2,16 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 3A 管理員 Google 認證核心 — 2026-09-23
+
+依使用者批准實作 Phase 3A，僅在隔離本機驗證；OAuth Client 與 Sites callback 實測仍依先前指示暫緩，不是正式軟體 Release 或 Sites 部署。
+
+- 新增 Google OIDC discovery、RS256 ID token 驗證、issuer／audience／效期／nonce／`email_verified` 檢查，以及 PKCE、state、一次性 callback state。
+- 新增 Google-only 一次性 Bootstrap start／callback、授權 Email、Google subject 綁定、pending identity binding、登入／登出與 HttpOnly Secure Session cookie。
+- Session 使用 idle／absolute timeout、D1 token hash、帳號狀態／auth version 驗證；停權、綁定及權限資料變動沿用既有 Session 撤銷 trigger。
+- 新增 `0004_phase_03a_auth_states.sql`、`0005_phase_03a_bootstrap_state_purpose.sql` 與 7 組認證測試；未建立本地密碼、ChatGPT／Gemini 認證或 AI 身分欄位。
+- 正式部署前仍須補充 OAuth Client、Google callback／Cookie 的平台實測與 D-09 證據。
+
 ## Phase 2 學年度與學籍核心 — 2026-09-23
 
 依使用者批准實作 Phase 2，僅在隔離本機驗證；完整結果見 [Phase 2 紀錄](docs/PHASE_2.md)，不是正式軟體 Release 或 Sites 部署。

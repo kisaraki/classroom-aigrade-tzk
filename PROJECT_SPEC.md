@@ -2164,11 +2164,13 @@ Phase 0 的 Sites 原始碼位於 `site/`，GitHub Pages 原始碼位於 `pages/
 - Login／Logout、Session timeout／revoke。
 - 登入與 AI 提供者／API Key 獨立的驗收案例。
 
-Google OAuth 在 Sites 的實作方式、callback、Cookie、Secret 與平台存取設定原列於 Phase 0 驗證；使用者於 2026-09-23 指示暫緩 OAuth 設定與實測，因此須在 Phase 3A 實作前先補齊，確保管理員僅需 Google 認證即可到達管理端。若平台無法符合，回報限制，不自行恢復已取消的認證條件。
+Google OAuth 在 Sites 的實作方式、callback、Cookie、Secret 與平台存取設定原列於 Phase 0 驗證；使用者於 2026-09-23 指示暫緩 OAuth 設定與實測，因此須在 Phase 3A 的 Production enablement 前補齊。Phase 3A 可先以注入的 OIDC／Google adapter 完成本機契約與安全測試；若平台無法符合，回報限制，不自行恢復已取消的認證條件。
 
 一般首次 Bootstrap 不依賴人工核驗。Emergency Recovery 與受控 Rebind 依 D-01、Phase 3B 的授權模組銜接。
 
 不得建立 PasswordService、本地密碼、Password Reset 或本地登入備援。不得加入 ChatGPT／Gemini 認證分支或人工資格核驗。
+
+截至 2026-09-23，Phase 3A 已建立可注入的 Google OIDC discovery／RS256 ID token 驗證、PKCE、state／nonce 一次性 callback state、Google-only Bootstrap、登入／登出與 Session routes；OAuth Client、callback／Cookie 的 Sites 實際設定仍依使用者先前指示暫緩，不能將本機虛構測試視為平台實測完成。完整驗證紀錄見 [Phase 3A 報告](docs/PHASE_3A.md)。
 
 ---
 

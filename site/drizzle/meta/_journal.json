@@ -29,6 +29,20 @@
       "when": 1790162245327,
       "tag": "0003_phase_02_academic_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790164588422,
+      "tag": "0004_phase_03a_auth_states",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1790165201392,
+      "tag": "0005_phase_03a_bootstrap_state_purpose",
+      "breakpoints": true
     }
   ]
 }

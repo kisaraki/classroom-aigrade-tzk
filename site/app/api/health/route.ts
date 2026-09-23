@@ -1,6 +1,6 @@
 export function GET() {
   return Response.json(
-    { status: "ok", phase: 2 },
+    { status: "ok", phase: "3A" },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

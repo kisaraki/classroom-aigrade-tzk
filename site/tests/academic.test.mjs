@@ -877,7 +877,7 @@ test("Phase 2 upgrades a populated Phase 1 database without rewriting historical
     .run();
   for (const migration of readMigrationFiles({ migrationsFolder }).slice(
     0,
-    2,
+    4,
   )) {
     await db.batch([
       ...migration.sql.map((statement) => db.prepare(statement)),

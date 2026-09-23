@@ -527,6 +527,34 @@ export const bootstrapState = sqliteTable(
   (t) => [check("bootstrap_singleton", sql`${t.id} = 1`)],
 );
 
+// OAuth state is short-lived server data. The browser retains only the
+// transient state/nonce/PKCE verifier; D1 stores hashes so a database read
+// cannot recover the callback secrets.
+export const authOauthStates = sqliteTable(
+  "auth_oauth_states",
+  {
+    id: id(),
+    stateHash: text("state_hash").notNull().unique(),
+    nonceHash: text("nonce_hash").notNull(),
+    codeVerifierHash: text("code_verifier_hash").notNull(),
+    expiresAt: integer("expires_at").notNull(),
+    usedAt: integer("used_at"),
+    createdAt: createdAt(),
+    purpose: text("purpose").notNull().default("login"),
+  },
+  (t) => [
+    index("oauth_state_expiry").on(t.expiresAt),
+    check("oauth_state_hash", hexHash(t.stateHash)),
+    check("oauth_nonce_hash", hexHash(t.nonceHash)),
+    check("oauth_verifier_hash", hexHash(t.codeVerifierHash)),
+    check("oauth_state_purpose", sql`${t.purpose} IN ('login', 'bootstrap')`),
+    check(
+      "oauth_state_times",
+      sql`${t.expiresAt} > ${t.createdAt} AND (${t.usedAt} IS NULL OR ${t.usedAt} >= ${t.createdAt})`,
+    ),
+  ],
+);
+
 export const scoreChangeHistory = sqliteTable(
   "score_change_history",
   {

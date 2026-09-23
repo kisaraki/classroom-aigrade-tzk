@@ -1,0 +1,4313 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "68e676cb-ce1c-4d57-a16b-8267edeefbf9",
+  "prevId": "8490236a-a48c-4544-9c55-577cf6b02158",
+  "tables": {
+    "academic_operation_students": {
+      "name": "academic_operation_students",
+      "columns": {
+        "operation_id": {
+          "name": "operation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "academic_operation_student_unique": {
+          "name": "academic_operation_student_unique",
+          "columns": [
+            "operation_id",
+            "student_id"
+          ],
+          "isUnique": true
+        },
+        "academic_operations_by_student": {
+          "name": "academic_operations_by_student",
+          "columns": [
+            "student_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "academic_operation_students_operation_id_academic_operations_id_fk": {
+          "name": "academic_operation_students_operation_id_academic_operations_id_fk",
+          "tableFrom": "academic_operation_students",
+          "tableTo": "academic_operations",
+          "columnsFrom": [
+            "operation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "academic_operation_students_student_id_students_id_fk": {
+          "name": "academic_operation_students_student_id_students_id_fk",
+          "tableFrom": "academic_operation_students",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "academic_operations": {
+      "name": "academic_operations",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "preview_id": {
+          "name": "preview_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "auth_session_id": {
+          "name": "auth_session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "before_revision": {
+          "name": "before_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "after_revision": {
+          "name": "after_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "changes_json": {
+          "name": "changes_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result_json": {
+          "name": "result_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "undo_of": {
+          "name": "undo_of",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "academic_operations_preview_id_unique": {
+          "name": "academic_operations_preview_id_unique",
+          "columns": [
+            "preview_id"
+          ],
+          "isUnique": true
+        },
+        "academic_operations_undo_of_unique": {
+          "name": "academic_operations_undo_of_unique",
+          "columns": [
+            "undo_of"
+          ],
+          "isUnique": true
+        },
+        "academic_operation_actor": {
+          "name": "academic_operation_actor",
+          "columns": [
+            "actor_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "academic_operations_preview_id_academic_previews_id_fk": {
+          "name": "academic_operations_preview_id_academic_previews_id_fk",
+          "tableFrom": "academic_operations",
+          "tableTo": "academic_previews",
+          "columnsFrom": [
+            "preview_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "academic_operations_actor_id_admin_users_id_fk": {
+          "name": "academic_operations_actor_id_admin_users_id_fk",
+          "tableFrom": "academic_operations",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "academic_operations_auth_session_id_admin_sessions_id_fk": {
+          "name": "academic_operations_auth_session_id_admin_sessions_id_fk",
+          "tableFrom": "academic_operations",
+          "tableTo": "admin_sessions",
+          "columnsFrom": [
+            "auth_session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "academic_operations_undo_of_academic_operations_id_fk": {
+          "name": "academic_operations_undo_of_academic_operations_id_fk",
+          "tableFrom": "academic_operations",
+          "tableTo": "academic_operations",
+          "columnsFrom": [
+            "undo_of"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "academic_operation_json": {
+          "name": "academic_operation_json",
+          "value": "json_valid(\"academic_operations\".\"changes_json\") AND json_valid(\"academic_operations\".\"result_json\")"
+        },
+        "academic_operation_revision": {
+          "name": "academic_operation_revision",
+          "value": "typeof(\"academic_operations\".\"before_revision\") = 'integer' AND \"academic_operations\".\"before_revision\" >= 0 AND (\"academic_operations\".\"after_revision\" IS NULL OR (typeof(\"academic_operations\".\"after_revision\") = 'integer' AND \"academic_operations\".\"after_revision\" >= \"academic_operations\".\"before_revision\"))"
+        }
+      }
+    },
+    "academic_previews": {
+      "name": "academic_previews",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "base_revision": {
+          "name": "base_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "payload_json": {
+          "name": "payload_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resources_json": {
+          "name": "resources_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "history_reason": {
+          "name": "history_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "academic_preview_actor": {
+          "name": "academic_preview_actor",
+          "columns": [
+            "actor_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "academic_previews_actor_id_admin_users_id_fk": {
+          "name": "academic_previews_actor_id_admin_users_id_fk",
+          "tableFrom": "academic_previews",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "academic_preview_json": {
+          "name": "academic_preview_json",
+          "value": "json_valid(\"academic_previews\".\"payload_json\") AND json_valid(\"academic_previews\".\"resources_json\")"
+        },
+        "academic_preview_revision": {
+          "name": "academic_preview_revision",
+          "value": "typeof(\"academic_previews\".\"base_revision\") = 'integer' AND \"academic_previews\".\"base_revision\" >= 0"
+        }
+      }
+    },
+    "academic_state": {
+      "name": "academic_state",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "current_year_id": {
+          "name": "current_year_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "revision": {
+          "name": "revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "academic_state_current_year_id_academic_years_id_fk": {
+          "name": "academic_state_current_year_id_academic_years_id_fk",
+          "tableFrom": "academic_state",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "current_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "academic_state_singleton": {
+          "name": "academic_state_singleton",
+          "value": "\"academic_state\".\"id\" = 1"
+        },
+        "academic_revision": {
+          "name": "academic_revision",
+          "value": "typeof(\"academic_state\".\"revision\") = 'integer' AND \"academic_state\".\"revision\" >= 0"
+        }
+      }
+    },
+    "academic_terms": {
+      "name": "academic_terms",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "term_number": {
+          "name": "term_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "starts_on": {
+          "name": "starts_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ends_on": {
+          "name": "ends_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "term_number_unique": {
+          "name": "term_number_unique",
+          "columns": [
+            "academic_year_id",
+            "term_number"
+          ],
+          "isUnique": true
+        },
+        "term_year_unique": {
+          "name": "term_year_unique",
+          "columns": [
+            "id",
+            "academic_year_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "academic_terms_academic_year_id_academic_years_id_fk": {
+          "name": "academic_terms_academic_year_id_academic_years_id_fk",
+          "tableFrom": "academic_terms",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "term_number": {
+          "name": "term_number",
+          "value": "\"academic_terms\".\"term_number\" IN (1, 2)"
+        },
+        "term_dates": {
+          "name": "term_dates",
+          "value": "length(\"academic_terms\".\"starts_on\") = 10 AND \"academic_terms\".\"starts_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"academic_terms\".\"starts_on\", '+0 days') IS NOT NULL AND date(\"academic_terms\".\"starts_on\", '+0 days') = \"academic_terms\".\"starts_on\" AND length(\"academic_terms\".\"ends_on\") = 10 AND \"academic_terms\".\"ends_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"academic_terms\".\"ends_on\", '+0 days') IS NOT NULL AND date(\"academic_terms\".\"ends_on\", '+0 days') = \"academic_terms\".\"ends_on\" AND \"academic_terms\".\"starts_on\" < \"academic_terms\".\"ends_on\""
+        }
+      }
+    },
+    "academic_years": {
+      "name": "academic_years",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "starts_on": {
+          "name": "starts_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ends_on": {
+          "name": "ends_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "academic_years_code_unique": {
+          "name": "academic_years_code_unique",
+          "columns": [
+            "code"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "year_dates": {
+          "name": "year_dates",
+          "value": "length(\"academic_years\".\"starts_on\") = 10 AND \"academic_years\".\"starts_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"academic_years\".\"starts_on\", '+0 days') IS NOT NULL AND date(\"academic_years\".\"starts_on\", '+0 days') = \"academic_years\".\"starts_on\" AND length(\"academic_years\".\"ends_on\") = 10 AND \"academic_years\".\"ends_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"academic_years\".\"ends_on\", '+0 days') IS NOT NULL AND date(\"academic_years\".\"ends_on\", '+0 days') = \"academic_years\".\"ends_on\" AND \"academic_years\".\"starts_on\" < \"academic_years\".\"ends_on\""
+        }
+      }
+    },
+    "admin_assignments": {
+      "name": "admin_assignments",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "admin_user_id": {
+          "name": "admin_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "academic_term_id": {
+          "name": "academic_term_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scope_type": {
+          "name": "scope_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "grade": {
+          "name": "grade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "class_id": {
+          "name": "class_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "starts_on": {
+          "name": "starts_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ends_on": {
+          "name": "ends_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "assignments_admin_term": {
+          "name": "assignments_admin_term",
+          "columns": [
+            "admin_user_id",
+            "academic_term_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "admin_assignments_admin_user_id_admin_users_id_fk": {
+          "name": "admin_assignments_admin_user_id_admin_users_id_fk",
+          "tableFrom": "admin_assignments",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "admin_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "admin_assignments_academic_term_id_academic_terms_id_fk": {
+          "name": "admin_assignments_academic_term_id_academic_terms_id_fk",
+          "tableFrom": "admin_assignments",
+          "tableTo": "academic_terms",
+          "columnsFrom": [
+            "academic_term_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "admin_assignments_class_id_classes_id_fk": {
+          "name": "admin_assignments_class_id_classes_id_fk",
+          "tableFrom": "admin_assignments",
+          "tableTo": "classes",
+          "columnsFrom": [
+            "class_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "assignment_shape": {
+          "name": "assignment_shape",
+          "value": "(\"admin_assignments\".\"scope_type\" = 'school' AND \"admin_assignments\".\"grade\" IS NULL AND \"admin_assignments\".\"class_id\" IS NULL AND \"admin_assignments\".\"subject\" IS NULL) OR (\"admin_assignments\".\"scope_type\" = 'grade' AND \"admin_assignments\".\"grade\" IS NOT NULL AND \"admin_assignments\".\"grade\" IN (7,8,9) AND \"admin_assignments\".\"class_id\" IS NULL AND \"admin_assignments\".\"subject\" IS NULL) OR (\"admin_assignments\".\"scope_type\" IN ('class', 'homeroom') AND \"admin_assignments\".\"class_id\" IS NOT NULL AND \"admin_assignments\".\"grade\" IS NULL AND \"admin_assignments\".\"subject\" IS NULL) OR (\"admin_assignments\".\"scope_type\" = 'teaching_subject' AND \"admin_assignments\".\"class_id\" IS NOT NULL AND \"admin_assignments\".\"grade\" IS NULL AND \"admin_assignments\".\"subject\" IS NOT NULL AND \"admin_assignments\".\"subject\" IN ('CHINESE','ENGLISH','MATH','SCIENCE','GEOGRAPHY','HISTORY','CIVICS'))"
+        },
+        "assignment_dates": {
+          "name": "assignment_dates",
+          "value": "length(\"admin_assignments\".\"starts_on\") = 10 AND \"admin_assignments\".\"starts_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"admin_assignments\".\"starts_on\", '+0 days') IS NOT NULL AND date(\"admin_assignments\".\"starts_on\", '+0 days') = \"admin_assignments\".\"starts_on\" AND (\"admin_assignments\".\"ends_on\" IS NULL OR (length(\"admin_assignments\".\"ends_on\") = 10 AND \"admin_assignments\".\"ends_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"admin_assignments\".\"ends_on\", '+0 days') IS NOT NULL AND date(\"admin_assignments\".\"ends_on\", '+0 days') = \"admin_assignments\".\"ends_on\" AND \"admin_assignments\".\"ends_on\" > \"admin_assignments\".\"starts_on\"))"
+        }
+      }
+    },
+    "admin_sessions": {
+      "name": "admin_sessions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "admin_user_id": {
+          "name": "admin_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "auth_version": {
+          "name": "auth_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "authenticated_at": {
+          "name": "authenticated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_seen_at": {
+          "name": "last_seen_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "admin_sessions_token_hash_unique": {
+          "name": "admin_sessions_token_hash_unique",
+          "columns": [
+            "token_hash"
+          ],
+          "isUnique": true
+        },
+        "sessions_admin_expiry": {
+          "name": "sessions_admin_expiry",
+          "columns": [
+            "admin_user_id",
+            "expires_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "admin_sessions_admin_user_id_admin_users_id_fk": {
+          "name": "admin_sessions_admin_user_id_admin_users_id_fk",
+          "tableFrom": "admin_sessions",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "admin_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "session_hash": {
+          "name": "session_hash",
+          "value": "length(\"admin_sessions\".\"token_hash\") = 64 AND \"admin_sessions\".\"token_hash\" NOT GLOB '*[^0-9a-f]*'"
+        },
+        "session_times": {
+          "name": "session_times",
+          "value": "\"admin_sessions\".\"expires_at\" > \"admin_sessions\".\"authenticated_at\" AND \"admin_sessions\".\"last_seen_at\" >= \"admin_sessions\".\"authenticated_at\""
+        },
+        "session_auth_version": {
+          "name": "session_auth_version",
+          "value": "typeof(\"admin_sessions\".\"auth_version\") = 'integer' AND \"admin_sessions\".\"auth_version\" > 0"
+        }
+      }
+    },
+    "admin_users": {
+      "name": "admin_users",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "authorized_email": {
+          "name": "authorized_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "google_subject_id": {
+          "name": "google_subject_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending_identity_binding'"
+        },
+        "identity_bound_at": {
+          "name": "identity_bound_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_login_at": {
+          "name": "last_login_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "auth_version": {
+          "name": "auth_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "admin_users_username_unique": {
+          "name": "admin_users_username_unique",
+          "columns": [
+            "username"
+          ],
+          "isUnique": true
+        },
+        "admin_users_authorized_email_unique": {
+          "name": "admin_users_authorized_email_unique",
+          "columns": [
+            "authorized_email"
+          ],
+          "isUnique": true
+        },
+        "admin_users_google_subject_id_unique": {
+          "name": "admin_users_google_subject_id_unique",
+          "columns": [
+            "google_subject_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "admin_users_created_by_admin_users_id_fk": {
+          "name": "admin_users_created_by_admin_users_id_fk",
+          "tableFrom": "admin_users",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "admin_role": {
+          "name": "admin_role",
+          "value": "\"admin_users\".\"role\" IN ('super_admin', 'system_admin', 'academic_admin', 'score_admin', 'ai_admin', 'archive_admin', 'viewer')"
+        },
+        "admin_status": {
+          "name": "admin_status",
+          "value": "\"admin_users\".\"status\" IN ('pending_identity_binding', 'active', 'disabled', 'locked', 'identity_rebind_required')"
+        },
+        "admin_active_binding": {
+          "name": "admin_active_binding",
+          "value": "\"admin_users\".\"status\" <> 'active' OR (\"admin_users\".\"google_subject_id\" IS NOT NULL AND length(\"admin_users\".\"google_subject_id\") > 0 AND \"admin_users\".\"identity_bound_at\" IS NOT NULL)"
+        },
+        "admin_auth_version": {
+          "name": "admin_auth_version",
+          "value": "typeof(\"admin_users\".\"auth_version\") = 'integer' AND \"admin_users\".\"auth_version\" > 0"
+        }
+      }
+    },
+    "ai_advice_references": {
+      "name": "ai_advice_references",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "advice_id": {
+          "name": "advice_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chunk_id": {
+          "name": "chunk_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "material_version": {
+          "name": "material_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title_snapshot": {
+          "name": "title_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content_hash_snapshot": {
+          "name": "content_hash_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "advice_reference_unique": {
+          "name": "advice_reference_unique",
+          "columns": [
+            "advice_id",
+            "chunk_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "ai_advice_references_advice_id_ai_advices_id_fk": {
+          "name": "ai_advice_references_advice_id_ai_advices_id_fk",
+          "tableFrom": "ai_advice_references",
+          "tableTo": "ai_advices",
+          "columnsFrom": [
+            "advice_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ai_advice_references_chunk_id_ai_reference_chunks_id_fk": {
+          "name": "ai_advice_references_chunk_id_ai_reference_chunks_id_fk",
+          "tableFrom": "ai_advice_references",
+          "tableTo": "ai_reference_chunks",
+          "columnsFrom": [
+            "chunk_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "citation_hash": {
+          "name": "citation_hash",
+          "value": "length(\"ai_advice_references\".\"content_hash_snapshot\") = 64 AND \"ai_advice_references\".\"content_hash_snapshot\" NOT GLOB '*[^0-9a-f]*'"
+        },
+        "citation_version": {
+          "name": "citation_version",
+          "value": "typeof(\"ai_advice_references\".\"material_version\") = 'integer' AND \"ai_advice_references\".\"material_version\" > 0"
+        }
+      }
+    },
+    "ai_advices": {
+      "name": "ai_advices",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_id": {
+          "name": "exam_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "audience": {
+          "name": "audience",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "source_version": {
+          "name": "source_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prompt_version": {
+          "name": "prompt_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "stale_at": {
+          "name": "stale_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "input_tokens": {
+          "name": "input_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "output_tokens": {
+          "name": "output_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "ai_advices_job_id_unique": {
+          "name": "ai_advices_job_id_unique",
+          "columns": [
+            "job_id"
+          ],
+          "isUnique": true
+        },
+        "advice_version_unique": {
+          "name": "advice_version_unique",
+          "columns": [
+            "student_id",
+            "exam_id",
+            "audience",
+            "version"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "ai_advices_job_id_ai_jobs_id_fk": {
+          "name": "ai_advices_job_id_ai_jobs_id_fk",
+          "tableFrom": "ai_advices",
+          "tableTo": "ai_jobs",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ai_advices_student_id_students_id_fk": {
+          "name": "ai_advices_student_id_students_id_fk",
+          "tableFrom": "ai_advices",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ai_advices_exam_id_exams_id_fk": {
+          "name": "ai_advices_exam_id_exams_id_fk",
+          "tableFrom": "ai_advices",
+          "tableTo": "exams",
+          "columnsFrom": [
+            "exam_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "advice_audience": {
+          "name": "advice_audience",
+          "value": "\"ai_advices\".\"audience\" IN ('parent', 'student')"
+        },
+        "advice_provider": {
+          "name": "advice_provider",
+          "value": "\"ai_advices\".\"provider\" IN ('openai', 'gemini')"
+        },
+        "advice_versions": {
+          "name": "advice_versions",
+          "value": "typeof(\"ai_advices\".\"version\") = 'integer' AND \"ai_advices\".\"version\" > 0 AND typeof(\"ai_advices\".\"source_version\") = 'integer' AND \"ai_advices\".\"source_version\" > 0"
+        }
+      }
+    },
+    "ai_jobs": {
+      "name": "ai_jobs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_id": {
+          "name": "exam_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result_version_id": {
+          "name": "result_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "audience": {
+          "name": "audience",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "dedupe_key": {
+          "name": "dedupe_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source_version": {
+          "name": "source_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "lease_token_hash": {
+          "name": "lease_token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "lease_expires_at": {
+          "name": "lease_expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "next_attempt_at": {
+          "name": "next_attempt_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "ai_jobs_dedupe_key_unique": {
+          "name": "ai_jobs_dedupe_key_unique",
+          "columns": [
+            "dedupe_key"
+          ],
+          "isUnique": true
+        },
+        "ai_jobs_queue": {
+          "name": "ai_jobs_queue",
+          "columns": [
+            "status",
+            "next_attempt_at",
+            "lease_expires_at"
+          ],
+          "isUnique": false
+        },
+        "ai_jobs_student_version": {
+          "name": "ai_jobs_student_version",
+          "columns": [
+            "student_id",
+            "exam_id",
+            "source_version"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "ai_jobs_student_id_students_id_fk": {
+          "name": "ai_jobs_student_id_students_id_fk",
+          "tableFrom": "ai_jobs",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ai_jobs_exam_id_exams_id_fk": {
+          "name": "ai_jobs_exam_id_exams_id_fk",
+          "tableFrom": "ai_jobs",
+          "tableTo": "exams",
+          "columnsFrom": [
+            "exam_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ai_jobs_result_version_id_exam_result_versions_id_fk": {
+          "name": "ai_jobs_result_version_id_exam_result_versions_id_fk",
+          "tableFrom": "ai_jobs",
+          "tableTo": "exam_result_versions",
+          "columnsFrom": [
+            "result_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "ai_job_status": {
+          "name": "ai_job_status",
+          "value": "\"ai_jobs\".\"status\" IN ('pending', 'processing', 'completed', 'failed')"
+        },
+        "ai_job_audience": {
+          "name": "ai_job_audience",
+          "value": "\"ai_jobs\".\"audience\" IN ('parent', 'student')"
+        },
+        "ai_job_attempt": {
+          "name": "ai_job_attempt",
+          "value": "typeof(\"ai_jobs\".\"attempt_count\") = 'integer' AND \"ai_jobs\".\"attempt_count\" >= 0"
+        },
+        "ai_job_source": {
+          "name": "ai_job_source",
+          "value": "typeof(\"ai_jobs\".\"source_version\") = 'integer' AND \"ai_jobs\".\"source_version\" > 0"
+        },
+        "ai_job_lease": {
+          "name": "ai_job_lease",
+          "value": "(\"ai_jobs\".\"lease_token_hash\" IS NULL AND \"ai_jobs\".\"lease_expires_at\" IS NULL) OR (\"ai_jobs\".\"lease_token_hash\" IS NOT NULL AND length(\"ai_jobs\".\"lease_token_hash\") = 64 AND \"ai_jobs\".\"lease_token_hash\" NOT GLOB '*[^0-9a-f]*' AND \"ai_jobs\".\"lease_expires_at\" IS NOT NULL)"
+        }
+      }
+    },
+    "ai_reference_chunks": {
+      "name": "ai_reference_chunks",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "material_id": {
+          "name": "material_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "material_version": {
+          "name": "material_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "chunk_material_ordinal": {
+          "name": "chunk_material_ordinal",
+          "columns": [
+            "material_id",
+            "material_version",
+            "ordinal"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "ai_reference_chunks_material_id_ai_reference_materials_id_fk": {
+          "name": "ai_reference_chunks_material_id_ai_reference_materials_id_fk",
+          "tableFrom": "ai_reference_chunks",
+          "tableTo": "ai_reference_materials",
+          "columnsFrom": [
+            "material_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "chunk_ordinal": {
+          "name": "chunk_ordinal",
+          "value": "typeof(\"ai_reference_chunks\".\"ordinal\") = 'integer' AND \"ai_reference_chunks\".\"ordinal\" >= 0"
+        },
+        "chunk_hash": {
+          "name": "chunk_hash",
+          "value": "length(\"ai_reference_chunks\".\"content_hash\") = 64 AND \"ai_reference_chunks\".\"content_hash\" NOT GLOB '*[^0-9a-f]*'"
+        },
+        "chunk_version": {
+          "name": "chunk_version",
+          "value": "typeof(\"ai_reference_chunks\".\"material_version\") = 'integer' AND \"ai_reference_chunks\".\"material_version\" > 0"
+        }
+      }
+    },
+    "ai_reference_materials": {
+      "name": "ai_reference_materials",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "object_key": {
+          "name": "object_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "grade": {
+          "name": "grade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'draft'"
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "ai_reference_materials_object_key_unique": {
+          "name": "ai_reference_materials_object_key_unique",
+          "columns": [
+            "object_key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "ai_reference_materials_created_by_admin_users_id_fk": {
+          "name": "ai_reference_materials_created_by_admin_users_id_fk",
+          "tableFrom": "ai_reference_materials",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "material_hash": {
+          "name": "material_hash",
+          "value": "length(\"ai_reference_materials\".\"content_hash\") = 64 AND \"ai_reference_materials\".\"content_hash\" NOT GLOB '*[^0-9a-f]*'"
+        },
+        "material_status": {
+          "name": "material_status",
+          "value": "\"ai_reference_materials\".\"status\" IN ('draft', 'active', 'archived')"
+        },
+        "material_grade": {
+          "name": "material_grade",
+          "value": "\"ai_reference_materials\".\"grade\" IN (7,8,9)"
+        },
+        "material_dates": {
+          "name": "material_dates",
+          "value": "(\"ai_reference_materials\".\"valid_from\" IS NULL OR length(\"ai_reference_materials\".\"valid_from\") = 10 AND \"ai_reference_materials\".\"valid_from\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"ai_reference_materials\".\"valid_from\", '+0 days') IS NOT NULL AND date(\"ai_reference_materials\".\"valid_from\", '+0 days') = \"ai_reference_materials\".\"valid_from\") AND (\"ai_reference_materials\".\"valid_to\" IS NULL OR length(\"ai_reference_materials\".\"valid_to\") = 10 AND \"ai_reference_materials\".\"valid_to\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"ai_reference_materials\".\"valid_to\", '+0 days') IS NOT NULL AND date(\"ai_reference_materials\".\"valid_to\", '+0 days') = \"ai_reference_materials\".\"valid_to\") AND (\"ai_reference_materials\".\"valid_from\" IS NULL OR \"ai_reference_materials\".\"valid_to\" IS NULL OR \"ai_reference_materials\".\"valid_to\" > \"ai_reference_materials\".\"valid_from\")"
+        },
+        "material_version": {
+          "name": "material_version",
+          "value": "typeof(\"ai_reference_materials\".\"version\") = 'integer' AND \"ai_reference_materials\".\"version\" > 0"
+        }
+      }
+    },
+    "archive_batches": {
+      "name": "archive_batches",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "manifest_json": {
+          "name": "manifest_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "undo_until": {
+          "name": "undo_until",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "restored_at": {
+          "name": "restored_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "archive_batches_actor_id_admin_users_id_fk": {
+          "name": "archive_batches_actor_id_admin_users_id_fk",
+          "tableFrom": "archive_batches",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "archive_manifest": {
+          "name": "archive_manifest",
+          "value": "json_valid(\"archive_batches\".\"manifest_json\")"
+        },
+        "archive_reason": {
+          "name": "archive_reason",
+          "value": "length(trim(\"archive_batches\".\"reason\")) > 0"
+        },
+        "archive_undo_window": {
+          "name": "archive_undo_window",
+          "value": "\"archive_batches\".\"undo_until\" > \"archive_batches\".\"created_at\""
+        }
+      }
+    },
+    "archive_items": {
+      "name": "archive_items",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "source_version": {
+          "name": "source_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "snapshot_json": {
+          "name": "snapshot_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "purge_eligible_on": {
+          "name": "purge_eligible_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "purged_at": {
+          "name": "purged_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "archive_item_unique": {
+          "name": "archive_item_unique",
+          "columns": [
+            "batch_id",
+            "entity_type",
+            "entity_id"
+          ],
+          "isUnique": true
+        },
+        "archive_student": {
+          "name": "archive_student",
+          "columns": [
+            "student_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "archive_items_batch_id_archive_batches_id_fk": {
+          "name": "archive_items_batch_id_archive_batches_id_fk",
+          "tableFrom": "archive_items",
+          "tableTo": "archive_batches",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "archive_items_student_id_students_id_fk": {
+          "name": "archive_items_student_id_students_id_fk",
+          "tableFrom": "archive_items",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "archive_snapshot": {
+          "name": "archive_snapshot",
+          "value": "json_valid(\"archive_items\".\"snapshot_json\")"
+        },
+        "archive_source_version": {
+          "name": "archive_source_version",
+          "value": "typeof(\"archive_items\".\"source_version\") = 'integer' AND \"archive_items\".\"source_version\" > 0"
+        },
+        "archive_purge_date": {
+          "name": "archive_purge_date",
+          "value": "\"archive_items\".\"purge_eligible_on\" IS NULL OR length(\"archive_items\".\"purge_eligible_on\") = 10 AND \"archive_items\".\"purge_eligible_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"archive_items\".\"purge_eligible_on\", '+0 days') IS NOT NULL AND date(\"archive_items\".\"purge_eligible_on\", '+0 days') = \"archive_items\".\"purge_eligible_on\""
+        }
+      }
+    },
+    "audit_logs": {
+      "name": "audit_logs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "operation_id": {
+          "name": "operation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "metadata_json": {
+          "name": "metadata_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "retention_until": {
+          "name": "retention_until",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "audit_operation": {
+          "name": "audit_operation",
+          "columns": [
+            "operation_id"
+          ],
+          "isUnique": false
+        },
+        "audit_retention": {
+          "name": "audit_retention",
+          "columns": [
+            "retention_until"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "audit_logs_actor_id_admin_users_id_fk": {
+          "name": "audit_logs_actor_id_admin_users_id_fk",
+          "tableFrom": "audit_logs",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "audit_metadata": {
+          "name": "audit_metadata",
+          "value": "json_valid(\"audit_logs\".\"metadata_json\")"
+        },
+        "audit_retention_date": {
+          "name": "audit_retention_date",
+          "value": "length(\"audit_logs\".\"retention_until\") = 10 AND \"audit_logs\".\"retention_until\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"audit_logs\".\"retention_until\", '+0 days') IS NOT NULL AND date(\"audit_logs\".\"retention_until\", '+0 days') = \"audit_logs\".\"retention_until\""
+        }
+      }
+    },
+    "auth_oauth_states": {
+      "name": "auth_oauth_states",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "state_hash": {
+          "name": "state_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nonce_hash": {
+          "name": "nonce_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "code_verifier_hash": {
+          "name": "code_verifier_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "used_at": {
+          "name": "used_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "auth_oauth_states_state_hash_unique": {
+          "name": "auth_oauth_states_state_hash_unique",
+          "columns": [
+            "state_hash"
+          ],
+          "isUnique": true
+        },
+        "oauth_state_expiry": {
+          "name": "oauth_state_expiry",
+          "columns": [
+            "expires_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "oauth_state_hash": {
+          "name": "oauth_state_hash",
+          "value": "length(\"auth_oauth_states\".\"state_hash\") = 64 AND \"auth_oauth_states\".\"state_hash\" NOT GLOB '*[^0-9a-f]*'"
+        },
+        "oauth_nonce_hash": {
+          "name": "oauth_nonce_hash",
+          "value": "length(\"auth_oauth_states\".\"nonce_hash\") = 64 AND \"auth_oauth_states\".\"nonce_hash\" NOT GLOB '*[^0-9a-f]*'"
+        },
+        "oauth_verifier_hash": {
+          "name": "oauth_verifier_hash",
+          "value": "length(\"auth_oauth_states\".\"code_verifier_hash\") = 64 AND \"auth_oauth_states\".\"code_verifier_hash\" NOT GLOB '*[^0-9a-f]*'"
+        },
+        "oauth_state_times": {
+          "name": "oauth_state_times",
+          "value": "\"auth_oauth_states\".\"expires_at\" > \"auth_oauth_states\".\"created_at\" AND (\"auth_oauth_states\".\"used_at\" IS NULL OR \"auth_oauth_states\".\"used_at\" >= \"auth_oauth_states\".\"created_at\")"
+        }
+      }
+    },
+    "bootstrap_state": {
+      "name": "bootstrap_state",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "initialized_by": {
+          "name": "initialized_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "initialized_at": {
+          "name": "initialized_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "bootstrap_state_initialized_by_admin_users_id_fk": {
+          "name": "bootstrap_state_initialized_by_admin_users_id_fk",
+          "tableFrom": "bootstrap_state",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "initialized_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "bootstrap_singleton": {
+          "name": "bootstrap_singleton",
+          "value": "\"bootstrap_state\".\"id\" = 1"
+        }
+      }
+    },
+    "classes": {
+      "name": "classes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "grade": {
+          "name": "grade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "class_code_unique": {
+          "name": "class_code_unique",
+          "columns": [
+            "academic_year_id",
+            "code"
+          ],
+          "isUnique": true
+        },
+        "class_year_unique": {
+          "name": "class_year_unique",
+          "columns": [
+            "id",
+            "academic_year_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "classes_academic_year_id_academic_years_id_fk": {
+          "name": "classes_academic_year_id_academic_years_id_fk",
+          "tableFrom": "classes",
+          "tableTo": "academic_years",
+          "columnsFrom": [
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "class_grade_code": {
+          "name": "class_grade_code",
+          "value": "\"classes\".\"grade\" IN (7, 8, 9) AND length(\"classes\".\"code\") = 3 AND \"classes\".\"code\" GLOB '[7-9][0-9][0-9]' AND substr(\"classes\".\"code\", 1, 1) = CAST(\"classes\".\"grade\" AS TEXT)"
+        }
+      }
+    },
+    "exam_participations": {
+      "name": "exam_participations",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_id": {
+          "name": "exam_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "academic_term_id": {
+          "name": "academic_term_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "enrollment_id": {
+          "name": "enrollment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "class_id_snapshot": {
+          "name": "class_id_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "class_code_snapshot": {
+          "name": "class_code_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "grade_snapshot": {
+          "name": "grade_snapshot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "seat_number_snapshot": {
+          "name": "seat_number_snapshot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'LOCAL'"
+        },
+        "external_school_label": {
+          "name": "external_school_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "student_eligibility_snapshot": {
+          "name": "student_eligibility_snapshot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "term_eligibility_snapshot": {
+          "name": "term_eligibility_snapshot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "exam_eligibility_override": {
+          "name": "exam_eligibility_override",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ranking_eligible": {
+          "name": "ranking_eligible",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "participation_unique": {
+          "name": "participation_unique",
+          "columns": [
+            "exam_id",
+            "student_id",
+            "origin"
+          ],
+          "isUnique": true
+        },
+        "participation_score_parent": {
+          "name": "participation_score_parent",
+          "columns": [
+            "id",
+            "exam_id",
+            "student_id",
+            "origin"
+          ],
+          "isUnique": true
+        },
+        "participation_class_lookup": {
+          "name": "participation_class_lookup",
+          "columns": [
+            "exam_id",
+            "class_id_snapshot"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "exam_participations_student_id_students_id_fk": {
+          "name": "exam_participations_student_id_students_id_fk",
+          "tableFrom": "exam_participations",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "exam_participations_class_id_snapshot_classes_id_fk": {
+          "name": "exam_participations_class_id_snapshot_classes_id_fk",
+          "tableFrom": "exam_participations",
+          "tableTo": "classes",
+          "columnsFrom": [
+            "class_id_snapshot"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "exam_participations_exam_id_academic_term_id_exams_id_academic_term_id_fk": {
+          "name": "exam_participations_exam_id_academic_term_id_exams_id_academic_term_id_fk",
+          "tableFrom": "exam_participations",
+          "tableTo": "exams",
+          "columnsFrom": [
+            "exam_id",
+            "academic_term_id"
+          ],
+          "columnsTo": [
+            "id",
+            "academic_term_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "exam_participations_enrollment_id_student_id_academic_term_id_class_id_snapshot_student_enrollments_id_student_id_academic_term_id_class_id_fk": {
+          "name": "exam_participations_enrollment_id_student_id_academic_term_id_class_id_snapshot_student_enrollments_id_student_id_academic_term_id_class_id_fk",
+          "tableFrom": "exam_participations",
+          "tableTo": "student_enrollments",
+          "columnsFrom": [
+            "enrollment_id",
+            "student_id",
+            "academic_term_id",
+            "class_id_snapshot"
+          ],
+          "columnsTo": [
+            "id",
+            "student_id",
+            "academic_term_id",
+            "class_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "participation_flags": {
+          "name": "participation_flags",
+          "value": "\"exam_participations\".\"student_eligibility_snapshot\" IN (0, 1) AND \"exam_participations\".\"term_eligibility_snapshot\" IN (0, 1) AND \"exam_participations\".\"exam_eligibility_override\" IN (0, 1) AND \"exam_participations\".\"ranking_eligible\" IN (0, 1)"
+        },
+        "participation_source": {
+          "name": "participation_source",
+          "value": "(\"exam_participations\".\"origin\" = 'LOCAL' AND \"exam_participations\".\"enrollment_id\" IS NOT NULL AND \"exam_participations\".\"class_id_snapshot\" IS NOT NULL AND \"exam_participations\".\"class_code_snapshot\" IS NOT NULL AND \"exam_participations\".\"grade_snapshot\" IN (7,8,9) AND \"exam_participations\".\"grade_snapshot\" IS NOT NULL AND \"exam_participations\".\"seat_number_snapshot\" > 0 AND \"exam_participations\".\"seat_number_snapshot\" IS NOT NULL AND \"exam_participations\".\"external_school_label\" IS NULL AND \"exam_participations\".\"ranking_eligible\" = coalesce(\"exam_participations\".\"exam_eligibility_override\", \"exam_participations\".\"term_eligibility_snapshot\", \"exam_participations\".\"student_eligibility_snapshot\")) OR (\"exam_participations\".\"origin\" = 'EXTERNAL_TRANSFER' AND \"exam_participations\".\"ranking_eligible\" = 0 AND \"exam_participations\".\"enrollment_id\" IS NULL AND \"exam_participations\".\"class_id_snapshot\" IS NULL AND \"exam_participations\".\"class_code_snapshot\" IS NULL AND \"exam_participations\".\"grade_snapshot\" IS NULL AND \"exam_participations\".\"seat_number_snapshot\" IS NULL AND \"exam_participations\".\"external_school_label\" IS NOT NULL)"
+        }
+      }
+    },
+    "exam_result_versions": {
+      "name": "exam_result_versions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_id": {
+          "name": "exam_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "source_version": {
+          "name": "source_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "calculation_version": {
+          "name": "calculation_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provisional": {
+          "name": "provisional",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "exam_result_version_unique": {
+          "name": "exam_result_version_unique",
+          "columns": [
+            "exam_id",
+            "version"
+          ],
+          "isUnique": true
+        },
+        "result_version_exam_parent": {
+          "name": "result_version_exam_parent",
+          "columns": [
+            "id",
+            "exam_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "exam_result_versions_exam_id_exams_id_fk": {
+          "name": "exam_result_versions_exam_id_exams_id_fk",
+          "tableFrom": "exam_result_versions",
+          "tableTo": "exams",
+          "columnsFrom": [
+            "exam_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "exam_result_versions_created_by_admin_users_id_fk": {
+          "name": "exam_result_versions_created_by_admin_users_id_fk",
+          "tableFrom": "exam_result_versions",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "result_version_number": {
+          "name": "result_version_number",
+          "value": "typeof(\"exam_result_versions\".\"version\") = 'integer' AND \"exam_result_versions\".\"version\" > 0 AND typeof(\"exam_result_versions\".\"source_version\") = 'integer' AND \"exam_result_versions\".\"source_version\" > 0"
+        },
+        "result_provisional": {
+          "name": "result_provisional",
+          "value": "\"exam_result_versions\".\"provisional\" IN (0, 1)"
+        }
+      }
+    },
+    "exam_results": {
+      "name": "exam_results",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result_version_id": {
+          "name": "result_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_id": {
+          "name": "exam_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "participation_id": {
+          "name": "participation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "average_hundredths": {
+          "name": "average_hundredths",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "total_hundredths": {
+          "name": "total_hundredths",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "class_rank": {
+          "name": "class_rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "grade_rank": {
+          "name": "grade_rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "computed_json": {
+          "name": "computed_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "result_participation_unique": {
+          "name": "result_participation_unique",
+          "columns": [
+            "result_version_id",
+            "participation_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "exam_results_participation_id_exam_participations_id_fk": {
+          "name": "exam_results_participation_id_exam_participations_id_fk",
+          "tableFrom": "exam_results",
+          "tableTo": "exam_participations",
+          "columnsFrom": [
+            "participation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "exam_results_result_version_id_exam_id_exam_result_versions_id_exam_id_fk": {
+          "name": "exam_results_result_version_id_exam_id_exam_result_versions_id_exam_id_fk",
+          "tableFrom": "exam_results",
+          "tableTo": "exam_result_versions",
+          "columnsFrom": [
+            "result_version_id",
+            "exam_id"
+          ],
+          "columnsTo": [
+            "id",
+            "exam_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "result_json": {
+          "name": "result_json",
+          "value": "json_valid(\"exam_results\".\"computed_json\")"
+        },
+        "result_numbers": {
+          "name": "result_numbers",
+          "value": "(\"exam_results\".\"average_hundredths\" IS NULL OR (typeof(\"exam_results\".\"average_hundredths\") = 'integer' AND \"exam_results\".\"average_hundredths\" BETWEEN 0 AND 10000)) AND (\"exam_results\".\"total_hundredths\" IS NULL OR (typeof(\"exam_results\".\"total_hundredths\") = 'integer' AND \"exam_results\".\"total_hundredths\" >= 0)) AND (\"exam_results\".\"class_rank\" IS NULL OR typeof(\"exam_results\".\"class_rank\") = 'integer' AND \"exam_results\".\"class_rank\" > 0) AND (\"exam_results\".\"grade_rank\" IS NULL OR typeof(\"exam_results\".\"grade_rank\") = 'integer' AND \"exam_results\".\"grade_rank\" > 0)"
+        }
+      }
+    },
+    "exam_subject_settings": {
+      "name": "exam_subject_settings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_id": {
+          "name": "exam_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_type": {
+          "name": "exam_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "held": {
+          "name": "held",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        }
+      },
+      "indexes": {
+        "exam_subject_unique": {
+          "name": "exam_subject_unique",
+          "columns": [
+            "exam_id",
+            "exam_type",
+            "subject"
+          ],
+          "isUnique": true
+        },
+        "exam_setting_parent": {
+          "name": "exam_setting_parent",
+          "columns": [
+            "id",
+            "exam_id",
+            "exam_type",
+            "subject"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "exam_subject_settings_exam_id_exams_id_fk": {
+          "name": "exam_subject_settings_exam_id_exams_id_fk",
+          "tableFrom": "exam_subject_settings",
+          "tableTo": "exams",
+          "columnsFrom": [
+            "exam_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "exam_subject_types": {
+          "name": "exam_subject_types",
+          "value": "(\"exam_subject_settings\".\"exam_type\" = 'QUIZ' AND \"exam_subject_settings\".\"subject\" IN ('CHINESE', 'ENGLISH', 'MATH')) OR (\"exam_subject_settings\".\"exam_type\" = 'MIDTERM' AND \"exam_subject_settings\".\"subject\" IN ('CHINESE', 'ENGLISH', 'MATH', 'SCIENCE', 'GEOGRAPHY', 'HISTORY', 'CIVICS'))"
+        },
+        "exam_held": {
+          "name": "exam_held",
+          "value": "\"exam_subject_settings\".\"held\" IN (0, 1)"
+        },
+        "setting_version": {
+          "name": "setting_version",
+          "value": "typeof(\"exam_subject_settings\".\"version\") = 'integer' AND \"exam_subject_settings\".\"version\" > 0"
+        }
+      }
+    },
+    "exams": {
+      "name": "exams",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "academic_term_id": {
+          "name": "academic_term_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sequence": {
+          "name": "sequence",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "starts_on": {
+          "name": "starts_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ends_on": {
+          "name": "ends_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "locked_at": {
+          "name": "locked_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "exam_term_sequence_unique": {
+          "name": "exam_term_sequence_unique",
+          "columns": [
+            "academic_term_id",
+            "sequence"
+          ],
+          "isUnique": true
+        },
+        "exam_term_unique": {
+          "name": "exam_term_unique",
+          "columns": [
+            "id",
+            "academic_term_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "exams_academic_term_id_academic_terms_id_fk": {
+          "name": "exams_academic_term_id_academic_terms_id_fk",
+          "tableFrom": "exams",
+          "tableTo": "academic_terms",
+          "columnsFrom": [
+            "academic_term_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "exam_sequence": {
+          "name": "exam_sequence",
+          "value": "\"exams\".\"sequence\" IN (1, 2, 3)"
+        },
+        "exam_dates": {
+          "name": "exam_dates",
+          "value": "length(\"exams\".\"starts_on\") = 10 AND \"exams\".\"starts_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"exams\".\"starts_on\", '+0 days') IS NOT NULL AND date(\"exams\".\"starts_on\", '+0 days') = \"exams\".\"starts_on\" AND length(\"exams\".\"ends_on\") = 10 AND \"exams\".\"ends_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"exams\".\"ends_on\", '+0 days') IS NOT NULL AND date(\"exams\".\"ends_on\", '+0 days') = \"exams\".\"ends_on\" AND \"exams\".\"ends_on\" > \"exams\".\"starts_on\""
+        },
+        "exam_version": {
+          "name": "exam_version",
+          "value": "typeof(\"exams\".\"version\") = 'integer' AND \"exams\".\"version\" > 0"
+        }
+      }
+    },
+    "import_job_items": {
+      "name": "import_job_items",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "row_number": {
+          "name": "row_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source_version": {
+          "name": "source_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "committed_version": {
+          "name": "committed_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "before_json": {
+          "name": "before_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "after_json": {
+          "name": "after_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "import_row_unique": {
+          "name": "import_row_unique",
+          "columns": [
+            "job_id",
+            "row_number"
+          ],
+          "isUnique": true
+        },
+        "import_item_student": {
+          "name": "import_item_student",
+          "columns": [
+            "student_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "import_job_items_job_id_import_jobs_id_fk": {
+          "name": "import_job_items_job_id_import_jobs_id_fk",
+          "tableFrom": "import_job_items",
+          "tableTo": "import_jobs",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "import_job_items_student_id_students_id_fk": {
+          "name": "import_job_items_student_id_students_id_fk",
+          "tableFrom": "import_job_items",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "import_row_number": {
+          "name": "import_row_number",
+          "value": "typeof(\"import_job_items\".\"row_number\") = 'integer' AND \"import_job_items\".\"row_number\" > 0"
+        },
+        "import_item_snapshots": {
+          "name": "import_item_snapshots",
+          "value": "json_valid(\"import_job_items\".\"before_json\") AND json_valid(\"import_job_items\".\"after_json\")"
+        }
+      }
+    },
+    "import_jobs": {
+      "name": "import_jobs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "object_key": {
+          "name": "object_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_hash": {
+          "name": "file_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mapping_json": {
+          "name": "mapping_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "preview_version": {
+          "name": "preview_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "committed_at": {
+          "name": "committed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rollback_until": {
+          "name": "rollback_until",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "import_actor_created": {
+          "name": "import_actor_created",
+          "columns": [
+            "actor_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "import_jobs_actor_id_admin_users_id_fk": {
+          "name": "import_jobs_actor_id_admin_users_id_fk",
+          "tableFrom": "import_jobs",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "import_file_hash": {
+          "name": "import_file_hash",
+          "value": "length(\"import_jobs\".\"file_hash\") = 64 AND \"import_jobs\".\"file_hash\" NOT GLOB '*[^0-9a-f]*'"
+        },
+        "import_mapping": {
+          "name": "import_mapping",
+          "value": "json_valid(\"import_jobs\".\"mapping_json\")"
+        },
+        "import_preview_version": {
+          "name": "import_preview_version",
+          "value": "typeof(\"import_jobs\".\"preview_version\") = 'integer' AND \"import_jobs\".\"preview_version\" > 0"
+        },
+        "import_rollback_window": {
+          "name": "import_rollback_window",
+          "value": "\"import_jobs\".\"rollback_until\" IS NULL OR (\"import_jobs\".\"committed_at\" IS NOT NULL AND \"import_jobs\".\"rollback_until\" > \"import_jobs\".\"committed_at\")"
+        }
+      }
+    },
+    "score_change_history": {
+      "name": "score_change_history",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "score_item_id": {
+          "name": "score_item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "operation_id": {
+          "name": "operation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "before_json": {
+          "name": "before_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "after_json": {
+          "name": "after_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "from_version": {
+          "name": "from_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "to_version": {
+          "name": "to_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "score_history_version": {
+          "name": "score_history_version",
+          "columns": [
+            "score_item_id",
+            "to_version"
+          ],
+          "isUnique": true
+        },
+        "score_history_student": {
+          "name": "score_history_student",
+          "columns": [
+            "student_id",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "score_change_history_score_item_id_score_items_id_fk": {
+          "name": "score_change_history_score_item_id_score_items_id_fk",
+          "tableFrom": "score_change_history",
+          "tableTo": "score_items",
+          "columnsFrom": [
+            "score_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "score_change_history_student_id_students_id_fk": {
+          "name": "score_change_history_student_id_students_id_fk",
+          "tableFrom": "score_change_history",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "score_change_history_actor_id_admin_users_id_fk": {
+          "name": "score_change_history_actor_id_admin_users_id_fk",
+          "tableFrom": "score_change_history",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "score_history_values": {
+          "name": "score_history_values",
+          "value": "json_valid(\"score_change_history\".\"before_json\") AND json_valid(\"score_change_history\".\"after_json\") AND length(trim(\"score_change_history\".\"reason\")) > 0 AND \"score_change_history\".\"to_version\" = \"score_change_history\".\"from_version\" + 1"
+        }
+      }
+    },
+    "score_items": {
+      "name": "score_items",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "participation_id": {
+          "name": "participation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "setting_id": {
+          "name": "setting_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_id": {
+          "name": "exam_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "exam_type": {
+          "name": "exam_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "class_id_snapshot": {
+          "name": "class_id_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "score_value": {
+          "name": "score_value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "score_status": {
+          "name": "score_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'UNENTERED'"
+        },
+        "include_in_average": {
+          "name": "include_in_average",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "include_in_ranking": {
+          "name": "include_in_ranking",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "score_participation_setting_unique": {
+          "name": "score_participation_setting_unique",
+          "columns": [
+            "participation_id",
+            "setting_id"
+          ],
+          "isUnique": true
+        },
+        "scores_exam_class": {
+          "name": "scores_exam_class",
+          "columns": [
+            "exam_id",
+            "class_id_snapshot",
+            "exam_type"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "score_items_class_id_snapshot_classes_id_fk": {
+          "name": "score_items_class_id_snapshot_classes_id_fk",
+          "tableFrom": "score_items",
+          "tableTo": "classes",
+          "columnsFrom": [
+            "class_id_snapshot"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "score_items_participation_id_exam_id_student_id_origin_exam_participations_id_exam_id_student_id_origin_fk": {
+          "name": "score_items_participation_id_exam_id_student_id_origin_exam_participations_id_exam_id_student_id_origin_fk",
+          "tableFrom": "score_items",
+          "tableTo": "exam_participations",
+          "columnsFrom": [
+            "participation_id",
+            "exam_id",
+            "student_id",
+            "origin"
+          ],
+          "columnsTo": [
+            "id",
+            "exam_id",
+            "student_id",
+            "origin"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "score_items_setting_id_exam_id_exam_type_subject_exam_subject_settings_id_exam_id_exam_type_subject_fk": {
+          "name": "score_items_setting_id_exam_id_exam_type_subject_exam_subject_settings_id_exam_id_exam_type_subject_fk",
+          "tableFrom": "score_items",
+          "tableTo": "exam_subject_settings",
+          "columnsFrom": [
+            "setting_id",
+            "exam_id",
+            "exam_type",
+            "subject"
+          ],
+          "columnsTo": [
+            "id",
+            "exam_id",
+            "exam_type",
+            "subject"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "score_value_status": {
+          "name": "score_value_status",
+          "value": "(\"score_items\".\"score_status\" = 'NORMAL' AND \"score_items\".\"score_value\" IS NOT NULL AND typeof(\"score_items\".\"score_value\") = 'integer' AND \"score_items\".\"score_value\" BETWEEN 0 AND 10000 AND \"score_items\".\"include_in_average\" = 1) OR (\"score_items\".\"score_status\" IN ('UNENTERED', 'ABSENT', 'OFFICIAL_LEAVE', 'SICK_LEAVE', 'EXEMPT', 'NOT_HELD') AND \"score_items\".\"score_value\" IS NULL AND \"score_items\".\"include_in_average\" = 0)"
+        },
+        "score_ranking_flag": {
+          "name": "score_ranking_flag",
+          "value": "\"score_items\".\"include_in_ranking\" IN (0, 1)"
+        },
+        "score_origin_ranking": {
+          "name": "score_origin_ranking",
+          "value": "\"score_items\".\"origin\" <> 'EXTERNAL_TRANSFER' OR \"score_items\".\"include_in_ranking\" = 0"
+        },
+        "score_version": {
+          "name": "score_version",
+          "value": "typeof(\"score_items\".\"version\") = 'integer' AND \"score_items\".\"version\" > 0"
+        }
+      }
+    },
+    "student_enrollments": {
+      "name": "student_enrollments",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "academic_year_id": {
+          "name": "academic_year_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "academic_term_id": {
+          "name": "academic_term_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "class_id": {
+          "name": "class_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "seat_number": {
+          "name": "seat_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'valid'"
+        },
+        "ranking_eligible": {
+          "name": "ranking_eligible",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "change_source": {
+          "name": "change_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "enrollment_snapshot_parent": {
+          "name": "enrollment_snapshot_parent",
+          "columns": [
+            "id",
+            "student_id",
+            "academic_term_id",
+            "class_id"
+          ],
+          "isUnique": true
+        },
+        "enrollment_student_period": {
+          "name": "enrollment_student_period",
+          "columns": [
+            "student_id",
+            "effective_from",
+            "effective_to"
+          ],
+          "isUnique": false
+        },
+        "enrollment_seat_period": {
+          "name": "enrollment_seat_period",
+          "columns": [
+            "class_id",
+            "seat_number",
+            "effective_from"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "student_enrollments_student_id_students_id_fk": {
+          "name": "student_enrollments_student_id_students_id_fk",
+          "tableFrom": "student_enrollments",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "student_enrollments_academic_term_id_academic_year_id_academic_terms_id_academic_year_id_fk": {
+          "name": "student_enrollments_academic_term_id_academic_year_id_academic_terms_id_academic_year_id_fk",
+          "tableFrom": "student_enrollments",
+          "tableTo": "academic_terms",
+          "columnsFrom": [
+            "academic_term_id",
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id",
+            "academic_year_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "student_enrollments_class_id_academic_year_id_classes_id_academic_year_id_fk": {
+          "name": "student_enrollments_class_id_academic_year_id_classes_id_academic_year_id_fk",
+          "tableFrom": "student_enrollments",
+          "tableTo": "classes",
+          "columnsFrom": [
+            "class_id",
+            "academic_year_id"
+          ],
+          "columnsTo": [
+            "id",
+            "academic_year_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "enrollment_dates": {
+          "name": "enrollment_dates",
+          "value": "length(\"student_enrollments\".\"effective_from\") = 10 AND \"student_enrollments\".\"effective_from\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"student_enrollments\".\"effective_from\", '+0 days') IS NOT NULL AND date(\"student_enrollments\".\"effective_from\", '+0 days') = \"student_enrollments\".\"effective_from\" AND (\"student_enrollments\".\"effective_to\" IS NULL OR (length(\"student_enrollments\".\"effective_to\") = 10 AND \"student_enrollments\".\"effective_to\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"student_enrollments\".\"effective_to\", '+0 days') IS NOT NULL AND date(\"student_enrollments\".\"effective_to\", '+0 days') = \"student_enrollments\".\"effective_to\" AND \"student_enrollments\".\"effective_to\" > \"student_enrollments\".\"effective_from\"))"
+        },
+        "enrollment_seat": {
+          "name": "enrollment_seat",
+          "value": "typeof(\"student_enrollments\".\"seat_number\") = 'integer' AND \"student_enrollments\".\"seat_number\" > 0"
+        },
+        "enrollment_status": {
+          "name": "enrollment_status",
+          "value": "\"student_enrollments\".\"status\" IN ('valid', 'voided')"
+        },
+        "enrollment_ranking": {
+          "name": "enrollment_ranking",
+          "value": "\"student_enrollments\".\"ranking_eligible\" IN (0, 1)"
+        },
+        "enrollment_version": {
+          "name": "enrollment_version",
+          "value": "typeof(\"student_enrollments\".\"version\") = 'integer' AND \"student_enrollments\".\"version\" > 0"
+        }
+      }
+    },
+    "student_identity_lookup_hashes": {
+      "name": "student_identity_lookup_hashes",
+      "columns": {
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key_version": {
+          "name": "key_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "identity_number_lookup_hash": {
+          "name": "identity_number_lookup_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "identity_student_version_unique": {
+          "name": "identity_student_version_unique",
+          "columns": [
+            "student_id",
+            "key_version"
+          ],
+          "isUnique": true
+        },
+        "identity_hash_version_unique": {
+          "name": "identity_hash_version_unique",
+          "columns": [
+            "key_version",
+            "identity_number_lookup_hash"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "student_identity_lookup_hashes_student_id_students_id_fk": {
+          "name": "student_identity_lookup_hashes_student_id_students_id_fk",
+          "tableFrom": "student_identity_lookup_hashes",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "identity_hash_format": {
+          "name": "identity_hash_format",
+          "value": "length(\"student_identity_lookup_hashes\".\"identity_number_lookup_hash\") = 64 AND \"student_identity_lookup_hashes\".\"identity_number_lookup_hash\" NOT GLOB '*[^0-9a-f]*'"
+        },
+        "identity_hash_version": {
+          "name": "identity_hash_version",
+          "value": "typeof(\"student_identity_lookup_hashes\".\"key_version\") = 'integer' AND \"student_identity_lookup_hashes\".\"key_version\" > 0"
+        }
+      }
+    },
+    "student_term_ranking_policies": {
+      "name": "student_term_ranking_policies",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "academic_term_id": {
+          "name": "academic_term_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ranking_eligible": {
+          "name": "ranking_eligible",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "student_term_policy_unique": {
+          "name": "student_term_policy_unique",
+          "columns": [
+            "student_id",
+            "academic_term_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "student_term_ranking_policies_student_id_students_id_fk": {
+          "name": "student_term_ranking_policies_student_id_students_id_fk",
+          "tableFrom": "student_term_ranking_policies",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "student_term_ranking_policies_academic_term_id_academic_terms_id_fk": {
+          "name": "student_term_ranking_policies_academic_term_id_academic_terms_id_fk",
+          "tableFrom": "student_term_ranking_policies",
+          "tableTo": "academic_terms",
+          "columnsFrom": [
+            "academic_term_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "term_ranking_flag": {
+          "name": "term_ranking_flag",
+          "value": "\"student_term_ranking_policies\".\"ranking_eligible\" IN (0, 1)"
+        },
+        "term_policy_version": {
+          "name": "term_policy_version",
+          "value": "typeof(\"student_term_ranking_policies\".\"version\") = 'integer' AND \"student_term_ranking_policies\".\"version\" > 0"
+        }
+      }
+    },
+    "students": {
+      "name": "students",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "student_number": {
+          "name": "student_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "birth_date": {
+          "name": "birth_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "identity_number_encrypted": {
+          "name": "identity_number_encrypted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "identity_encryption_key_version": {
+          "name": "identity_encryption_key_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ranking_eligible_default": {
+          "name": "ranking_eligible_default",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'active'"
+        },
+        "transferred_out_on": {
+          "name": "transferred_out_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "graduated_on": {
+          "name": "graduated_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "retention_until": {
+          "name": "retention_until",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "public_query_until": {
+          "name": "public_query_until",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "students_student_number_unique": {
+          "name": "students_student_number_unique",
+          "columns": [
+            "student_number"
+          ],
+          "isUnique": true
+        },
+        "student_public_lookup": {
+          "name": "student_public_lookup",
+          "columns": [
+            "name",
+            "birth_date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "student_birth_date": {
+          "name": "student_birth_date",
+          "value": "length(\"students\".\"birth_date\") = 10 AND \"students\".\"birth_date\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"students\".\"birth_date\", '+0 days') IS NOT NULL AND date(\"students\".\"birth_date\", '+0 days') = \"students\".\"birth_date\""
+        },
+        "student_ranking_default": {
+          "name": "student_ranking_default",
+          "value": "\"students\".\"ranking_eligible_default\" IN (0, 1)"
+        },
+        "student_status": {
+          "name": "student_status",
+          "value": "\"students\".\"status\" IN ('active', 'transferred_out', 'graduated')"
+        },
+        "student_ciphertext": {
+          "name": "student_ciphertext",
+          "value": "json_valid(\"students\".\"identity_number_encrypted\") AND json_extract(\"students\".\"identity_number_encrypted\", '$.algorithm') IS 'AES-256-GCM' AND json_type(\"students\".\"identity_number_encrypted\", '$.iv') IS 'text' AND json_type(\"students\".\"identity_number_encrypted\", '$.ciphertext') IS 'text'"
+        },
+        "student_key_version": {
+          "name": "student_key_version",
+          "value": "typeof(\"students\".\"identity_encryption_key_version\") = 'integer' AND \"students\".\"identity_encryption_key_version\" > 0"
+        },
+        "student_version": {
+          "name": "student_version",
+          "value": "typeof(\"students\".\"version\") = 'integer' AND \"students\".\"version\" > 0"
+        },
+        "student_retention_dates": {
+          "name": "student_retention_dates",
+          "value": "(\"students\".\"retention_until\" IS NULL OR length(\"students\".\"retention_until\") = 10 AND \"students\".\"retention_until\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"students\".\"retention_until\", '+0 days') IS NOT NULL AND date(\"students\".\"retention_until\", '+0 days') = \"students\".\"retention_until\") AND (\"students\".\"public_query_until\" IS NULL OR (length(\"students\".\"public_query_until\") = 10 AND \"students\".\"public_query_until\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"students\".\"public_query_until\", '+0 days') IS NOT NULL AND date(\"students\".\"public_query_until\", '+0 days') = \"students\".\"public_query_until\" AND \"students\".\"retention_until\" IS NOT NULL AND \"students\".\"public_query_until\" <= \"students\".\"retention_until\")) AND (\"students\".\"transferred_out_on\" IS NULL OR length(\"students\".\"transferred_out_on\") = 10 AND \"students\".\"transferred_out_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"students\".\"transferred_out_on\", '+0 days') IS NOT NULL AND date(\"students\".\"transferred_out_on\", '+0 days') = \"students\".\"transferred_out_on\") AND (\"students\".\"graduated_on\" IS NULL OR length(\"students\".\"graduated_on\") = 10 AND \"students\".\"graduated_on\" GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(\"students\".\"graduated_on\", '+0 days') IS NOT NULL AND date(\"students\".\"graduated_on\", '+0 days') = \"students\".\"graduated_on\")"
+        }
+      }
+    },
+    "system_settings": {
+      "name": "system_settings",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value_json": {
+          "name": "value_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 1
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "system_settings_updated_by_admin_users_id_fk": {
+          "name": "system_settings_updated_by_admin_users_id_fk",
+          "tableFrom": "system_settings",
+          "tableTo": "admin_users",
+          "columnsFrom": [
+            "updated_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "settings_key_allowlist": {
+          "name": "settings_key_allowlist",
+          "value": "\"system_settings\".\"key\" IN ('ai_provider', 'ai_model', 'ai_prompt', 'rag_config')"
+        },
+        "settings_json": {
+          "name": "settings_json",
+          "value": "json_valid(\"system_settings\".\"value_json\")"
+        },
+        "settings_version": {
+          "name": "settings_version",
+          "value": "typeof(\"system_settings\".\"version\") = 'integer' AND \"system_settings\".\"version\" > 0"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
