@@ -47,12 +47,12 @@
 | `node --import ./scripts/sites-env.mjs --test tests/import-service.test.mjs tests/import-keys.test.mjs` | 第一輪 10 項通過；後續邊界案例另納完整回歸       |
 | `npm test`                                                                                              | 125 項通過，0 失敗／略過                         |
 | `npm run typecheck`                                                                                     | 通過                                             |
-| `npm run lint`                                                                                          | 通過                                           |
-| `npm run format:check`                                                                                  | 通過                                       |
-| `npm run build`                                                                                         | 通過                                       |
-| `node scripts/check-docs.mjs`                                                                           | 通過                                       |
-| `node scripts/check-safety.mjs`                                                                         | 通過                                       |
-| `git diff --check`                                                                                      | 通過                           |
+| `npm run lint`                                                                                          | 通過                                             |
+| `npm run format:check`                                                                                  | 通過                                             |
+| `npm run build`                                                                                         | 通過                                             |
+| `node scripts/check-docs.mjs`                                                                           | 通過                                             |
+| `node scripts/check-safety.mjs`                                                                         | 通過                                             |
+| `git diff --check`                                                                                      | 通過                                             |
 
 測試使用隔離 Miniflare D1／R2、虛構學生及程序內金鑰。包含：識別欄位不一致、目標／科目錯誤、重複列與檔案、半途失敗與重試、Commit 併發、Rollback 中途失敗、發布／後續更新阻擋、30 天前後邊界、新生加密與 Soft Delete、原校來源、晚轉入與 NOT_HELD、HTTP Cookie／CSRF／未知欄位、跨班／跨科／他人 Job、提交前撤權、ZIP 偽造長度與展開上限、跨 sheet 列數、UTF-8 錯誤及 key ring 格式。
 
