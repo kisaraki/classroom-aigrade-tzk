@@ -82,7 +82,17 @@ value 接受 0～100、最多兩位小數（建議十進位字串），或 A／B
 
 評量／科目設定影響全校，需全校 score.write；班級名單需整班範圍，任課教師只可寫入自己班級且自己科目的成績。原校成績授權依學生目前有效學籍，無本校班級快照。已轉出、軟刪除或班級封存不接受新草稿寫入。歷史、發布、鎖定及封存評量不可走草稿入口；Phase 7 才處理解鎖、原因、重算與重新鎖定。
 
-測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google／Sites 登入依 D-09 暫緩。沒有計算平均／排名、匯入、發布、AI 重生或正式 migration。完整證據見 [Phase 4 紀錄](../docs/PHASE_4.md)。
+Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google／Sites 登入依 D-09 暫緩。草稿 API 證據見 [Phase 4 紀錄](../docs/PHASE_4.md)。
+
+## Phase 5 平均與排名核心
+
+`lib/domain/averages.ts` 使用百分之一分整數與 BigInt 中間運算，單次四捨五入。`lib/domain/ranking.ts` 的 `calculateExam` 接受同一評量版本、科目設定、當次參與／排名資格快照與開始日在籍快照，回傳檢測、段考、定評平均、總分、科目總分及班級／全年段競賽排名；`calculateSemesterAverage` 直接合計同學期同來源的原始有效分數。
+
+`PROVISIONAL` 只計 QUIZ，`FINAL` 計 QUIZ＋MIDTERM；這是計算範圍，不能當成發布成功。D-08 的合法發布轉換、持久結果版本與公開可見性由 Phase 7 實作。原校資料分開回傳；本校 cohort 分開列示在籍、參與、合格、實際排名人數及各指標有效學生數／分數筆數／最高平均，未新增公開統計 UI。
+
+`lib/server/exams/ranking-service.ts` 提供內部唯讀 `RankingService.calculate(session, examId, { classId } | { grade }, mode)`，以實際 Session、score.read、全科 Scope 及評量日期授權。D1 batch 讀取一致資料，再重驗授權、exam.version 與 academic_state.revision；班級模式不回傳全年段名次／其他班資料。來源變更回報 `CALCULATION_SOURCE_CHANGED`，呼叫者須重新計算。單科權限不能讀全科排名。
+
+此服務不是 HTTP route，也沒有儲存或發布結果。未來發布交易須再次驗證權限、來源版本與學籍 revision，原子保存計算結果及統計快照；不得把新鮮度檢查當成資料庫寫入鎖。既有草稿與公開路由不會自動呼叫此服務。完整測試與限制見 [Phase 5 紀錄](../docs/PHASE_5.md)。
 
 ## 部署邊界
 
