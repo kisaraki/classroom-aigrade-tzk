@@ -4,7 +4,7 @@
 
 ## 模型入口
 
-- [Drizzle schema](../site/db/schema.ts)：35 張關聯表的欄位、外鍵、CHECK 與索引。
+- [Drizzle schema](../site/db/schema.ts)：37 張關聯表的欄位、外鍵、CHECK 與索引。
 - [核心 migration](../site/drizzle/0000_phase_01_core.sql)：建立關聯表及索引。
 - [跨列約束與 FTS migration](../site/drizzle/0001_phase_01_invariants.sql)：學籍、快照、管理員與版本約束，及 FTS 邏輯表 `ai_reference_chunks_fts`。FTS 內部 shadow tables 不另算業務表。
 - [Migration journal](../site/drizzle/meta/_journal.json)：Drizzle 的順序與時間戳；snapshot 記錄可生成的關聯 schema，FTS／trigger 保存在 custom migration。
@@ -12,7 +12,7 @@
 
 ## Phase 2 擴充
 
-Phase 2 擴充學籍命令表；目前含 Phase 3B 共 35 張關聯表加 FTS5。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
+Phase 2 擴充學籍命令表；目前含 Phase 4 共 37 張關聯表加 FTS5。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
 
 ```mermaid
 erDiagram
@@ -25,7 +25,7 @@ erDiagram
     academic_operations o|--o| academic_operations : undoes
 ```
 
-內部服務只接受 server-created Preview；Confirm 在同一 batch 保存變更、操作與 Audit，並清空已提交 Preview 的建檔 payload。未確認資料的保存／Purge、真實授權 adapter 及雲端部署依後續 Phase 關卡；詳細欄位與限制見 [Phase 2 紀錄](PHASE_2.md)。`npm run db:verify` 現在套用七份 migration；下文的既有 Phase 1 模型與安全契約仍適用。
+內部服務只接受 server-created Preview；Confirm 在同一 batch 保存變更、操作與 Audit，並清空已提交 Preview 的建檔 payload。未確認資料的保存／Purge、真實授權 adapter 及雲端部署依後續 Phase 關卡；詳細欄位與限制見 [Phase 2 紀錄](PHASE_2.md)。`npm run db:verify` 現在套用八份 migration；下文的既有 Phase 1 模型與安全契約仍適用。
 
 ## Phase 3A 認證狀態
 
@@ -40,6 +40,14 @@ OAuth state 新增 admin_session_id／identity_request_id。升級只新增欄�
 帳號及 Scope 異動先在同一 D1 batch 的 Audit insert 驗證操作者與目標版本，失敗使整筆交易回滾；唯一索引及既有最後管理員／Session 撤銷 trigger 維持生效。Recovery 完成在相同交易驗證尚未消費 request、更新綁定、撤銷 Sessions、消費 request 與 Audit。
 
 本機驗證從 Phase 3A 六份 migration 升級，保留既有 OAuth state、外鍵及完整性；若應用版本回退，不刪除已套用 migration，回退程式仍須使用相容的新增欄位。Production 備份／復原與 migration 仍須另行 preflight 及人工確認。
+
+## Phase 4 評量命令
+
+[0007 migration](../site/drizzle/0007_phase_04_exam_commands.sql) 新增 exam_roster_previews 與 exam_operations。前者保存操作人、評量／班級、評量版本、學籍 revision 及伺服器解析的資格／班級快照；後者保存不可重複的 operationId、actor／Session、request hash、結果及可選的唯一 preview 關聯。兩表禁止更新，透過一次交易新增。
+
+草稿提交先驗證權限／Scope，再於交易內檢查 Session、目前學年度／revision、評量版本與草稿狀態；成績、ScoreChangeHistory、評量版本、操作結果與 Audit 一起提交。資料庫只保存分數百分之一整數；空白與特殊代碼為 NULL，0 保持有效。原校成績沿用獨立 origin 與空本校班級快照，不能進入本校排名。
+
+升級只新增兩表、索引及不可變 trigger，0000～0006 保持不變，不回填或重算既有成績。從七份 migration 升級至八份時驗證原成績、名單與 Sessions 不變。回退程式需保留新增表；Production 仍須 preflight、備份／復原驗證及人工確認。兩表中的學生／班級引用及 History 要在 Phase 9 Purge 範圍一起處理，不以刪除操作紀錄提供回退。詳細驗證見 [Phase 4 紀錄](PHASE_4.md)。
 
 ## ER 圖
 

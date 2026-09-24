@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 3B 管理員授權核心已建立。** 截至 2026-09-24，已實作 Permission／Scope、管理員異動、Google Rebind／Recovery、5 分鐘重新驗證與 Session 撤銷；完整本機驗證結果見 Phase 3B 紀錄。OAuth Client 與 Sites callback 實測依使用者指示暫緩；沒有真實學生資料或 Sites Production 部署，管理 UI 與後續功能仍按 Phase 進行。
+**Phase 4 評量與草稿成績核心已建立。** 截至 2026-09-24，已實作評量／科目設定、名單快照、特殊代碼、原校成績與具權限及版本驗證的草稿 API；完整結果見 Phase 4 紀錄。OAuth Client 與 Sites callback 實測依使用者指示暫緩；沒有真實學生資料或 Sites Production 部署。平均、排名、發布及管理 UI 仍按後續 Phase 進行。
 
 ## 文件入口
 
@@ -18,6 +18,7 @@
 | [Phase 2 驗證紀錄](docs/PHASE_2.md) | 學籍服務、Preview／Confirm、撤銷與權限介面驗證 |
 | [Phase 3A 驗證紀錄](docs/PHASE_3A.md) | Google OIDC、Bootstrap、Session 與 callback 安全契約 |
 | [Phase 3B 驗證紀錄](docs/PHASE_3B.md) | RBAC／Scope、管理員異動、Rebind／Recovery、5 分鐘時窗及併發驗證 |
+| [Phase 4 驗證紀錄](docs/PHASE_4.md) | 評量、科目設定、草稿成績、名單快照與原子提交驗證 |
 | [資料模型與 ER 圖](docs/DATABASE.md) | 資料表對照、migration、加密輪替與復原方式 |
 | [Sites 開發說明](site/README.md) | 安裝、預覽、建置、測試與環境設定 |
 | [待決策清單](PROJECT_SPEC.md#spec-72-2) | 尚未定案的業務選擇與確認關卡 |
@@ -42,9 +43,9 @@
 | 項目 | 規劃 | 狀態 |
 |---|---|---|
 | 正式執行平台 | ChatGPT Sites | 專案已建立，尚未發布 |
-| 後端 | Vinext／Cloudflare Workers | 已建立 Google-only auth routes 與 health route；僅本機預覽 |
+| 後端 | Vinext／Cloudflare Workers | 已建立 Google-only auth、管理員與草稿評量 API、health route；僅本機預覽 |
 | 前端 | React／HTML／CSS | 已建立開發進度預覽頁 |
-| 關聯式資料庫 | D1／SQLite，binding `DB` | 35 張關聯表、FTS5 與七份 migration；隔離本機驗證 |
+| 關聯式資料庫 | D1／SQLite，binding `DB` | 37 張關聯表、FTS5 與八份 migration；隔離本機驗證 |
 | 檔案儲存 | R2，binding `FILES` | 本機測試；雲端尚未配置 |
 | AI | OpenAI API、Google Gemini API adapter | 尚未整合 |
 | 參考資料搜尋 | D1 FTS 優先 | FTS5 索引同步及篩選驗證；RAG 尚未實作 |
@@ -64,7 +65,7 @@ npm run dev
 
 Windows PowerShell 可使用 `npm.cmd`。預覽僅監聽本機；以終端顯示 URL 為準。建置使用 `npm run build`，建置後本機預覽使用 `npm start`。不會自動部署。
 
-驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；實際結果見 [Phase 2 紀錄](docs/PHASE_2.md)。
+驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；實際結果見 [Phase 4 紀錄](docs/PHASE_4.md)。
 
 環境欄位見 [site/.env.example](site/.env.example)，真實值只填入忽略提交的 `.env` 或 Sites Settings；本次預覽與測試不需要真實 Secret。migration 位於 `site/drizzle/`，不由應用程式啟動時自動套用，未套用至雲端。
 
@@ -84,7 +85,8 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 2 | 學年度、班級、學生與學籍服務；Preview／Confirm、升班、轉出與撤銷完成隔離測試 |
 | Phase 3A | OIDC 驗證、PKCE、一次性 Bootstrap、登入／登出與 Session 核心完成；OAuth Client／Sites callback 實測暫緩 |
 | Phase 3B | 授權核心與管理 API 已建立；本機驗證及限制見 Phase 3B 紀錄 |
-| Phase 4～19 | 尚未開始 |
+| Phase 4 | 評量、名單快照、特殊狀態與草稿成績服務；驗證與限制見 Phase 4 紀錄 |
+| Phase 5～19 | 尚未開始 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
 

@@ -2,6 +2,16 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 4 評量與草稿成績核心 — 2026-09-24
+
+依使用者核准接續 Phase 4，驗證與限制見 [Phase 4 紀錄](docs/PHASE_4.md)。本次不是正式 Release 或 Sites 部署。
+
+- 新增草稿評量、固定科目設定、NOT_HELD、A/B/C/D/N 與 0～100.00 的精確分數驗證；空白、特殊狀態與 0 分分開保存。
+- 名單採 Preview／Confirm，依開始日解析有效學籍並固定 D-03 資格及班級快照；原校成績保留獨立來源與空本校班級，不參與本校排名。
+- 管理 API 重驗 Cookie Session、Permission、班級／科目 Scope、來源版本及草稿狀態；交易內防止撤權或版本競爭，成績、History、版本、Audit 與操作結果原子提交。
+- 新增 0007 migration，保留 0000～0006；建立不可變名單預覽及可重送操作紀錄。補入隔離 D1 的權限、狀態、併發、回滾及升級測試。
+- 真實 Google／Sites 驗證仍暫緩；平均、排名、匯入、發布及 UI 屬後續 Phase。
+
 ## Phase 3B 管理員授權核心 — 2026-09-24
 
 接續使用者已核准的 Phase 3B、D-01／D-10，新增 D-11 決策：Google Recent Authentication 及一次性 Recovery 核准均為 5 分鐘。驗證結果見 [Phase 3B 紀錄](docs/PHASE_3B.md)；不是正式軟體 Release 或 Sites 部署。

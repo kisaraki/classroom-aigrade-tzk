@@ -1113,3 +1113,64 @@ export const academicOperationStudents = sqliteTable(
     index("academic_operations_by_student").on(t.studentId),
   ],
 );
+
+export const examRosterPreviews = sqliteTable(
+  "exam_roster_previews",
+  {
+    id: id(),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => adminUsers.id),
+    examId: text("exam_id")
+      .notNull()
+      .references(() => exams.id),
+    classId: text("class_id")
+      .notNull()
+      .references(() => classes.id),
+    examVersion: integer("exam_version").notNull(),
+    academicRevision: integer("academic_revision").notNull(),
+    rosterJson: text("roster_json").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("exam_preview_actor").on(t.actorId, t.createdAt),
+    check("exam_preview_version", positiveVersion(t.examVersion)),
+    check(
+      "exam_preview_revision",
+      sql`typeof(${t.academicRevision}) = 'integer' AND ${t.academicRevision} >= 0`,
+    ),
+    check(
+      "exam_preview_roster",
+      sql`${json(t.rosterJson)} AND json_type(${t.rosterJson}) = 'array'`,
+    ),
+  ],
+);
+
+export const examOperations = sqliteTable(
+  "exam_operations",
+  {
+    id: id(),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => adminUsers.id),
+    authSessionId: text("auth_session_id")
+      .notNull()
+      .references(() => adminSessions.id),
+    kind: text("kind").notNull(),
+    requestHash: text("request_hash").notNull(),
+    resultJson: text("result_json").notNull(),
+    previewId: text("preview_id")
+      .unique()
+      .references(() => examRosterPreviews.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("exam_operation_actor").on(t.actorId, t.createdAt),
+    check("exam_operation_hash", hexHash(t.requestHash)),
+    check("exam_operation_result", json(t.resultJson)),
+    check(
+      "exam_operation_kind",
+      sql`${t.kind} IN ('CREATE_EXAM','SCHEDULE','SUBJECT','ROSTER','EXTERNAL','SCORES')`,
+    ),
+  ],
+);
