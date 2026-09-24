@@ -899,6 +899,7 @@ export class AcademicService {
   async confirm(
     previewId: string,
     input: { confirmed: boolean },
+    transactionStatements: readonly D1PreparedStatement[] = [],
   ): Promise<Receipt> {
     if (input.confirmed !== true) fail("CONFIRMATION_REQUIRED");
     const preview = await this.one(
@@ -997,7 +998,7 @@ export class AcademicService {
         .bind(preview.id),
     );
     try {
-      await this.db.batch(statements);
+      await this.db.batch([...statements, ...transactionStatements]);
     } catch {
       const committed = await this.db
         .prepare("SELECT * FROM academic_operations WHERE id = ?")

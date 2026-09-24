@@ -650,6 +650,7 @@ export class ExamService {
     session: AuthSession,
     examId: string,
     input: Command & { scores: ScoreInput[]; reason?: string },
+    transactionStatements: readonly D1PreparedStatement[] = [],
   ) {
     if (!Array.isArray(input.scores) || !input.scores.length)
       fail("INVALID_SCORE_BATCH");
@@ -811,7 +812,7 @@ export class ExamService {
         }
         return {
           result: { examId, version: exam.version + 1, count: entries.length },
-          writes,
+          writes: [...writes, ...transactionStatements],
         };
       },
     );

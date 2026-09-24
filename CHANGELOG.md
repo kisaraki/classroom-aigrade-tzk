@@ -2,6 +2,10 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 6 匯入核心 — 2026-09-25
+
+使用者核准啟動 Phase 6，並於 2026-09-24 核准 D-07 整批原子提交／衝突阻擋，以及 D-11 上傳門檻。CSV／XLSX、成績與七年級新生匯入、Preview／Commit／30 天 Rollback 已加入，完整回歸 125 項及 typecheck、lint、format、build、文件／敏感資料檢查通過。沿用既有 schema，沒有新增 migration；驗證與限制見 [Phase 6 紀錄](docs/PHASE_6.md)。本次不是正式 Release 或 Sites 部署。
+
 ## Phase 5 平均與排名核心 — 2026-09-24
 
 使用者核准啟動 Phase 5，並核准 D-04 全部三項：完全無有效分數時，平均／總分為 NULL 且不排名；實際 0 分有效。科目比序有數值優先於缺值，雙缺值續比。一般統計納入不排名但有分數者，排名統計只含合格且有分數者；原校成績另列。驗證及限制見 [Phase 5 紀錄](docs/PHASE_5.md)。本次不是正式 Release 或 Sites 部署。

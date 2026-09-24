@@ -94,6 +94,39 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 
 此服務不是 HTTP route，也沒有儲存或發布結果。未來發布交易須再次驗證權限、來源版本與學籍 revision，原子保存計算結果及統計快照；不得把新鮮度檢查當成資料庫寫入鎖。既有草稿與公開路由不會自動呼叫此服務。完整測試與限制見 [Phase 5 紀錄](../docs/PHASE_5.md)。
 
+## Phase 6 匯入與回復 API
+
+成績匯入目標為 `{ kind: "SCORES", examId, classId, examType, subjects }`；七年級新生為 `{ kind: "NEW_STUDENTS", academicTermId, classId }`。一次檔案限同一目標班級與評量分類，XLSX 每科一張 sheet，最多 10 張。跨班檔案必須分開建立 Job；新生檔使用一張 sheet。成績匯入僅操作已有名單確認的參與紀錄，不替評量補建名單。
+
+| 方法與路徑                                    | 用途                                                                                                                              |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| POST /api/admin/imports/template              | JSON `{ target }`；下載文字儲存格 XLSX 範本                                                                                       |
+| POST /api/admin/imports                       | 原始檔案位元組，Content-Type 為 application/octet-stream；X-Import-Format 為 csv 或 xlsx，X-Import-Target 為目標 JSON；回傳 jobId |
+| GET /api/admin/imports/[id]                   | Job 狀態、目標、預覽版本及錯誤                                                                                                    |
+| POST /api/admin/imports/[id]/preview          | JSON `{ columns? }`；解析、識別、驗證及預覽。columns 可將範本欄名映射到檔案欄名                                                   |
+| POST /api/admin/imports/[id]/commit           | JSON `{ previewVersion, confirmed: true }`；重驗權限與來源後整批提交                                                              |
+| GET /api/admin/imports/[id]/errors            | 僅含列序與錯誤碼的 CSV，不回顯姓名、身分證、原始列或 SQL                                                                          |
+| POST /api/admin/imports/[id]/rollback/preview | JSON `{}`；列示可回復項目或衝突及版本差異                                                                                         |
+| POST /api/admin/imports/[id]/rollback/confirm | JSON `{ previewVersion, confirmed: true }`；在期限內整批回復                                                                      |
+
+所有入口驗證應用 Session；Job 限建立者且必須仍具有目前 Permission／Scope，下載亦相同。寫入須同源 Origin；回應 no-store。表單 UI 尚未建立，不代表能從公開頁面上傳。
+
+上傳遵守 [§73.4](../PROJECT_SPEC.md#spec-73-4)：5 MiB、5,000 筆資料列、每列 30 欄；XLSX 展開總量 25 MiB／1,000 ZIP 項目，實際串流展開量與宣告大小都檢查。拒絕公式、巨集、外部連結、加密檔及 .xls；目前也拒絕隱藏 sheet、合併儲存格及非支援儲存格型別。CSV 使用 UTF-8（可含 BOM），保留前導零與原始文字；日期填 YYYY-MM-DD，不推測 Excel 日期序號或已遺失的識別碼前導零。
+
+成績欄位為學年度、學期、評量次序、評量分類、班級、姓名、座號、學號、身分證字號、科目、分數、成績來源及原校名稱。前四欄可省略，由 Job 目標提供；若有值則必須一致。成績來源空白視為 LOCAL，原校資料填 EXTERNAL_TRANSFER 並核對既有原校名稱；不混入本校排名。新生欄位為姓名、生日、班級、座號、學號、身分證字號、生效日期。範本全部使用文字儲存格。
+
+同一建立者曾成功提交相同內容至同一目標時，Preview 回傳 duplicateOf；仍需查看新預覽並明確 Confirm 才會再次寫入。相同 Job 的確認重送只回傳既有結果。錯誤不部分提交；來源異動必須重新預覽。
+
+30 天從 committed_at 起算，滿 30 天失效。Rollback 不覆蓋後續版本；發布、鎖定、封存、轉出等受保護狀態會阻擋。還原首次新增成績時保存為 UNENTERED／NOT_HELD，保留 History 的外鍵及版本。新生回復採學籍 voided 與學生 Soft Delete，保留加密識別及稽核；同一識別資料的再次使用須循後續 Restore 流程，不自動 Purge。
+
+原檔僅保存在私有 FILES binding 的隨機物件 key；不提供公開網址、不以使用者檔名作 key。Job／Items、成績／學籍、History／Audit 於同一 D1 batch 提交。D1／R2 跨儲存上傳失敗保留 FAILED Job，可重新上傳建立新 Job；不會寫入成績。原檔清理與 Purge 尚未開放。
+
+新增兩個鎖定的小型解析依賴：[fflate 0.8.3](https://github.com/101arrowz/fflate) 與 [fast-xml-parser 5.11.1](https://github.com/NaturalIntelligence/fast-xml-parser)。ZIP 分批解壓並核對 CRC；XML 拒絕 DTD／自訂實體。沒有執行試算表公式或呼叫外部連結。
+
+身分金鑰仍使用既有 Secret 名稱：IDENTITY_ENCRYPTION_KEY 為含 version（正整數）、base64（32-byte 金鑰）的 JSON object；IDENTITY_HMAC_SECRET 為相同格式 object 的 JSON array，列出所有有效查重版本。兩類金鑰必須獨立，重複版本或格式錯誤時拒絕。不要把真實 Secret 放入範本、Job、文件或 Git。正式環境輪替沿用 [資料模型說明](../docs/DATABASE.md)。
+
+實際驗證及限制見 [Phase 6 紀錄](../docs/PHASE_6.md)。
+
 ## 部署邊界
 
 目前 Sites 未發布。任何 Sites deployment 都是 Production，必須另有「確認正式部署」授權；不得把 `npm start` 的本機測試結果當成雲端部署驗證。

@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 5 平均與排名核心已建立。** 截至 2026-09-24，D-04 已定案；精確平均／總分、班級／全年段排名、共同名次與具 Scope 及來源版本驗證的內部計算服務已實作，驗證見 Phase 5 紀錄。OAuth Client 與 Sites callback 實測依使用者指示暫緩；沒有真實學生資料或 Sites Production 部署。計算結果尚未發布，發布交易與公開／管理 UI 仍按後續 Phase 進行。
+**Phase 6 匯入核心已建立。** 截至 2026-09-25，CSV／XLSX、成績及七年級新生預覽、整批原子提交與 30 天 Rollback 已實作，驗證見 [Phase 6 紀錄](docs/PHASE_6.md)。OAuth Client 與 Sites callback 實測依使用者指示暫緩；沒有真實學生資料或 Sites Production 部署。發布交易與公開／管理 UI 仍按後續 Phase 進行。
 
 ## 文件入口
 
@@ -20,6 +20,7 @@
 | [Phase 3B 驗證紀錄](docs/PHASE_3B.md) | RBAC／Scope、管理員異動、Rebind／Recovery、5 分鐘時窗及併發驗證 |
 | [Phase 4 驗證紀錄](docs/PHASE_4.md) | 評量、科目設定、草稿成績、名單快照與原子提交驗證 |
 | [Phase 5 驗證紀錄](docs/PHASE_5.md) | 精確平均、五層比序、快照排名、統計母體與計算讀取邊界 |
+| [Phase 6 驗證紀錄](docs/PHASE_6.md) | CSV／XLSX、身分比對、原子提交與 30 天 Rollback |
 | [資料模型與 ER 圖](docs/DATABASE.md) | 資料表對照、migration、加密輪替與復原方式 |
 | [Sites 開發說明](site/README.md) | 安裝、預覽、建置、測試與環境設定 |
 | [待決策清單](PROJECT_SPEC.md#spec-72-2) | 尚未定案的業務選擇與確認關卡 |
@@ -66,7 +67,7 @@ npm run dev
 
 Windows PowerShell 可使用 `npm.cmd`。預覽僅監聽本機；以終端顯示 URL 為準。建置使用 `npm run build`，建置後本機預覽使用 `npm start`。不會自動部署。
 
-驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；最新結果見 [Phase 5 紀錄](docs/PHASE_5.md)。
+驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；最新結果見 [Phase 6 紀錄](docs/PHASE_6.md)。
 
 環境欄位見 [site/.env.example](site/.env.example)，真實值只填入忽略提交的 `.env` 或 Sites Settings；本次預覽與測試不需要真實 Secret。migration 位於 `site/drizzle/`，不由應用程式啟動時自動套用，未套用至雲端。
 
@@ -88,7 +89,8 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 3B | 授權核心與管理 API 已建立；本機驗證及限制見 Phase 3B 紀錄 |
 | Phase 4 | 評量、名單快照、特殊狀態與草稿成績服務；驗證與限制見 Phase 4 紀錄 |
 | Phase 5 | 平均、總分、排名與統計母體核心；驗證與限制見 Phase 5 紀錄 |
-| Phase 6～19 | 尚未開始 |
+| Phase 6 | 匯入、預覽、原子提交與 Rollback 核心；驗證與限制見 Phase 6 紀錄 |
+| Phase 7～19 | 尚未開始 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
 
