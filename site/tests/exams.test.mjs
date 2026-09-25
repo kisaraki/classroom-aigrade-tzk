@@ -981,8 +981,8 @@ test("Phase 4 migration: upgrade Phase 3B without changing its scores, snapshots
     parts: await all(db, "SELECT * FROM exam_participations ORDER BY id"),
     sessions: await all(db, "SELECT * FROM admin_sessions ORDER BY id"),
   };
-  assert.equal((await migrationPreflight(db)).pending, 1);
-  assert.equal((await migrateLocalDatabase(db)).applied, 8);
+  assert.equal((await migrationPreflight(db)).pending, 2);
+  assert.equal((await migrateLocalDatabase(db)).applied, 9);
   assert.equal((await migrateLocalDatabase(db)).pending, 0);
   assert.deepEqual(
     await all(db, "SELECT * FROM score_items ORDER BY id"),

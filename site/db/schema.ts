@@ -650,7 +650,7 @@ export const systemSettings = sqliteTable(
   ],
 );
 
-// Publication policy is deferred to D-08; immutable versions have no release-state enum.
+// D-08 release components and complete snapshots live in publication_snapshots.
 export const examResultVersions = sqliteTable(
   "exam_result_versions",
   {
@@ -1173,4 +1173,41 @@ export const examOperations = sqliteTable(
       sql`${t.kind} IN ('CREATE_EXAM','SCHEDULE','SUBJECT','ROSTER','EXTERNAL','SCORES')`,
     ),
   ],
+);
+
+export const publicationPreviews = sqliteTable(
+  "publication_previews",
+  {
+    id: id(),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => adminUsers.id),
+    examId: text("exam_id")
+      .notNull()
+      .references(() => exams.id),
+    sourceVersion: integer("source_version").notNull(),
+    academicRevision: integer("academic_revision").notNull(),
+    payloadJson: text("payload_json").notNull(),
+    resultVersionId: text("result_version_id").references(
+      () => examResultVersions.id,
+    ),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check("publication_preview_payload", json(t.payloadJson)),
+    check("publication_preview_version", positiveVersion(t.sourceVersion)),
+    index("publication_preview_actor").on(t.actorId, t.createdAt),
+  ],
+);
+
+export const publicationSnapshots = sqliteTable(
+  "publication_snapshots",
+  {
+    resultVersionId: text("result_version_id")
+      .primaryKey()
+      .notNull()
+      .references(() => examResultVersions.id),
+    snapshotJson: text("snapshot_json").notNull(),
+  },
+  (t) => [check("publication_snapshot_json", json(t.snapshotJson))],
 );

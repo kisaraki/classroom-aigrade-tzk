@@ -792,7 +792,7 @@ test("Phase 3B migration upgrades Phase 3A in place and preserves outstanding OA
     ),
     /INVALID_OAUTH_STATE_PURPOSE/,
   );
-  assert.equal((await migrationPreflight(db)).applied, 8);
+  assert.equal((await migrationPreflight(db)).applied, 9);
   assert.equal(
     (
       await one(

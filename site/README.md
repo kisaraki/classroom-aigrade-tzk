@@ -88,7 +88,7 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 
 `lib/domain/averages.ts` 使用百分之一分整數與 BigInt 中間運算，單次四捨五入。`lib/domain/ranking.ts` 的 `calculateExam` 接受同一評量版本、科目設定、當次參與／排名資格快照與開始日在籍快照，回傳檢測、段考、定評平均、總分、科目總分及班級／全年段競賽排名；`calculateSemesterAverage` 直接合計同學期同來源的原始有效分數。
 
-`PROVISIONAL` 只計 QUIZ，`FINAL` 計 QUIZ＋MIDTERM；這是計算範圍，不能當成發布成功。D-08 的合法發布轉換、持久結果版本與公開可見性由 Phase 7 實作。原校資料分開回傳；本校 cohort 分開列示在籍、參與、合格、實際排名人數及各指標有效學生數／分數筆數／最高平均，未新增公開統計 UI。
+未指定 components 的舊內部預覽介面中，`PROVISIONAL` 只計 QUIZ，`FINAL` 計 QUIZ＋MIDTERM。Phase 7 發布明確傳入已發布 components，故支援 MIDTERM 先發布；只有兩分類皆發布才為 FINAL。原校資料分開回傳；本校 cohort 分開列示在籍、參與、合格、實際排名人數及各指標有效學生數／分數筆數／最高平均，未新增公開統計 UI。
 
 `lib/server/exams/ranking-service.ts` 提供內部唯讀 `RankingService.calculate(session, examId, { classId } | { grade }, mode)`，以實際 Session、score.read、全科 Scope 及評量日期授權。D1 batch 讀取一致資料，再重驗授權、exam.version 與 academic_state.revision；班級模式不回傳全年段名次／其他班資料。來源變更回報 `CALCULATION_SOURCE_CHANGED`，呼叫者須重新計算。單科權限不能讀全科排名。
 
@@ -126,6 +126,20 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 身分金鑰仍使用既有 Secret 名稱：IDENTITY_ENCRYPTION_KEY 為含 version（正整數）、base64（32-byte 金鑰）的 JSON object；IDENTITY_HMAC_SECRET 為相同格式 object 的 JSON array，列出所有有效查重版本。兩類金鑰必須獨立，重複版本或格式錯誤時拒絕。不要把真實 Secret 放入範本、Job、文件或 Git。正式環境輪替沿用 [資料模型說明](../docs/DATABASE.md)。
 
 實際驗證及限制見 [Phase 6 紀錄](../docs/PHASE_6.md)。
+
+## Phase 7 發布與修改 API
+
+全部為管理端 API，Cookie Session、Permission／Scope、no-store；寫入要求同源 Origin 與 application/json，body 上限 1 MiB。
+
+| 方法／路徑                                          | 輸入及用途                                                                                                                                                                    |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST `/api/admin/exams/[id]/publication/preview`    | 發布：`{kind:"PUBLISH",component:"QUIZ"或"MIDTERM",expectedVersion}`；修改：`{kind:"EDIT",reason,expectedVersion,scores:[{participationId,settingId,expectedVersion,value}]}` |
+| POST `/api/admin/exams/[id]/publication/confirm`    | `{previewId,confirmed:true}`；來源版本改變須重新預覽，重送不重複提交                                                                                                          |
+| GET `/api/admin/exams/[id]/publication?classId=...` | 只讀取已提交的班級結果，不回傳其他班級或全年段個人名次；尚無版本則 published=false                                                                                            |
+
+發布須全校 score.write；修改逐列驗證班級／科目權限。兩者皆要求 5 分鐘內 Google Recent Authentication。部分發布後未發布分類的後續填分也走 EDIT；其分數不進入公開快照。編輯一律保存原因及 History，在同一交易內解鎖、重算、保存完整版本與 AI 請求、重新鎖定。歷史年度僅 super_admin 可依正式修改流程處理，封存評量拒絕。
+
+`regenerationRequest(jobId)` 僅供 Phase 12 內部消費契約，回傳版本／audience，不呼叫 AI，亦不能取代消費者完成時的原子版本及學生狀態檢查。詳見 [Phase 7 紀錄](../docs/PHASE_7.md)。
 
 ## 部署邊界
 

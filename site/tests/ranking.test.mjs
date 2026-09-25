@@ -327,3 +327,35 @@ test("Phase 5 integrity: reject duplicates, invalid subjects/origins and malform
   calculateExam(base);
   assert.deepEqual(base, frozen);
 });
+
+test("Phase 7 D-08 components select midterm independently in exam and semester calculation", () => {
+  const value = input(
+    [
+      participant("fictional", [
+        mark("CHINESE", 0),
+        mark("CHINESE", 80, "MIDTERM"),
+      ]),
+    ],
+    { mode: "PROVISIONAL", components: ["MIDTERM"] },
+  );
+  assert.equal(calculateExam(value).local[0].exam.averageHundredths, 8000);
+  assert.equal(calculateExam(value).local[0].quiz.averageHundredths, null);
+  assert.equal(
+    calculateSemesterAverage([value], "fictional", "LOCAL").averageHundredths,
+    8000,
+  );
+});
+
+test("Phase 7 D-08 rejects inconsistent explicit final/provisional component sets", () => {
+  for (const extra of [
+    { mode: "FINAL", components: ["QUIZ"] },
+    { mode: "PROVISIONAL", components: ["QUIZ", "MIDTERM"] },
+    { mode: "PROVISIONAL", components: [] },
+    { mode: "PROVISIONAL", components: ["QUIZ", "QUIZ"] },
+    { mode: "PROVISIONAL", components: ["OTHER"] },
+  ])
+    assert.throws(
+      () => calculateExam(input([], extra)),
+      /INVALID_CALCULATION_INPUT/,
+    );
+});

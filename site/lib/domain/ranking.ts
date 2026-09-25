@@ -1,7 +1,7 @@
 import { averageScores, type AverageScore } from "./averages.ts";
 import { SUBJECT_SETTINGS, type Subject, type ExamType } from "./scores.ts";
 
-export const CALCULATION_VERSION = "phase5-v1";
+export const CALCULATION_VERSION = "phase7-v1";
 export type CalculationMode = "PROVISIONAL" | "FINAL";
 export type ScoreOrigin = "LOCAL" | "EXTERNAL_TRANSFER";
 export type CalculationScore = AverageScore & {
@@ -23,6 +23,8 @@ export type ExamCalculationInput = {
   academicYearId: string;
   sourceVersion: number;
   mode: CalculationMode;
+  /** D-08: explicit published components; omission preserves the Phase 5 preview API. */
+  components?: readonly ExamType[];
   settings: readonly { examType: ExamType; subject: Subject; held: boolean }[];
   /** Caller supplies the enrollment snapshot at the assessment start, never today's roster. */
   enrollmentSnapshot: readonly {
@@ -60,6 +62,15 @@ const subjects = SUBJECT_SETTINGS.filter((s) => s.examType === "MIDTERM").map(
 );
 
 function validate(input: ExamCalculationInput) {
+  if (
+    input.components !== undefined &&
+    (!Array.isArray(input.components) ||
+      !input.components.length ||
+      new Set(input.components).size !== input.components.length ||
+      input.components.some((v) => v !== "QUIZ" && v !== "MIDTERM") ||
+      (input.mode === "FINAL") !== (input.components.length === 2))
+  )
+    invalid();
   if (
     !input ||
     !isId(input.examId) ||
@@ -138,14 +149,23 @@ function validate(input: ExamCalculationInput) {
   return classGrades;
 }
 
-function selected(p: CalculationParticipant, mode: CalculationMode) {
-  return p.scores.filter((s) => mode === "FINAL" || s.examType === "QUIZ");
+function selected(
+  p: CalculationParticipant,
+  mode: CalculationMode,
+  components?: readonly ExamType[],
+) {
+  return p.scores.filter((s) =>
+    components
+      ? components.includes(s.examType)
+      : mode === "FINAL" || s.examType === "QUIZ",
+  );
 }
 function summarize(
   p: CalculationParticipant,
   mode: CalculationMode,
+  components?: readonly ExamType[],
 ): ParticipantResult {
-  const scores = selected(p, mode);
+  const scores = selected(p, mode, components);
   return {
     participationId: p.id,
     studentId: p.studentId,
@@ -236,7 +256,9 @@ function cohort(rows: ParticipantResult[], enrollmentCount: number) {
 /** Pure calculation over one version of one exam. No publication or authorization is implied. */
 export function calculateExam(input: ExamCalculationInput) {
   const classGrades = validate(input);
-  const summaries = input.participants.map((p) => summarize(p, input.mode));
+  const summaries = input.participants.map((p) =>
+    summarize(p, input.mode, input.components),
+  );
   const local = summaries.filter((p) => p.origin === "LOCAL");
   const external = summaries.filter((p) => p.origin === "EXTERNAL_TRANSFER");
   const classes = [...classGrades.entries()]
@@ -303,7 +325,7 @@ export function calculateSemesterAverage(
     ids.add(exam.examId);
     for (const p of exam.participants)
       if (p.studentId === studentId && p.origin === origin)
-        scores.push(...selected(p, exam.mode));
+        scores.push(...selected(p, exam.mode, exam.components));
   }
   return averageScores(scores);
 }

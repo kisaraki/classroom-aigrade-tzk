@@ -57,6 +57,13 @@
       "when": 1790203916381,
       "tag": "0007_phase_04_exam_commands",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790327119376,
+      "tag": "0008_phase_07_publication",
+      "breakpoints": true
     }
   ]
 }
