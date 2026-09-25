@@ -898,10 +898,15 @@ test("Phase 2 upgrades a populated Phase 1 database without rewriting historical
     "score_items",
   ])
     before[table] = await all(db, `SELECT * FROM ${table} ORDER BY id`);
-  assert.equal((await migrationPreflight(db)).pending, 5);
+  assert.equal((await migrationPreflight(db)).pending, 6);
   await migrateLocalDatabase(db);
   for (const [table, rows] of Object.entries(before))
-    assert.deepEqual(await all(db, `SELECT * FROM ${table} ORDER BY id`), rows);
+    assert.deepEqual(
+      await all(db, `SELECT * FROM ${table} ORDER BY id`),
+      table === "students"
+        ? rows.map((row) => ({ ...row, archived_at: null }))
+        : rows,
+    );
   assert.equal(
     (await one(db, "SELECT current_year_id FROM academic_state"))
       .current_year_id,
@@ -1023,7 +1028,7 @@ test("Phase 2 transfer-out and mistaken-transfer recovery", async (t) => {
     },
   );
   await t.test(
-    "existing retention events are blocked pending D-05; future scheduling is not silently immediate",
+    "untracked retention promises are not shortened; future scheduling is not silently immediate",
     async () => {
       await rejects(
         f.service.previewTransferOut(ids[0], "2031-01-01"),

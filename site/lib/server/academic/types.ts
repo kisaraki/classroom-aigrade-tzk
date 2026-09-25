@@ -63,7 +63,8 @@ export type Table =
   | "classes"
   | "students"
   | "student_enrollments"
-  | "student_identity_lookup_hashes";
+  | "student_identity_lookup_hashes"
+  | "retention_events";
 export type Change = { table: Table; key: Row; before: Row | null; after: Row };
 export type Plan = {
   kind: AcademicKind;

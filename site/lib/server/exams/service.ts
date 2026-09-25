@@ -458,7 +458,7 @@ export class ExamService {
     }
     const rows = (
       await this.sql(
-        "SELECT e.id AS enrollment_id,e.student_id,e.class_id,e.seat_number,c.code,c.grade,s.ranking_eligible_default,p.ranking_eligible AS term_override FROM student_enrollments e JOIN students s ON s.id=e.student_id JOIN classes c ON c.id=e.class_id LEFT JOIN student_term_ranking_policies p ON p.student_id=e.student_id AND p.academic_term_id=e.academic_term_id WHERE e.academic_term_id=? AND e.class_id=? AND e.status='valid' AND e.effective_from<=? AND (e.effective_to IS NULL OR e.effective_to>?) AND s.status='active' AND s.deleted_at IS NULL AND c.archived_at IS NULL AND NOT EXISTS (SELECT 1 FROM exam_participations x WHERE x.exam_id=? AND x.student_id=e.student_id AND x.origin='LOCAL') ORDER BY e.seat_number,e.student_id",
+        "SELECT e.id AS enrollment_id,e.student_id,e.class_id,e.seat_number,c.code,c.grade,s.ranking_eligible_default,p.ranking_eligible AS term_override FROM student_enrollments e JOIN students s ON s.id=e.student_id JOIN classes c ON c.id=e.class_id LEFT JOIN student_term_ranking_policies p ON p.student_id=e.student_id AND p.academic_term_id=e.academic_term_id WHERE e.academic_term_id=? AND e.class_id=? AND e.status='valid' AND e.effective_from<=? AND (e.effective_to IS NULL OR e.effective_to>?) AND s.status='active' AND s.deleted_at IS NULL AND s.archived_at IS NULL AND c.archived_at IS NULL AND NOT EXISTS (SELECT 1 FROM exam_participations x WHERE x.exam_id=? AND x.student_id=e.student_id AND x.origin='LOCAL') ORDER BY e.seat_number,e.student_id",
         exam.academic_term_id,
         classId,
         exam.starts_on,
@@ -575,7 +575,7 @@ export class ExamService {
     const today = taipeiBusinessDate(this.now());
     const rows = (
       await this.sql(
-        "SELECT e.class_id,e.academic_term_id FROM student_enrollments e JOIN students s ON s.id=e.student_id JOIN classes c ON c.id=e.class_id WHERE e.student_id=? AND e.status='valid' AND e.effective_from<=? AND (e.effective_to IS NULL OR e.effective_to>?) AND s.status='active' AND s.deleted_at IS NULL AND c.archived_at IS NULL",
+        "SELECT e.class_id,e.academic_term_id FROM student_enrollments e JOIN students s ON s.id=e.student_id JOIN classes c ON c.id=e.class_id WHERE e.student_id=? AND e.status='valid' AND e.effective_from<=? AND (e.effective_to IS NULL OR e.effective_to>?) AND s.status='active' AND s.deleted_at IS NULL AND s.archived_at IS NULL AND c.archived_at IS NULL",
         studentId,
         today,
         today,
@@ -734,7 +734,7 @@ export class ExamService {
           // Transfers/soft deletion stop all new draft writes, including edits of existing items.
           if (
             !(await this.sql(
-              "SELECT id FROM students WHERE id=? AND status='active' AND deleted_at IS NULL",
+              "SELECT id FROM students WHERE id=? AND status='active' AND deleted_at IS NULL AND archived_at IS NULL",
               part.student_id,
             ).first())
           )

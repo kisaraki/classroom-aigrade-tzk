@@ -116,6 +116,7 @@ export const students = sqliteTable(
     version: version(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
+    archivedAt: integer("archived_at"),
   },
   (t) => [
     index("student_public_lookup").on(t.name, t.birthDate),
@@ -1210,4 +1211,67 @@ export const publicationSnapshots = sqliteTable(
     snapshotJson: text("snapshot_json").notNull(),
   },
   (t) => [check("publication_snapshot_json", json(t.snapshotJson))],
+);
+
+export const retentionEvents = sqliteTable(
+  "retention_events",
+  {
+    id: id(),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => students.id),
+    kind: text("kind").notNull(),
+    effectiveOn: text("effective_on").notNull(),
+    publicUntil: text("public_until").notNull(),
+    retentionUntil: text("retention_until").notNull(),
+    actorId: text("actor_id").references(() => adminUsers.id),
+    reason: text("reason").notNull(),
+    revokedAt: integer("revoked_at"),
+    version: version(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("retention_student").on(t.studentId),
+    check(
+      "retention_event_dates",
+      sql`${date(t.effectiveOn)} AND ${date(t.publicUntil)} AND ${date(t.retentionUntil)} AND ${t.publicUntil} <= ${t.retentionUntil}`,
+    ),
+    check(
+      "retention_event_kind",
+      sql`${t.kind} IN ('TRANSFER_OUT','GRADUATION','EXTENSION','LEGACY')`,
+    ),
+    check("retention_event_version", positiveVersion(t.version)),
+  ],
+);
+
+export const archiveState = sqliteTable(
+  "archive_state",
+  {
+    id: integer("id").primaryKey(),
+    revision: integer("revision").notNull().default(0),
+  },
+  (t) => [
+    check("archive_state_singleton", sql`${t.id}=1 AND ${t.revision}>=0`),
+  ],
+);
+export const archivePreviews = sqliteTable(
+  "archive_previews",
+  {
+    id: id(),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => adminUsers.id),
+    academicRevision: integer("academic_revision").notNull(),
+    archiveRevision: integer("archive_revision").notNull(),
+    payloadJson: text("payload_json").notNull(),
+    resultJson: text("result_json"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check(
+      "archive_preview_json",
+      sql`${json(t.payloadJson)} AND ${json(t.resultJson)}`,
+    ),
+    index("archive_preview_actor").on(t.actorId, t.createdAt),
+  ],
 );

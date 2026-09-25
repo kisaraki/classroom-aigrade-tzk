@@ -528,6 +528,7 @@ export class ImportService {
               student.name !== v["姓名"] ||
               student.student_number !== v["學號"] ||
               student.status !== "active" ||
+              student.archived_at !== null ||
               student.deleted_at !== null
             )
               fail("IMPORT_IDENTITY_MISMATCH");
@@ -831,13 +832,14 @@ export class ImportService {
         issues.push({ row: 0, code: "IMPORT_ROLLBACK_SOURCE_CONFLICT" });
       for (const item of items) {
         const current = await this.sql(
-          "SELECT s.version,p.status,p.deleted_at FROM score_items s JOIN students p ON p.id=s.student_id WHERE s.id=?",
+          "SELECT s.version,p.status,p.deleted_at,p.archived_at FROM score_items s JOIN students p ON p.id=s.student_id WHERE s.id=?",
           item.entity_id,
         ).first<Row>();
         if (
           !current ||
           current.version !== item.committed_version ||
           current.status !== "active" ||
+          current.archived_at !== null ||
           current.deleted_at !== null
         )
           issues.push({
@@ -851,7 +853,7 @@ export class ImportService {
       for (const item of items) {
         const after = JSON.parse(String(item.after_json));
         const current = await this.sql(
-          "SELECT s.version,s.status,s.deleted_at,e.version AS enrollment_version,e.status AS enrollment_status,(SELECT count(*) FROM student_enrollments n WHERE n.student_id=s.id) AS enrollment_count FROM students s JOIN student_enrollments e ON e.student_id=s.id WHERE s.id=? AND e.id=?",
+          "SELECT s.version,s.status,s.deleted_at,s.archived_at,e.version AS enrollment_version,e.status AS enrollment_status,(SELECT count(*) FROM student_enrollments n WHERE n.student_id=s.id) AS enrollment_count FROM students s JOIN student_enrollments e ON e.student_id=s.id WHERE s.id=? AND e.id=?",
           item.student_id,
           after.enrollmentId,
         ).first<Row>();
@@ -859,6 +861,7 @@ export class ImportService {
           !current ||
           current.version !== item.committed_version ||
           current.status !== "active" ||
+          current.archived_at !== null ||
           current.deleted_at !== null ||
           current.enrollment_version !== 1 ||
           current.enrollment_status !== "valid" ||

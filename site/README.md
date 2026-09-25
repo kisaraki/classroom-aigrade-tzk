@@ -39,7 +39,7 @@ Windows PowerShell 可使用 `npm.cmd`。若 npm shim 找不到自身模組，�
 
 [AcademicService](lib/server/academic/service.ts) 提供學年度、班級、新生／轉入、學籍、轉班／座號、升班、轉出、撤銷與歷史查詢。所有業務寫入先取得 Preview，再明確 Confirm；來源 revision、actor、Session 與 Scope 會重驗。授權 adapter 預設拒絕，目前只有隔離測試，尚未接管理路由；後續 API 串接時必須使用伺服器授權並在 Confirm 交易重驗，不得把 request body 直接當作授權結果。
 
-詳細輸入、錯誤與限制見 [Phase 2 紀錄](../docs/PHASE_2.md)。Excel／CSV 上傳與完整 Import 流程留待 Phase 6，沒有新增貼上表格介面。
+詳細輸入、錯誤與限制見 [Phase 2 紀錄](../docs/PHASE_2.md)。Excel／CSV 上傳與完整 Import 流程見下方 Phase 6，沒有新增貼上表格介面。
 
 ## 管理員認證
 
@@ -80,7 +80,7 @@ operationId 使用 8～128 個英數／點／底線／連字號，相同 actor �
 
 value 接受 0～100、最多兩位小數（建議十進位字串），或 A／B／C／D／N；null／空字串是 UNENTERED。不接受負數、指數字串、逗號、任意狀態或客戶端傳入 ranking／average／snapshot。數字轉百分之一整數保存，回應的 scoreValue 是整數，displayValue 是兩位小數字串。未寫入的本校不舉行科目顯示 NOT_HELD；其他未寫入科目顯示 UNENTERED，兩者版本都是 0。
 
-評量／科目設定影響全校，需全校 score.write；班級名單需整班範圍，任課教師只可寫入自己班級且自己科目的成績。原校成績授權依學生目前有效學籍，無本校班級快照。已轉出、軟刪除或班級封存不接受新草稿寫入。歷史、發布、鎖定及封存評量不可走草稿入口；Phase 7 才處理解鎖、原因、重算與重新鎖定。
+評量／科目設定影響全校，需全校 score.write；班級名單需整班範圍，任課教師只可寫入自己班級且自己科目的成績。原校成績授權依學生目前有效學籍，無本校班級快照。已轉出、軟刪除或班級封存不接受新草稿寫入。歷史、發布、鎖定及封存評量不可走草稿入口；解鎖、原因、重算與重新鎖定見下方 Phase 7。
 
 Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google／Sites 登入依 D-09 暫緩。草稿 API 證據見 [Phase 4 紀錄](../docs/PHASE_4.md)。
 
@@ -140,6 +140,24 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 發布須全校 score.write；修改逐列驗證班級／科目權限。兩者皆要求 5 分鐘內 Google Recent Authentication。部分發布後未發布分類的後續填分也走 EDIT；其分數不進入公開快照。編輯一律保存原因及 History，在同一交易內解鎖、重算、保存完整版本與 AI 請求、重新鎖定。歷史年度僅 super_admin 可依正式修改流程處理，封存評量拒絕。
 
 `regenerationRequest(jobId)` 僅供 Phase 12 內部消費契約，回傳版本／audience，不呼叫 AI，亦不能取代消費者完成時的原子版本及學生狀態檢查。詳見 [Phase 7 紀錄](../docs/PHASE_7.md)。
+
+## Phase 8 封存、畢業與保存期限 API
+
+| 方法／路徑                         | 用途                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| POST `/api/admin/archives/preview` | 建立以下動作的預覽與 Preflight；回傳 previewId、警告及必要前後值                            |
+| POST `/api/admin/archives/confirm` | `{previewId,confirmed:true}`；重驗授權、Recent Authentication、來源與期限，原子提交且可重送 |
+| GET `/api/admin/archives/[id]`     | 重新驗證整份 Manifest 的 archive.read Scope 後取得批次紀錄                                  |
+
+所有寫入使用同源 Origin、Cookie Session、application/json、1 MiB body 上限及 no-store。action 支援 ARCHIVE、GRADUATE、EXTEND、READMIT、UNDO、RESTORE：
+
+- ARCHIVE：`{action,target:{academicTermId,onDate,studentId或classId或grade},reason,force}`。
+- GRADUATE：同上，但 target 僅指定 grade:9。日期不可在未來，逐列保留歷史學籍快照。
+- EXTEND：target 指定 studentId，加上 ISO 日期 until；只延長非 active 學生的既有期限，必要時同步延長保存。
+- READMIT：target 同時指定 studentId、目標 classId，加上 seatNumber。建立新學籍、保留舊期限事件並暫停套用截止日；需 archive.manage 與 academic.write。
+- UNDO／RESTORE：`{action,batchId,reason}`；前者限提交起未滿 30 天，後者不受快速 Undo 時窗限制，但皆不得覆蓋後續修改或已 Purge 項目。
+
+一般封存／畢業／延長／復原須 archive.manage 與 Scope，皆要求 5 分鐘內 Google Recent Authentication；歷史年度遵守既有 super_admin 限制。已封存項目不能重複封存，Restore 衝突需先釐清，不提供強制覆蓋。publicEligibility 是 Phase 13 對接用的內部期限 helper，不是公開查詢 API。詳見 [Phase 8 紀錄](../docs/PHASE_8.md)。
 
 ## 部署邊界
 

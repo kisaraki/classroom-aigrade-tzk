@@ -6,6 +6,10 @@ import {
 } from "../../domain/dates.ts";
 import { maskIdentity, sealIdentity, type IdentityKeys } from "../identity.ts";
 import {
+  retentionDeadlines,
+  type RetentionEvent,
+} from "../../domain/retention.ts";
+import {
   AcademicError,
   type AcademicDependencies,
   type AcademicKind,
@@ -66,6 +70,7 @@ const tables: Table[] = [
   "students",
   "student_enrollments",
   "student_identity_lookup_hashes",
+  "retention_events",
 ];
 const reversible: AcademicKind[] = [
   "ENROLLMENT",
@@ -125,7 +130,7 @@ export class AcademicService {
   }
   private async activeStudent(id: string) {
     return this.one(
-      "SELECT * FROM students WHERE id = ? AND status = 'active' AND deleted_at IS NULL",
+      "SELECT * FROM students WHERE id = ? AND status = 'active' AND deleted_at IS NULL AND archived_at IS NULL",
       string(id),
     );
   }
@@ -678,7 +683,7 @@ export class AcademicService {
     )
       fail("INVALID_PROMOTION_TERMS");
     const enrolled = await this.all(
-      "SELECT e.*, c.code, c.grade FROM student_enrollments e JOIN students s ON s.id = e.student_id JOIN classes c ON c.id = e.class_id WHERE e.academic_term_id = ? AND e.status = 'valid' AND s.status = 'active' AND s.deleted_at IS NULL AND e.effective_from < ? AND (e.effective_to IS NULL OR e.effective_to >= ?) ORDER BY c.code, e.seat_number, e.student_id",
+      "SELECT e.*, c.code, c.grade FROM student_enrollments e JOIN students s ON s.id = e.student_id JOIN classes c ON c.id = e.class_id WHERE e.academic_term_id = ? AND e.status = 'valid' AND s.status = 'active' AND s.deleted_at IS NULL AND s.archived_at IS NULL AND e.effective_from < ? AND (e.effective_to IS NULL OR e.effective_to >= ?) ORDER BY c.code, e.seat_number, e.student_id",
       source.id,
       source.ends_on,
       source.ends_on,
@@ -765,13 +770,6 @@ export class AcademicService {
       plan = newPlan("TRANSFER_OUT"),
       student = await this.activeStudent(studentId),
       on = date(effectiveOn);
-    if (
-      student.retention_until !== null ||
-      student.public_query_until !== null ||
-      student.graduated_on !== null ||
-      student.transferred_out_on !== null
-    )
-      fail("RETENTION_POLICY_REQUIRED");
     if (on > taipeiBusinessDate(this.now()))
       fail("FUTURE_TRANSFER_OUT_NOT_SUPPORTED");
     const enrollments = await this.all(
@@ -783,17 +781,49 @@ export class AcademicService {
       fail("NO_ACTIVE_ENROLLMENT");
     for (const old of enrollments) this.replacePrefix(plan, old, on);
     const until = addCalendarYears(on, 3);
+    const event = {
+      id: newId(),
+      student_id: String(student.id),
+      kind: "TRANSFER_OUT",
+      effective_on: on,
+      public_until: until,
+      retention_until: until,
+      actor_id: null,
+      reason: "Transfer out",
+      revoked_at: null,
+      version: 1,
+      created_at: this.now(),
+    };
+    this.add(plan, "retention_events", event);
+    const events = await this.all(
+      "SELECT * FROM retention_events WHERE student_id=?",
+      student.id,
+    );
+    const previous = retentionDeadlines(events as unknown as RetentionEvent[]);
+    if (
+      (student.retention_until !== null &&
+        (!previous.retentionUntil ||
+          student.retention_until > previous.retentionUntil)) ||
+      (student.public_query_until !== null &&
+        (!previous.publicUntil ||
+          student.public_query_until > previous.publicUntil))
+    )
+      fail("RETENTION_POLICY_REQUIRED");
+    const deadlines = retentionDeadlines([
+      ...events,
+      event,
+    ] as unknown as RetentionEvent[]);
     this.touchStudent(plan, student, {
       status: "transferred_out",
       transferred_out_on: on,
-      retention_until: until,
-      public_query_until: until,
+      retention_until: deadlines.retentionUntil,
+      public_query_until: deadlines.publicUntil,
     });
     plan.display.push({
       studentId: student.id,
       effectiveOn: on,
-      retentionUntil: until,
-      publicQueryUntil: until,
+      retentionUntil: deadlines.retentionUntil,
+      publicQueryUntil: deadlines.publicUntil,
     });
     return this.save(plan, base, options);
   }
@@ -821,13 +851,34 @@ export class AcademicService {
     const changes: Change[] = JSON.parse(String(original.changes_json));
     const plan = newPlan("UNDO");
     plan.undoOf = String(original.id);
+    // Phase 2 receipts predate event rows; the migration preserves that single old promise as LEGACY.
+    if (
+      original.kind === "TRANSFER_OUT" &&
+      !changes.some((c) => c.table === "retention_events")
+    ) {
+      for (const c of changes.filter((c) => c.table === "students")) {
+        for (const event of await this.all(
+          "SELECT * FROM retention_events WHERE student_id=? AND kind='LEGACY' AND effective_on=? AND revoked_at IS NULL",
+          c.key.id,
+          c.after.transferred_out_on,
+        ))
+          this.update(plan, "retention_events", event, {
+            revoked_at: this.now(),
+            version: Number(event.version) + 1,
+          });
+      }
+    }
     // Void inserted segments first, then restore original segments. Keep snapshot FK targets intact.
     const ordered = [
       ...changes.filter((c) => c.before === null),
       ...changes.filter((c) => c.before !== null),
     ];
     for (const change of ordered) {
-      if (change.table !== "students" && change.table !== "student_enrollments")
+      if (
+        change.table !== "students" &&
+        change.table !== "student_enrollments" &&
+        change.table !== "retention_events"
+      )
         fail("OPERATION_NOT_REVERSIBLE");
       const row = await this.one(
         `SELECT * FROM ${change.table} WHERE id = ?`,
@@ -837,7 +888,12 @@ export class AcademicService {
         Object.entries(change.after).some(([key, value]) => row[key] !== value)
       )
         fail("UNDO_VERSION_CONFLICT");
-      if (change.table === "student_enrollments") {
+      if (change.table === "retention_events") {
+        this.update(plan, "retention_events", row, {
+          revoked_at: this.now(),
+          version: Number(row.version) + 1,
+        });
+      } else if (change.table === "student_enrollments") {
         this.update(plan, change.table, row, {
           ...(change.before ?? { status: "voided" }),
           version: Number(row.version) + 1,
@@ -935,6 +991,9 @@ export class AcademicService {
       replayed: false,
     };
     // Creation profiles are needed only until commit; receipts contain IDs, and previews are cleared atomically.
+    for (const change of plan.changes)
+      if (change.table === "retention_events" && change.before === null)
+        change.after.actor_id = grant.adminId;
     const undoChanges = reversible.includes(plan.kind) ? plan.changes : [];
     const statements = [
       this.db

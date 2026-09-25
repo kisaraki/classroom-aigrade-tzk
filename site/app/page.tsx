@@ -1,13 +1,13 @@
 export default function Home() {
   return (
     <main className="preview-shell">
-      <p className="eyebrow">CLASSROOM AIGRADE · PHASE 7</p>
+      <p className="eyebrow">CLASSROOM AIGRADE · PHASE 8</p>
       <h1>
         學生成績與
         <br />
         AI 學習建議
       </h1>
-      <p className="intro">分開發布、成績修改與完整版本重算核心已建立。</p>
+      <p className="intro">封存、畢業、保存期限與安全復原核心已建立。</p>
       <section className="preview-card" aria-labelledby="preview-heading">
         <h2 id="preview-heading">目前進度</h2>
         <p>Google 登入實測依指示暫緩。家長查詢與管理介面尚未開放。</p>

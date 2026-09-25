@@ -4,7 +4,7 @@
 
 ## 模型入口
 
-- [Drizzle schema](../site/db/schema.ts)：39 張關聯表的欄位、外鍵、CHECK 與索引。
+- [Drizzle schema](../site/db/schema.ts)：42 張關聯表的欄位、外鍵、CHECK 與索引。
 - [核心 migration](../site/drizzle/0000_phase_01_core.sql)：建立關聯表及索引。
 - [跨列約束與 FTS migration](../site/drizzle/0001_phase_01_invariants.sql)：學籍、快照、管理員與版本約束，及 FTS 邏輯表 `ai_reference_chunks_fts`。FTS 內部 shadow tables 不另算業務表。
 - [Migration journal](../site/drizzle/meta/_journal.json)：Drizzle 的順序與時間戳；snapshot 記錄可生成的關聯 schema，FTS／trigger 保存在 custom migration。
@@ -12,7 +12,7 @@
 
 ## Phase 2 擴充
 
-Phase 2 擴充學籍命令表；目前含 Phase 7 共 39 張關聯表加 FTS5。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
+Phase 2 擴充學籍命令表；目前含 Phase 8 共 42 張關聯表加 FTS5。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
 
 ```mermaid
 erDiagram
@@ -127,7 +127,7 @@ erDiagram
 
 業務日期使用 Asia/Taipei 的 `YYYY-MM-DD`，期間是 `[開始日, 結束日)`。例如 10 月 1 日轉班，舊班區間到 10 月 1 日但不包含當日，新班從當日開始。`effective_to = NULL` 代表尚未關閉，建立後續學籍前需關閉既有區間。`voided` 表示撤銷的學籍紀錄，不參與目前區間衝突判斷；它仍保留舊評量的關聯。
 
-技術時間欄位使用非負整數 UTC Unix 毫秒。應用層應傳入精確毫秒；資料庫 `created_at` 預設值精度為秒再換算毫秒，不作事件排序的唯一依據。月份／年份使用曆法運算，月底缺少對應日則取目標月份末日；日期工具及測試涵蓋台北午夜、閏年和跨年。保存期限的具體延長／多事件政策仍由 D-05 決定，沒有啟用到期刪除工作。
+技術時間欄位使用非負整數 UTC Unix 毫秒。應用層應傳入精確毫秒；資料庫 `created_at` 預設值精度為秒再換算毫秒，不作事件排序的唯一依據。月份／年份使用曆法運算，月底缺少對應日則取目標月份末日；日期工具及測試涵蓋台北午夜、閏年和跨年。D-05 已核准以有效事件分別取兩期限最大值，公開延長必要時同步延長保存，沒有啟用到期刪除工作。
 
 ### 學籍與排名資格
 
@@ -202,4 +202,6 @@ Preflight 比對完整已套用 journal 前綴與 SHA-256、確認應存在的 s
 
 Phase 7 新增 [0008 publication migration](../site/drizzle/0008_phase_07_publication.sql)，共九份 migration。`publication_previews` 保存版本化預覽與成功結果連結；`publication_snapshots` 保存不可變完整發布內容及首次發布固定的統計母體。發布使用既有結果表、History、Audit、AI Jobs，全部同一 D1 batch；升級與復原限制見 [Phase 7 紀錄](PHASE_7.md)。
 
-D-01／D-03／D-04／D-07／D-08／D-10 已核准；D-11 日期、5 分鐘認證時窗及匯入門檻已定案。D-02、D-05／D-06／D-09 與 D-11 其餘閾值依 [待決策表](../PROJECT_SPEC.md#spec-72-2) 處理。匯入原子性及發布狀態機已實作；Purge 邊界與 AI 重試上限仍待後續 Phase；狀態／版本欄位提供 migration 擴充點。
+D-01／D-03／D-04／D-05／D-07／D-08／D-10 已核准；D-11 日期、5 分鐘認證時窗及匯入門檻已定案。D-02、D-06／D-09 與 D-11 其餘閾值依 [待決策表](../PROJECT_SPEC.md#spec-72-2) 處理。匯入原子性及發布狀態機已實作；Purge 邊界與 AI 重試上限仍待後續 Phase；狀態／版本欄位提供 migration 擴充點。
+
+Phase 8 新增 [0009 retention migration](../site/drizzle/0009_phase_08_retention.sql)，共十份 migration。students.archived_at 與身分／刪除分開；retention_events 保存 D-05 有效承諾及撤銷，archive_previews／archive_state 保護 Preflight 與原子提交。原有期限以 LEGACY 事件回填，未新增永久刪除。詳見 [Phase 8 紀錄](PHASE_8.md)。

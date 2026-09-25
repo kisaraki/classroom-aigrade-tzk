@@ -214,10 +214,14 @@ export class PublicationService {
           setting = settings.results.find((s) => s.id === item.settingId);
         if (!part || !setting) return fail("SCORE_TARGET_NOT_FOUND", 404);
         const student = await this.sql(
-          "SELECT deleted_at FROM students WHERE id=?",
+          "SELECT deleted_at,archived_at FROM students WHERE id=?",
           part.student_id,
         ).first<Row>();
-        if (!student || student.deleted_at !== null)
+        if (
+          !student ||
+          student.deleted_at !== null ||
+          student.archived_at !== null
+        )
           fail("STUDENT_UNAVAILABLE");
         const old =
           scores.results.find(
@@ -498,7 +502,7 @@ export class PublicationService {
       for (const audience of ["parent", "student"])
         writes.push(
           this.sql(
-            "INSERT INTO ai_jobs (id,student_id,exam_id,result_version_id,audience,dedupe_key,source_version,status,created_at,updated_at) SELECT ?,?,?,?,?,?,?,'pending',?,? WHERE EXISTS (SELECT 1 FROM students WHERE id=? AND status='active' AND deleted_at IS NULL)",
+            "INSERT INTO ai_jobs (id,student_id,exam_id,result_version_id,audience,dedupe_key,source_version,status,created_at,updated_at) SELECT ?,?,?,?,?,?,?,'pending',?,? WHERE EXISTS (SELECT 1 FROM students WHERE id=? AND status='active' AND deleted_at IS NULL AND archived_at IS NULL)",
             crypto.randomUUID(),
             student,
             e.id,
@@ -559,7 +563,7 @@ export class PublicationService {
   /** Internal consumer contract only. Phase 12 must repeat this check atomically before storing advice. */
   async regenerationRequest(jobId: string) {
     const job = await this.sql(
-      "SELECT j.* FROM ai_jobs j JOIN students s ON s.id=j.student_id WHERE j.id=? AND s.status='active' AND s.deleted_at IS NULL AND j.status IN ('pending','processing','failed') AND j.result_version_id=(SELECT id FROM exam_result_versions WHERE exam_id=j.exam_id AND published_at IS NOT NULL ORDER BY version DESC LIMIT 1)",
+      "SELECT j.* FROM ai_jobs j JOIN students s ON s.id=j.student_id WHERE j.id=? AND s.status='active' AND s.deleted_at IS NULL AND s.archived_at IS NULL AND j.status IN ('pending','processing','failed') AND j.result_version_id=(SELECT id FROM exam_result_versions WHERE exam_id=j.exam_id AND published_at IS NOT NULL ORDER BY version DESC LIMIT 1)",
       jobId,
     ).first<Row>();
     return job

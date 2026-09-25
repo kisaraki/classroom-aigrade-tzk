@@ -100,9 +100,9 @@ test("Phase 1: real migrations, fictional seed and database boundaries", async (
     await t.test(
       "empty preflight, all core tables/indexes/FKs, repeat migration and seed isolation",
       async () => {
-        assert.equal((await migrationPreflight(db)).pending, 9);
+        assert.equal((await migrationPreflight(db)).pending, 10);
         assert.deepEqual(await migrateLocalDatabase(db), {
-          applied: 9,
+          applied: 10,
           pending: 0,
           foreignKeys: "ok",
           integrity: "ok",
@@ -126,7 +126,7 @@ test("Phase 1: real migrations, fictional seed and database boundaries", async (
                 .first(),
             );
         }
-        assert.equal(Object.keys(schema).length, 39);
+        assert.equal(Object.keys(schema).length, 42);
         assert.ok(
           await db
             .prepare(
@@ -1165,7 +1165,7 @@ test("migration recovery: failed DDL batch is atomic, and replay from a fresh da
         )
         .bind(first.hash, first.folderMillis),
     ]);
-    assert.equal((await migrationPreflight(db)).pending, 8);
+    assert.equal((await migrationPreflight(db)).pending, 9);
     await insert(db, "admin_users", admin("recovery-admin")).run();
     await insert(db, "ai_reference_materials", {
       id: "existing-material",

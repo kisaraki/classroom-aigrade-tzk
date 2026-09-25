@@ -64,6 +64,13 @@
       "when": 1790327119376,
       "tag": "0008_phase_07_publication",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790328815862,
+      "tag": "0009_phase_08_retention",
+      "breakpoints": true
     }
   ]
 }

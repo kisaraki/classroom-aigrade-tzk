@@ -442,7 +442,7 @@ test("Phase 7 migration upgrades Phase 6, preserves scores and is replayable", a
   }
   await seedFictional(db, fictionalKeys());
   const before = await all(db, "SELECT * FROM score_items ORDER BY id");
-  assert.equal((await migrationPreflight(db)).pending, 1);
+  assert.equal((await migrationPreflight(db)).pending, 2);
   await migrateLocalDatabase(db);
   assert.deepEqual(
     await all(db, "SELECT * FROM score_items ORDER BY id"),
