@@ -1,6 +1,8 @@
 declare namespace Cloudflare {
   interface Env {
     DB?: D1Database;
+    OPENAI_API_KEY?: string;
+    GEMINI_API_KEY?: string;
     FILES?: R2Bucket;
     GOOGLE_OAUTH_CLIENT_ID?: string;
     GOOGLE_OAUTH_CLIENT_SECRET?: string;

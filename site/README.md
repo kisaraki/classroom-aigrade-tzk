@@ -1,6 +1,6 @@
 # Sites 應用程式
 
-此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；進度及限制見 [Phase 3B 驗證紀錄](../docs/PHASE_3B.md)。
+此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；進度及限制見 [Phase 11 驗證紀錄](../docs/PHASE_11.md)。
 
 ## 本機開發
 
@@ -185,3 +185,12 @@ Purge 目前僅透過 server-owned mock adapter 在隔離測試執行。runtime 
 目前 Sites 未發布。任何 Sites deployment 都是 Production，必須另有「確認正式部署」授權；不得把 `npm start` 的本機測試結果當成雲端部署驗證。
 
 Starter 原有第三方程式與授權檔保留；MIT 專案授權見 [LICENSE](../LICENSE)。
+
+## Phase 11 Provider 與設定 API
+
+- `GET /api/admin/ai/settings`：回傳 `{ version, configuration }`；尚未設定時 `version: 0`、`configuration: null`。
+- `POST /api/admin/ai/settings`：接受 `{ configuration: { provider, model }, expectedVersion, confirmed: true }`。provider 僅 `openai` 或 `gemini`；model 必須由管理員明確指定，不接受 URL、路徑或其他欄位。
+- 讀寫皆須目前學期的全校 `ai.manage`；POST 另驗證同源 Origin、JSON、4 KiB 本文與版本。切換為整批原子提交，衝突不覆蓋，Audit 只記錄版本與供應者。API 不讀寫 Secret。
+- `OPENAI_API_KEY`／`GEMINI_API_KEY` 由平台 Env／Secret 注入，僅相應 Adapter 讀取；未設定不影響 Google 登入或成績核心。不提供金鑰查詢、上傳或測試付費 API 的 HTTP 入口。
+- 內部 `configuredAIProvider()` 回傳設定版本與 Provider；後續 Job 必須先授權、清除個資、保存來源版本，完成時重驗版本。Adapter 本身不處理學生成績、RAG、工作排程或建議持久化。
+- 已核准限制與錯誤／取消行為見 [Phase 11 紀錄](../docs/PHASE_11.md) 及 [主規格 §29](../PROJECT_SPEC.md#spec-29)。

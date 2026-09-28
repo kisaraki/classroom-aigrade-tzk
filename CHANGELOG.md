@@ -2,6 +2,10 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 11 AI Provider Layer — 2026-09-29
+
+使用者於 2026-09-28 核准 Phase 11 與 §29 的 D-11 Provider 門檻。完成 OpenAI／Gemini Adapter、Secret 讀取、逾時／重試、輸出與安全錯誤檢查，以及全校 ai.manage 的原子設定切換。200 項完整回歸、型別、lint、格式及建置通過，見 [Phase 11 紀錄](docs/PHASE_11.md)。沿用既有 schema，沒有新增套件、付費 API 呼叫或正式部署。
+
 ## Phase 10 RAG 參考資料核心 — 2026-09-28
 
 使用者核准 Phase 10 及 D-11 RAG 門檻。新增 PDF／Markdown 私有上傳、文字解析、Unicode chunking、中文 FTS、metadata／有效期／封存與授權 Retrieval API；個資檢查、版本 guard、原子寫入、清理重試及 Workers 本機測試已建立。0011 migration 升級至 48 張關聯表、12 份 migration；184 項完整回歸通過，見 [Phase 10 紀錄](docs/PHASE_10.md)。測試固定兩個並行程序並加上逾時，避免本機 Workers 子程序無限等待。未執行正式 migration、Purge 或 Sites 部署。

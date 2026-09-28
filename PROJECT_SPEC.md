@@ -897,6 +897,10 @@ AIProvider
 
 SystemSettings 只保存 provider、model、prompt、RAG 設定；API Key 只從 Secret 讀取。
 
+2026-09-28 使用者核准 Phase 11 的 D-11 門檻：每次 API 嘗試逾時 30 秒，最多 3 次嘗試，整次呼叫總時限 100 秒；只重試網路錯誤、逾時、HTTP 429、500／502／503／504。退避為 1 秒、2 秒加少量隨機延遲，遵守 Retry-After，超出剩餘總時限即結束；不自動切換供應者，重試可能增加 API 用量。
+
+每次送出的文字輸入合計最多 32,000 個 Unicode 字元，輸出上限 4,096 tokens，回應本文最多 1 MiB。超限、拒答、不完整輸出或工具呼叫皆回傳安全錯誤，不作為成功建議。模型由管理員明確設定；Phase 11 使用 mock 測試，不呼叫付費 API。測試須涵蓋上述邊界、重試耗盡、取消、供應者切換及錯誤不得洩漏 Secret／輸入／供應者原始回應。
+
 ---
 
 <a id="spec-30"></a>
@@ -2481,6 +2485,8 @@ Phase 5 本機計算與授權讀取的驗證、交付邊界見 [PHASE_5.md](docs
 
 ## 58. Phase 11 — AI Provider Layer
 
+2026-09-28 使用者核准啟動本階段及 §29 的 D-11 門檻。實作與驗證狀態見 [Phase 11 紀錄](docs/PHASE_11.md)；僅 mock 與本機驗證，不代表正式部署或付費 API 平台已驗收。
+
 ### Codex 能力提示
 
 - Recommended Effort：`HIGH`
@@ -3112,7 +3118,7 @@ Codex 不得：
 | D-08 | **已核准（2026-09-25）**：任一分類先發布為 PROVISIONAL，兩者皆明確發布才為 FINAL | 僅計已發布分類；全部 NOT_HELD 仍須明確發布；缺分不阻擋且不視為 0。發布／修改重算失敗整筆不生效，保留上一完整公開版本；首次發布失敗不公開 | Phase 7 |
 | D-09 | Google OAuth／OIDC 的平台 callback／Cookie 相容性、Email 正規化與允許的 Google 帳號政策 | Google sub 作綁定識別鍵已定義；Email 用於授權比對，不自行去除點號或加號別名。確認 Google-only 登入不被平台額外認證門檻阻擋；不能以訪客可偽造的 Email 標頭授權。2026-09-23 使用者指示暫緩 OAuth 設定與登入實測，尚未通過 | Phase 0 保存文件／存取選項證據；Phase 3A 前補實測與驗證契約 |
 | D-10 | **已核准（2026-09-23）**：預設角色對各項操作的權限矩陣、多任教範圍組合，以及教師異動後歷史資料 Scope | 採最小權限 Role × Permission × Scope × 時間範圍矩陣；未授權預設拒絕。導師限自己的班級但可操作全科；任課教師限任教班級與任教科目；Scope 變更立即撤銷既有 Sessions，歷史資料依有效日期與既有快照判定。 | Phase 3B |
-| D-11 | **日期已核准（2026-09-23）；認證時窗與 Phase 6 上傳門檻已核准（2026-09-24）**；Phase 10 RAG 門檻已核准（2026-09-28）；其餘門檻待決策 | 業務日期 Asia/Taipei；技術時間戳 UTC；含起不含迄；月／年期限依曆月／曆年，無對應日期時取該月最後一天。Google Recent Authentication 與一次性 Recovery 核准均 5 分鐘，滿時失效。CSV／XLSX：5 MiB、10 sheets、5,000 資料列、30 欄、展開 25 MiB／1,000 ZIP 項目；格式限制見 §73.4。RAG PDF／MD 與檢索限制依 §31；其他查詢、重試、容量與復原目標仍待各功能 Phase 確認 | 日期於 Phase 1；認證時窗於 Phase 3B；匯入門檻於 Phase 6；其餘最晚 Phase 18 |
+| D-11 | **日期已核准（2026-09-23）；認證時窗與 Phase 6 上傳門檻已核准（2026-09-24）**；Phase 10 RAG 與 Phase 11 Provider 門檻已核准（2026-09-28）；其餘門檻待決策 | 業務日期 Asia/Taipei；技術時間戳 UTC；含起不含迄；月／年期限依曆月／曆年，無對應日期時取該月最後一天。Google Recent Authentication 與一次性 Recovery 核准均 5 分鐘，滿時失效。CSV／XLSX：5 MiB、10 sheets、5,000 資料列、30 欄、展開 25 MiB／1,000 ZIP 項目；格式限制見 §73.4。RAG PDF／MD 與檢索限制依 §31；Provider 逾時、重試、容量依 §29；其他查詢、容量與復原目標仍待各功能 Phase 確認 | 日期於 Phase 1；認證時窗於 Phase 3B；匯入門檻於 Phase 6；其餘最晚 Phase 18 |
 
 <a id="spec-72-3"></a>
 
