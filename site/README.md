@@ -29,7 +29,7 @@ Windows PowerShell 可使用 `npm.cmd`。若 npm shim 找不到自身模組，�
 - 複製 [.env.example](.env.example) 為本機 `.env`；真實值不提交 Git。雲端 Secret 由 Sites Settings 管理，變更不代表已套用至執行中的版本。
 - Phase 3A 的 auth routes 需要部署平台注入 `GOOGLE_OAUTH_CLIENT_ID`、`GOOGLE_OAUTH_CLIENT_SECRET`、`GOOGLE_OAUTH_REDIRECT_URI` 與 `ADMIN_BOOTSTRAP_SECRET`；目前未填入真實值。
 - 管理員僅使用 Google OAuth／OIDC；未啟用 starter 的 ChatGPT 登入模擬，也沒有本地密碼登入。
-- [db/schema.ts](db/schema.ts) 已定義資料表；`drizzle/` 保存八份 migration、journal 與 snapshots。ER 圖、欄位表示及復原計畫見 [DATABASE.md](../docs/DATABASE.md)。
+- [db/schema.ts](db/schema.ts) 已定義資料表；`drizzle/` 保存十二份 migration、journal 與 snapshots。ER 圖、欄位表示及復原計畫見 [DATABASE.md](../docs/DATABASE.md)。
 - `npm run db:verify` 僅建立一次性 Miniflare D1，套用 migration、虛構 seed 並檢查重跑；結束即銷毀，不寫入本機預覽 DB 或雲端。伺服器不自動 migration。
 - 姓名與生日可重複；分數以百分之一分整數儲存。身分證只儲存密文、key 版本與 HMAC，key 在測試程序中隨機產生；不得將測試 key 當成正式 key。
 - `tests` 中的 migration、日期、身分證加密與 D1／R2 測試 使用暫時 Miniflare 實例與虛構資料；不接觸雲端資料庫。
@@ -168,6 +168,17 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 - `POST /api/admin/lifecycle/jobs/[id]/retry`：`{ confirmed: true }`；重試仍要求 Google Recent Authentication。
 
 Purge 目前僅透過 server-owned mock adapter 在隔離測試執行。runtime 未配置已驗證副本／備份 adapter，會拒絕 Production Purge；客戶端不能用欄位或環境開關略過。開始後至完成期間鎖住業務寫入，PARTIAL 可重試、不可 Undo。其他學生的已發布名次保留，受影響評量停止重算，原始群體統計移除。詳見 [Phase 9 紀錄](../docs/PHASE_9.md)。
+
+## Phase 10 參考資料 API
+
+- `POST /api/admin/references`：原始 binary body；`Content-Type: application/octet-stream`，`X-Reference-Format: md|pdf`，`X-Reference-Filename` 是 URI 編碼檔名，`X-Reference-Metadata` 是 URI 編碼 JSON。metadata 包含 `title`、可選 `description`、`subject`、`grade`、`validFrom`、`validTo`。成功回傳草稿 ID、version 與 chunks 數。
+- `GET /api/admin/references?after=...`：每頁 50 份 metadata；回傳 `next` 游標，不回傳物件 key 或原始檔名。
+- `POST /api/admin/references/[id]`：`{ version, metadata, status: "draft"|"active"|"archived", privacyReviewed }`。啟用須 `privacyReviewed: true` 且仍通過伺服器個資檢查；封存保留原 metadata 與引用片段，不受新個資檢查阻擋。封存後不可直接重啟，改上傳新文件。
+- `POST /api/admin/references/retrieve`：`{ query, subject, grade, classId? }`。回傳 `trust: "untrusted_reference_data"` 與最多 8 個版本化片段。未來 Provider 必須將其當作資料，不能拼接為系統指令或授予工具權限。
+- `GET /api/admin/references/pending`：全校 ai.manage 查看未完成上傳／清理項目。
+- `POST /api/admin/references/[id]/cleanup`：body `{}`；重試刪除未提交的私有物件，驗證不存在。保留清理紀錄以涵蓋晚到的物件寫入，可重複執行；不能刪除已提交文件。
+
+寫入要求同源 Origin；除 binary upload 外 POST 使用 JSON。管理全校共用資料須全校 ai.manage；檢索須 ai.read 與年級／班級／科目 Scope，使用伺服器解析的目前學期。Purge 未完成時拒絕相關操作。檔名只用於驗證，不保存在物件 key、Audit 或 AI Context。D-11 門檻與驗證見 [Phase 10 紀錄](../docs/PHASE_10.md)。
 
 ## 部署邊界
 

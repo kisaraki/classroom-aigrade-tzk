@@ -13,7 +13,7 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "db:verify": "node --import ./scripts/sites-env.mjs scripts/db-local.mjs",
-    "test": "node --import ./scripts/sites-env.mjs --test tests/*.test.mjs",
+    "test": "node --import ./scripts/sites-env.mjs --test --test-concurrency=2 --test-timeout=180000 tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write app db lib tests scripts/db-local.mjs .openai cloudflare-env.d.ts vite.config.ts package.json .prettierrc.json README.md ../pages ../docs ../scripts ../.github",
     "format:check": "prettier --check app db lib tests scripts/db-local.mjs .openai cloudflare-env.d.ts vite.config.ts package.json .prettierrc.json README.md ../pages ../docs ../scripts ../.github"
@@ -43,6 +43,7 @@
     "recharts": "^3.8.0",
     "sonner": "^2.0.8",
     "tailwind-merge": "3.6.0",
+    "unpdf": "1.8.1",
     "vaul": "^1.1.2",
     "zod": "^3.25.76"
   },

@@ -2,6 +2,10 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 10 RAG 參考資料核心 — 2026-09-28
+
+使用者核准 Phase 10 及 D-11 RAG 門檻。新增 PDF／Markdown 私有上傳、文字解析、Unicode chunking、中文 FTS、metadata／有效期／封存與授權 Retrieval API；個資檢查、版本 guard、原子寫入、清理重試及 Workers 本機測試已建立。0011 migration 升級至 48 張關聯表、12 份 migration；184 項完整回歸通過，見 [Phase 10 紀錄](docs/PHASE_10.md)。測試固定兩個並行程序並加上逾時，避免本機 Workers 子程序無限等待。未執行正式 migration、Purge 或 Sites 部署。
+
 ## Phase 9 Recycle Bin 與 Purge 核心 — 2026-09-28
 
 使用者於 2026-09-26 核准 Phase 9 及 D-06 三項政策。新增 Soft Delete、30 天 Recycle Bin Restore、Import Rollback 整合、Purge Preview／雙重確認、跨儲存失敗重試及最小證據；其他學生歷史名次與共享封存 Restore 保留。0010 migration 升級為 47 張關聯表、11 份 migration，171 項完整回歸通過，見 [Phase 9 紀錄](docs/PHASE_9.md)。正式副本與備份能力未實測，Production Purge 固定停用；沒有真實資料 Purge、Production migration 或 Sites 部署。

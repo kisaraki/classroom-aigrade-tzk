@@ -634,7 +634,7 @@ test("Phase 9 migration: Phase 8 data preserved, soft deletion backfill, failure
     now,
   );
   const before = await one(db, "SELECT * FROM students WHERE id='fictional-a'");
-  assert.equal((await migrationPreflight(db)).pending, 1);
+  assert.equal((await migrationPreflight(db)).pending, 2);
   await assert.rejects(
     db.batch([
       ...migrations[10].sql.filter((s) => s.trim()).map((s) => db.prepare(s)),

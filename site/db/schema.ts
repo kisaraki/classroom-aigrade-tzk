@@ -845,6 +845,7 @@ export const aiReferenceChunks = sqliteTable(
     content: text("content").notNull(),
     contentHash: text("content_hash").notNull(),
     createdAt: createdAt(),
+    searchTokens: text("search_tokens").notNull().default(""),
   },
   (t) => [
     uniqueIndex("chunk_material_ordinal").on(
@@ -858,6 +859,25 @@ export const aiReferenceChunks = sqliteTable(
     ),
     check("chunk_hash", hexHash(t.contentHash)),
     check("chunk_version", positiveVersion(t.materialVersion)),
+  ],
+);
+
+export const referenceUploads = sqliteTable(
+  "reference_uploads",
+  {
+    id: id(),
+    actorId: text("actor_id")
+      .notNull()
+      .references(() => adminUsers.id),
+    objectKey: text("object_key").notNull().unique(),
+    status: text("status").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check(
+      "reference_upload_status",
+      sql`${t.status} IN ('pending','ready','cleanup')`,
+    ),
   ],
 );
 

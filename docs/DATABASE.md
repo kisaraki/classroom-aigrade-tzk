@@ -4,7 +4,7 @@
 
 ## 模型入口
 
-- [Drizzle schema](../site/db/schema.ts)：47 張關聯表的欄位、外鍵、CHECK 與索引。
+- [Drizzle schema](../site/db/schema.ts)：48 張關聯表的欄位、外鍵、CHECK 與索引。
 - [核心 migration](../site/drizzle/0000_phase_01_core.sql)：建立關聯表及索引。
 - [跨列約束與 FTS migration](../site/drizzle/0001_phase_01_invariants.sql)：學籍、快照、管理員與版本約束，及 FTS 邏輯表 `ai_reference_chunks_fts`。FTS 內部 shadow tables 不另算業務表。
 - [Migration journal](../site/drizzle/meta/_journal.json)：Drizzle 的順序與時間戳；snapshot 記錄可生成的關聯 schema，FTS／trigger 保存在 custom migration。
@@ -12,7 +12,7 @@
 
 ## Phase 2 擴充
 
-Phase 2 擴充學籍命令表；目前含 Phase 9 共 47 張關聯表加 FTS5。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
+Phase 2 擴充學籍命令表；目前含 Phase 10 共 48 張關聯表加兩個 FTS5 索引。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
 
 ```mermaid
 erDiagram
@@ -155,7 +155,7 @@ D-03 的來源是 `students.ranking_eligible_default`、`student_term_ranking_po
 
 ### FTS 與引用
 
-FTS5 使用 external content，insert／update／delete trigger 同步片段，migration 會 rebuild 既有內容。查詢必須 join 材料表，檢查 active、有效日期和目前版本；單獨查 FTS 不具有授權或有效性過濾。封存不刪除片段，被引用的片段內容不可改寫，外鍵防止刪除被引用資料。中文斷詞品質、RAG 清洗與 Prompt Injection 防護留待 Phase 10／11，Phase 1 只驗證索引同步與篩選結構。
+FTS5 使用 external content，insert／update／delete trigger 同步片段，migration 會 rebuild 既有內容。查詢必須 join 材料表，檢查 active、有效日期和目前版本；單獨查 FTS 不具有授權或有效性過濾。封存不刪除片段，被引用的片段內容不可改寫，外鍵防止刪除被引用資料。Phase 10 新增中文逐字索引、個資檢查與不可信資料回傳契約；Provider 的 prompt 與工具隔離仍須在 Phase 11／12 整合。
 
 ## 身分證加密、查重與輪替
 
@@ -202,12 +202,26 @@ Preflight 比對完整已套用 journal 前綴與 SHA-256、確認應存在的 s
 
 Phase 7 新增 [0008 publication migration](../site/drizzle/0008_phase_07_publication.sql)，共九份 migration。`publication_previews` 保存版本化預覽與成功結果連結；`publication_snapshots` 保存不可變完整發布內容及首次發布固定的統計母體。發布使用既有結果表、History、Audit、AI Jobs，全部同一 D1 batch；升級與復原限制見 [Phase 7 紀錄](PHASE_7.md)。
 
-D-01／D-03／D-04／D-05／D-06／D-07／D-08／D-10 已核准；D-11 日期、5 分鐘認證時窗及匯入門檻已定案。D-02、D-09 與 D-11 其餘閾值依 [待決策表](../PROJECT_SPEC.md#spec-72-2) 處理。匯入原子性及發布狀態機已實作；Purge 政策已定案，正式副本／備份能力與 AI 重試上限仍待平台驗證／後續 Phase；狀態／版本欄位提供 migration 擴充點。
+D-01／D-03／D-04／D-05／D-06／D-07／D-08／D-10 已核准；D-11 日期、5 分鐘認證時窗、匯入及 RAG 門檻已定案。D-02、D-09 與 D-11 其餘閾值依 [待決策表](../PROJECT_SPEC.md#spec-72-2) 處理。匯入原子性及發布狀態機已實作；Purge 政策已定案，正式副本／備份能力與 AI 重試上限仍待平台驗證／後續 Phase；狀態／版本欄位提供 migration 擴充點。
 
 Phase 8 新增 [0009 retention migration](../site/drizzle/0009_phase_08_retention.sql)，共十份 migration。students.archived_at 與身分／刪除分開；retention_events 保存 D-05 有效承諾及撤銷，archive_previews／archive_state 保護 Preflight 與原子提交。原有期限以 LEGACY 事件回填，未新增永久刪除。詳見 [Phase 8 紀錄](PHASE_8.md)。
 
 ## Phase 9 生命週期與永久清除
 
-[0010 migration](../site/drizzle/0010_phase_09_lifecycle.sql) 新增 recycle_entries、lifecycle_previews、purge_jobs、purge_control 與 purged_exams；目前共 47 張關聯表、11 份 migration。Soft Delete 原時間、30 天截止日與版本保留；可驗證的既有新生 Rollback 同時回填學籍版本。
+Phase 10 的新增表與索引見本文末節；下列數量為 Phase 9 當時的狀態。
+
+[0010 migration](../site/drizzle/0010_phase_09_lifecycle.sql) 新增 recycle_entries、lifecycle_previews、purge_jobs、purge_control 與 purged_exams；Phase 9 完成時共 47 張關聯表、11 份 migration。Soft Delete 原時間、30 天截止日與版本保留；可驗證的既有新生 Rollback 同時回填學籍版本。
 
 Purge 開始後鎖住業務寫入；外部副本逐一刪除並驗證，再以原子 D1 batch 清理資料、保留他人名次並凍結受影響評量。未完成工作保留受保護 Manifest；成功時清除 Manifest，只保留兩年最小證據。共享封存批次保留其他學生的正式 Restore 資料。Production runtime 未提供已驗證的副本 adapter，故禁止正式 Purge；隔離測試不代表雲端刪除／備份能力已驗證。詳見 [Phase 9 紀錄](PHASE_9.md)。
+
+## Phase 10 RAG 文件與搜尋
+
+[0011 migration](../site/drizzle/0011_phase_10_references.sql) 新增 `reference_uploads`、片段 `search_tokens` 及 `reference_search` FTS5；目前 48 張關聯表、12 份 migration、兩個 FTS5 索引。既有 `ai_reference_chunks_fts` 保留，舊 migration 不改寫。
+
+`reference_uploads` 保存隨機 ID、操作者、私有物件 key、pending／ready／cleanup 與建立時間。只有 pending 可提交材料；已提交物件不能被清理。cleanup 記錄保留，讓失敗或晚到的 Object Storage 寫入仍有可重試索引。新表沿用 Purge 寫入鎖；正式副本 adapter 仍未啟用。
+
+上傳與更新的片段及 FTS 在同一 D1 batch 寫入，每個 INSERT 最多 10 列。metadata 更新複製新版本片段，舊片段與引用 hash 保留；封存只改狀態及版本。查詢須 join 材料並檢查有效期、科目、年級、目前版本與 Scope。
+
+升級不改寫舊片段內容、hash 或引用。未建立新索引的舊材料會回傳 `needsIndexReview: true`，不進入新 Retrieval API；全校 AI 管理員須重新確認個資並以現有版本更新啟用，產生有搜尋詞的新版本。超過新門檻則須重新匯入。正式升級前應先清點此類材料，避免誤認為已完成索引。
+
+驗證包含從 Phase 9 升級、批次中途錯誤完整回復、重試及舊片段保留。程式回退不刪除新表／欄位／索引，也不假設會回退資料庫。Production 仍要求 preflight、復原能力實測與人工確認；本次只在隔離資料庫驗證。詳見 [Phase 10 紀錄](PHASE_10.md)。
