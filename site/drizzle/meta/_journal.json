@@ -71,6 +71,13 @@
       "when": 1790328815862,
       "tag": "0009_phase_08_retention",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790374185849,
+      "tag": "0010_phase_09_lifecycle",
+      "breakpoints": true
     }
   ]
 }

@@ -1275,3 +1275,56 @@ export const archivePreviews = sqliteTable(
     index("archive_preview_actor").on(t.actorId, t.createdAt),
   ],
 );
+
+export const recycleEntries = sqliteTable("recycle_entries", {
+  id: id(),
+  studentId: text("student_id")
+    .notNull()
+    .references(() => students.id),
+  actorId: text("actor_id").references(() => adminUsers.id),
+  reason: text("reason").notNull(),
+  deletedAt: integer("deleted_at").notNull(),
+  restoreUntil: integer("restore_until").notNull(),
+  sourceVersion: integer("source_version").notNull(),
+  enrollmentJson: text("enrollment_json"),
+  restoredAt: integer("restored_at"),
+});
+
+export const lifecyclePreviews = sqliteTable("lifecycle_previews", {
+  id: id(),
+  actorId: text("actor_id")
+    .notNull()
+    .references(() => adminUsers.id),
+  kind: text("kind").notNull(),
+  academicRevision: integer("academic_revision").notNull(),
+  archiveRevision: integer("archive_revision").notNull(),
+  payloadJson: text("payload_json").notNull(),
+  resultJson: text("result_json"),
+  createdAt: createdAt(),
+});
+
+export const purgeJobs = sqliteTable("purge_jobs", {
+  id: id(),
+  actorId: text("actor_id")
+    .notNull()
+    .references(() => adminUsers.id),
+  status: text("status").notNull(),
+  manifestJson: text("manifest_json"),
+  studentCount: integer("student_count").notNull(),
+  createdAt: createdAt(),
+  completedAt: integer("completed_at"),
+  retentionUntil: text("retention_until").notNull(),
+});
+
+// Set only inside the same atomic batch that performs a reviewed purge plan.
+export const purgeControl = sqliteTable("purge_control", {
+  id: integer("id").primaryKey(),
+  executingJob: text("executing_job"),
+});
+
+export const purgedExams = sqliteTable("purged_exams", {
+  examId: text("exam_id")
+    .primaryKey()
+    .references(() => exams.id),
+  frozenAt: integer("frozen_at").notNull(),
+});

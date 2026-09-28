@@ -1003,7 +1003,20 @@ export class ImportService {
       ];
       for (const item of items) {
         const after = JSON.parse(String(item.after_json));
+        const enrollment = await this.sql(
+          "SELECT id,version FROM student_enrollments WHERE id=?",
+          after.enrollmentId,
+        ).first<Row>();
         writes.push(
+          this.sql(
+            "INSERT INTO recycle_entries (id,student_id,actor_id,reason,deleted_at,restore_until,source_version,enrollment_json) SELECT ?,id,?,'Import rollback',?,?,version+1,? FROM students WHERE id=?",
+            crypto.randomUUID(),
+            session.adminId,
+            now,
+            now + duration,
+            JSON.stringify(enrollment),
+            item.student_id,
+          ),
           this.sql(
             "UPDATE student_enrollments SET status='voided',version=version+1 WHERE id=?",
             after.enrollmentId,

@@ -793,6 +793,12 @@ export class ArchiveService {
     studentId: string,
     onDate = taipeiBusinessDate(this.now()),
   ) {
+    if (
+      await this.sql(
+        "SELECT id FROM purge_jobs WHERE status<>'DONE' LIMIT 1",
+      ).first()
+    )
+      return false;
     const s = await this.sql(
       "SELECT deleted_at,public_query_until,retention_until FROM students WHERE id=?",
       studentId,

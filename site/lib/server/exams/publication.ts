@@ -71,6 +71,13 @@ export class PublicationService {
     };
   }
   private async access(session: AuthSession, e: Row, request: Request) {
+    if (
+      await this.sql(
+        "SELECT exam_id FROM purged_exams WHERE exam_id=?",
+        e.id,
+      ).first()
+    )
+      fail("PURGED_EXAM_FROZEN");
     if (request.kind === "PUBLISH") {
       await this.authorization.assertPermission(
         session,

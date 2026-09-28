@@ -44,7 +44,11 @@ export type AuthorizationGrant = {
   role: AdminRole;
   recentGoogleAuthentication: boolean;
 };
-export type AuthorizationDependencies = { db: D1Database; now?: () => number };
+export type AuthorizationDependencies = {
+  db: D1Database;
+  now?: () => number;
+  allowPurgeMaintenance?: boolean;
+};
 type Row = Record<string, string | number | null>;
 const deny = (): never => {
   throw new AuthError("SCOPE_DENIED", 403);
@@ -74,9 +78,11 @@ export function permissionForAcademicAction(action: string): Permission | null {
 export class AuthorizationService {
   private readonly db: D1Database;
   private readonly now: () => number;
+  private readonly allowPurgeMaintenance: boolean;
   constructor(dependencies: AuthorizationDependencies) {
     this.db = dependencies.db;
     this.now = dependencies.now ?? Date.now;
+    this.allowPurgeMaintenance = dependencies.allowPurgeMaintenance === true;
   }
   async authorize(input: AuthorizationRequest): Promise<AuthorizationGrant> {
     const now = this.now();
@@ -98,6 +104,14 @@ export class AuthorizationService {
     )
       throw new AuthError("ACCESS_DENIED", 403);
     const role = row.role as AdminRole;
+    if (
+      !this.allowPurgeMaintenance &&
+      /^(academic|score|ai|archive)\./.test(input.permission) &&
+      (await this.db
+        .prepare("SELECT id FROM purge_jobs WHERE status<>'DONE' LIMIT 1")
+        .first())
+    )
+      throw new AuthError("PURGE_IN_PROGRESS", 503);
     if (!ROLE_PERMISSIONS[role]?.includes(input.permission))
       throw new AuthError("PERMISSION_DENIED", 403);
     const recentGoogleAuthentication =

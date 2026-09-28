@@ -159,6 +159,16 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 
 一般封存／畢業／延長／復原須 archive.manage 與 Scope，皆要求 5 分鐘內 Google Recent Authentication；歷史年度遵守既有 super_admin 限制。已封存項目不能重複封存，Restore 衝突需先釐清，不提供強制覆蓋。publicEligibility 是 Phase 13 對接用的內部期限 helper，不是公開查詢 API。詳見 [Phase 8 紀錄](../docs/PHASE_8.md)。
 
+## Phase 9 Recycle Bin 與 Purge API
+
+- `POST /api/admin/lifecycle/preview`：`{ action: "DELETE" | "RESTORE" | "PURGE", studentIds: string[], reason: string }`。
+- `POST /api/admin/lifecycle/confirm`：`{ previewId, confirmed: true, confirmation? }`；Purge 另要求 Preview 回傳的確認文字。
+- `GET /api/admin/lifecycle/list`：依 archive.read 與所有受影響歷史 Scope 篩選回收紀錄。
+- `GET /api/admin/lifecycle/jobs/[id]`：super_admin 查看 Purge 狀態及最小證據。
+- `POST /api/admin/lifecycle/jobs/[id]/retry`：`{ confirmed: true }`；重試仍要求 Google Recent Authentication。
+
+Purge 目前僅透過 server-owned mock adapter 在隔離測試執行。runtime 未配置已驗證副本／備份 adapter，會拒絕 Production Purge；客戶端不能用欄位或環境開關略過。開始後至完成期間鎖住業務寫入，PARTIAL 可重試、不可 Undo。其他學生的已發布名次保留，受影響評量停止重算，原始群體統計移除。詳見 [Phase 9 紀錄](../docs/PHASE_9.md)。
+
 ## 部署邊界
 
 目前 Sites 未發布。任何 Sites deployment 都是 Production，必須另有「確認正式部署」授權；不得把 `npm start` 的本機測試結果當成雲端部署驗證。

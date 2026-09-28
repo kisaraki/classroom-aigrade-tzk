@@ -442,6 +442,67 @@ test("Phase 6 new students: XLSX template, encrypted creation and reversible sof
   );
 });
 
+test("Phase 9 Recycle Bin restores a rolled-back new student and its original enrollment", async (t) => {
+  const { db, owner, service } = await fixture(t);
+  const scope = {
+    kind: "NEW_STUDENTS",
+    academicTermId: "term-115-1",
+    classId: "class-701",
+  };
+  const sheets = parseXlsx(await service.template(owner, scope));
+  sheets[0].rows.push([
+    "虛構復原學生",
+    "2013-06-01",
+    "701",
+    "10",
+    "00009",
+    "FICTIONAL-RESTORE-ID",
+    "2026-09-24",
+  ]);
+  const { jobId } = await service.upload(
+    owner,
+    scope,
+    "xlsx",
+    createWorkbook(sheets),
+  );
+  const p = await service.preview(owner, jobId);
+  await service.commit(owner, jobId, p.previewVersion, true);
+  const student = await one(
+    db,
+    "SELECT id FROM students WHERE student_number='00009'",
+  );
+  const rollback = await service.previewRollback(owner, jobId);
+  await service.rollback(owner, jobId, rollback.previewVersion, true);
+  const { LifecycleService } =
+    await import("../lib/server/lifecycle/service.ts");
+  const recycle = new LifecycleService({ db, now: () => now });
+  const restore = await recycle.preview(owner, {
+    action: "RESTORE",
+    studentIds: [student.id],
+    reason: "虛構匯入回復",
+  });
+  await recycle.confirm(owner, restore.previewId, true);
+  assert.equal(
+    (await one(db, "SELECT deleted_at FROM students WHERE id=?", student.id))
+      .deleted_at,
+    null,
+  );
+  assert.equal(
+    (
+      await one(
+        db,
+        "SELECT status FROM student_enrollments WHERE student_id=?",
+        student.id,
+      )
+    ).status,
+    "valid",
+  );
+  assert.equal(
+    (await one(db, "SELECT status FROM import_jobs WHERE id=?", jobId)).status,
+    "ROLLED_BACK",
+  );
+});
+
 test("Phase 6 origins and held policy: external scores stay unranked, late participants are refused, NOT_HELD is not absent", async (t) => {
   const { db, owner, service } = await fixture(t);
   const scope = { ...target, classId: "class-702" };

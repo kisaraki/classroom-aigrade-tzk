@@ -32,6 +32,13 @@ export class RankingService {
       examId,
     ).first<Row>();
     if (!row) return fail("EXAM_NOT_FOUND", 404);
+    if (
+      await this.statement(
+        "SELECT exam_id FROM purged_exams WHERE exam_id=?",
+        examId,
+      ).first()
+    )
+      fail("PURGED_EXAM_FROZEN", 409);
     return row;
   }
   async calculate(

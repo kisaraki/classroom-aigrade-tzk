@@ -2,6 +2,10 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 9 Recycle Bin 與 Purge 核心 — 2026-09-28
+
+使用者於 2026-09-26 核准 Phase 9 及 D-06 三項政策。新增 Soft Delete、30 天 Recycle Bin Restore、Import Rollback 整合、Purge Preview／雙重確認、跨儲存失敗重試及最小證據；其他學生歷史名次與共享封存 Restore 保留。0010 migration 升級為 47 張關聯表、11 份 migration，171 項完整回歸通過，見 [Phase 9 紀錄](docs/PHASE_9.md)。正式副本與備份能力未實測，Production Purge 固定停用；沒有真實資料 Purge、Production migration 或 Sites 部署。
+
 ## Phase 8 封存與保存期限核心 — 2026-09-25
 
 使用者核准 Phase 8 及 D-05。建立個別／班級／全年段封存、手動九年級畢業、Preflight／Force、30 天 Undo、正式 Restore、公開／保存期限同步延長與恢復在籍。有效事件分別取最晚期限，撤銷不覆蓋後續修改；封存阻擋新學籍、成績、匯入回復與 AI 重生。新增 0009 migration，回填既有保存承諾，保留歷史快照。154 項完整回歸、型別、lint、格式、建置及文件／敏感資料檢查通過，見 [Phase 8 紀錄](docs/PHASE_8.md)。沒有 Production migration、Purge 或 Sites 部署。
