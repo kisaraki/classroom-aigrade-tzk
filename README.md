@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 11 AI Provider Layer 已完成本機驗證。** 截至 2026-09-29，D-11 Provider 門檻已定案；OpenAI／Gemini Adapter、Secret 讀取、逾時／重試、錯誤邊界及授權設定切換已實作，驗證與限制見 [Phase 11 紀錄](docs/PHASE_11.md)。Production Purge 因副本／備份能力尚未實測而停用；OAuth Client 與 Sites callback 實測仍依指示暫緩，沒有真實學生資料、付費 API 呼叫或 Sites Production 部署。
+**Phase 12 AI Advice／Jobs 已完成核准的本機核心範圍。** 截至 2026-09-29，Context、家長／學生版成對建議、持久化工作、租約／重試、版本／重生及用量追蹤已實作；223 項完整回歸通過，驗證與限制見 [Phase 12 紀錄](docs/PHASE_12.md)。正式 consumer／排程待平台方案與部署核准。Production Purge 因副本／備份能力尚未實測而停用；OAuth Client 與 Sites callback 實測仍依指示暫緩，沒有真實學生資料、付費 API 呼叫或 Sites Production 部署。
 
 ## 文件入口
 
@@ -26,6 +26,7 @@
 | [Phase 9 驗證紀錄](docs/PHASE_9.md) | D-06、Recycle Bin、Rollback 整合、Purge 與重試 |
 | [Phase 10 驗證紀錄](docs/PHASE_10.md) | RAG 上傳、PDF／Markdown、中文 FTS、有效期與安全檢索 |
 | [Phase 11 驗證紀錄](docs/PHASE_11.md) | OpenAI／Gemini Adapter、逾時／重試、Secret 與設定切換 |
+| [Phase 12 驗證紀錄](docs/PHASE_12.md) | Context、成對建議、持久化 Jobs、重生與用量 |
 | [資料模型與 ER 圖](docs/DATABASE.md) | 資料表對照、migration、加密輪替與復原方式 |
 | [Sites 開發說明](site/README.md) | 安裝、預覽、建置、測試與環境設定 |
 | [待決策清單](PROJECT_SPEC.md#spec-72-2) | 尚未定案的業務選擇與確認關卡 |
@@ -52,9 +53,9 @@
 | 正式執行平台 | ChatGPT Sites | 專案已建立，尚未發布 |
 | 後端 | Vinext／Cloudflare Workers | 已建立 Google-only auth、管理員與草稿評量 API、health route；僅本機預覽 |
 | 前端 | React／HTML／CSS | 已建立開發進度預覽頁 |
-| 關聯式資料庫 | D1／SQLite，binding `DB` | 48 張關聯表、兩個 FTS5 索引與十二份 migration；隔離本機驗證 |
+| 關聯式資料庫 | D1／SQLite，binding `DB` | 48 張關聯表、兩個 FTS5 索引與十三份 migration；隔離本機驗證 |
 | 檔案儲存 | R2，binding `FILES` | 本機測試；雲端尚未配置 |
-| AI | OpenAI API、Google Gemini API adapter | Provider 與設定已建立；僅 mock，Jobs 待 Phase 12 |
+| AI | OpenAI API、Google Gemini API adapter | Provider、Context 與 Jobs 核心已建立；僅 mock，正式 consumer 待驗證 |
 | 參考資料搜尋 | D1 FTS 優先 | Phase 10 上傳、分段與中文 FTS 檢索已建立 |
 | 文件與版本入口 | GitHub Repository、GitHub Pages | Repository／Pages 已部署並驗證 |
 
@@ -100,7 +101,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 9 | Recycle Bin、Rollback 整合與 Purge 核心；171 項測試通過，Production Purge 停用 |
 | Phase 10 | RAG 參考資料核心；184 項測試通過，PDF／Markdown、中文 FTS 與授權檢索 |
 | Phase 11 | AI Provider Layer；200 項完整回歸通過，含 16 項 Provider／設定測試 |
-| Phase 12 | 已核准啟動；Context／建議驗證與 Job 核心已建立，整合驗證中，見 [進行紀錄](docs/PHASE_12.md) |
+| Phase 12 | 核准的本機核心範圍完成；223 項回歸通過，正式 consumer 未啟用，見 [驗證紀錄](docs/PHASE_12.md) |
 | Phase 13～19 | 尚未開始 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |

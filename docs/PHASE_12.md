@@ -1,6 +1,6 @@
 # Phase 12 驗證紀錄
 
-日期：2026-09-29。使用者核准 Phase 12、D-11 Job 門檻，以及先完成本機佇列／consumer 核心的範圍。目前實作完成、整合驗證中；正式排程與付費 API 尚未啟用。
+日期：2026-09-29。使用者核准 Phase 12、D-11 Job 門檻，以及先完成本機佇列／consumer 核心的範圍。核准的本機核心範圍已完成；正式排程與付費 API 尚未啟用。
 
 ## 零、模型／推理強度
 
@@ -34,9 +34,14 @@ PROJECT_SPEC／D-11、CHANGELOG、README、資料庫說明、schema／journal、
 ## 五、測試結果
 
 - 第一輪 Context／Advice：5 passed、0 failed。
-- 第一輪 Jobs：9 passed、0 failed；含成對保存、重試、併發、lease、转出、重生、權限與 HTTP。
+- 第一輪 Jobs：9 passed、0 failed；含成對保存、重試、併發、lease、轉出、重生、權限與 HTTP。
 - `npm run typecheck`：通過。
-- 新增完整專項、migration、lint、建置與 CI 完整回歸仍在驗證中，未宣稱通過。
+- `node --import ./scripts/sites-env.mjs --test --test-timeout=180000 tests/ai-jobs-migration.test.mjs`：1 passed；驗證原子回復、重跑與舊工作不自動授權。
+- Context／Advice／Jobs／Provider 專項 33 項：首次 30 passed；修正 RAG fixture 的搜尋 token 格式後，相關 4 項重跑全數通過。
+- `npm run lint`、`npm run format:check`、`npm run build`：通過。
+- `node scripts/check-docs.mjs`、`node scripts/check-safety.mjs`、`git diff --check`：通過；前端 bundle 未找到所檢查的 AI Secret／伺服器標記。
+- `node --import ./scripts/sites-env.mjs --test --test-timeout=180000 tests/migrations.test.mjs`：17 passed；修正 schema 宣告順序與 ALTER TABLE 附加順序不一致，既有資料邊界回歸恢復通過。
+- [完整 CI](https://github.com/kisaraki/classroom-aigrade-tzk/actions/runs/36520335655) 已通過修正後的 `9ab3309`：`npm test` 共 223 passed、0 failed；lint、格式、型別、文件／安全檢查及建置全數通過。首次 CI 的 schema 順序檢查中止 seed，造成連帶失敗，未視為通過。
 
 ## 六、安全性檢查
 
@@ -46,7 +51,7 @@ PROJECT_SPEC／D-11、CHANGELOG、README、資料庫說明、schema／journal、
 
 - 依使用者核准，本階段驗收本機 durable queue／consumer 介面。正式 consumer／排程待平台方案與正式部署核准；未使用 waitUntil 代替可靠佇列。查核時 Sites plugin 0.1.71 文件與工具未提供可確認的 queue／scheduler 配置契約，這不是平台不支援的證明。
 - 首次請求綁定持久化啟動者；撤權後自動工作拒絕，須由具資格管理員明確重新核准。背景生成限目前學年度，歷史建議仍保留並依 dated Scope 讀取。
-- 每組順序生成兩版；任一失敗不发布半套。Job 重試可能重新呼叫兩版。用量僅表示供應者該次成功回應的已知 tokens；失敗或中斷請求的帳單用量可能未知，NULL 不代表 0。
+- 每組順序生成兩版；任一失敗不發布半套。Job 重試可能重新呼叫兩版。用量僅表示供應者該次成功回應的已知 tokens；失敗或中斷請求的帳單用量可能未知，NULL 不代表 0。
 - 自動個資檢查沿用已知識別與模式比對，可能誤判，也不能保證辨識所有未知姓名。模型品質與真實平台能力尚未實測；本機測試不代表生成內容一定正確。
 - 管理／公開 UI 留待 Phase 13～15；Google OAuth／Sites 實測維持先前暫緩，Production Purge 仍停用。沒有正式部署、真實學生資料或付費 API 呼叫。
 
