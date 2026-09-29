@@ -100,7 +100,8 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 9 | Recycle Bin、Rollback 整合與 Purge 核心；171 項測試通過，Production Purge 停用 |
 | Phase 10 | RAG 參考資料核心；184 項測試通過，PDF／Markdown、中文 FTS 與授權檢索 |
 | Phase 11 | AI Provider Layer；200 項完整回歸通過，含 16 項 Provider／設定測試 |
-| Phase 12～19 | 尚未開始 |
+| Phase 12 | 已核准啟動；Context／建議驗證與 Job 核心已建立，整合驗證中，見 [進行紀錄](docs/PHASE_12.md) |
+| Phase 13～19 | 尚未開始 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
 

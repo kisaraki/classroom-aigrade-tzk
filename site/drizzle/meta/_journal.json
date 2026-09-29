@@ -85,6 +85,13 @@
       "when": 1790588555205,
       "tag": "0011_phase_10_references",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1790653049769,
+      "tag": "0012_phase_12_ai_jobs",
+      "breakpoints": true
     }
   ]
 }

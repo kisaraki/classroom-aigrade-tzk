@@ -7,6 +7,11 @@ export type AIOutput = {
   model: string;
   text: string;
   attempts: number;
+  usage?: {
+    inputTokens: number | null;
+    outputTokens: number | null;
+    totalTokens: number | null;
+  };
 };
 export interface AIProvider {
   generate(input: AIInput, signal?: AbortSignal): Promise<AIOutput>;
@@ -279,6 +284,7 @@ class TextProvider implements AIProvider {
       let timer: ReturnType<typeof setTimeout> | undefined;
       let abort: (() => void) | undefined;
       let retryAfter = 0;
+      let usage: AIOutput["usage"];
       try {
         const interrupted = new Promise<never>((_, reject) => {
           timer = setTimeout(
@@ -323,12 +329,45 @@ class TextProvider implements AIProvider {
             );
           }
           const data = await responseJson(response, controller.signal);
-          return provider === "openai" ? openAIText(data) : geminiText(data);
+          const parsedText =
+            provider === "openai" ? openAIText(data) : geminiText(data);
+          const rawUsage = record(
+            record(data)?.[provider === "openai" ? "usage" : "usageMetadata"],
+          );
+          if (rawUsage) {
+            const token = (key: string) => {
+              const value = rawUsage[key];
+              if (value === undefined) return null;
+              if (!Number.isSafeInteger(value) || Number(value) < 0)
+                return fail("AI_RESPONSE_INVALID");
+              return Number(value);
+            };
+            usage = {
+              inputTokens: token(
+                provider === "openai" ? "input_tokens" : "promptTokenCount",
+              ),
+              outputTokens: token(
+                provider === "openai"
+                  ? "output_tokens"
+                  : "candidatesTokenCount",
+              ),
+              totalTokens: token(
+                provider === "openai" ? "total_tokens" : "totalTokenCount",
+              ),
+            };
+          }
+          return parsedText;
         };
         const text = await Promise.race([execute(), interrupted]);
         cancelled(signal);
         if (now() >= deadline) return fail("AI_TIMEOUT");
-        return { provider, model, text, attempts: attempt };
+        return {
+          provider,
+          model,
+          text,
+          attempts: attempt,
+          ...(usage ? { usage } : {}),
+        };
       } catch (error) {
         cancelled(signal);
         const safe =

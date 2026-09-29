@@ -348,6 +348,41 @@ test("AI reports over-limit or invalid token counts as rejected output", async (
   }
 });
 
+test("Phase 12 provider usage normalizes counts and leaves unreported usage unknown", async () => {
+  for (const name of ["openai", "gemini"]) {
+    const response =
+      name === "openai"
+        ? {
+            ...openai(),
+            usage: { input_tokens: 10, output_tokens: 20, total_tokens: 30 },
+          }
+        : {
+            ...gemini(),
+            usageMetadata: {
+              promptTokenCount: 10,
+              candidatesTokenCount: 20,
+              totalTokenCount: 30,
+            },
+          };
+    assert.deepEqual(
+      (
+        await provider(name, async () => Response.json(response)).generate(
+          input,
+        )
+      ).usage,
+      { inputTokens: 10, outputTokens: 20, totalTokens: 30 },
+    );
+  }
+  assert.equal(
+    (
+      await provider("openai", async () => Response.json(openai())).generate(
+        input,
+      )
+    ).usage,
+    undefined,
+  );
+});
+
 test("AI adapters run in Workers with mocked outbound responses and no paid API", async (t) => {
   const { build } = await import("vite");
   const entry = "virtual:ai-provider-runtime";

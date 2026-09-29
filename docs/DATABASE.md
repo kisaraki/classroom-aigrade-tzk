@@ -225,3 +225,11 @@ Purge 開始後鎖住業務寫入；外部副本逐一刪除並驗證，再以�
 升級不改寫舊片段內容、hash 或引用。未建立新索引的舊材料會回傳 `needsIndexReview: true`，不進入新 Retrieval API；全校 AI 管理員須重新確認個資並以現有版本更新啟用，產生有搜尋詞的新版本。超過新門檻則須重新匯入。正式升級前應先清點此類材料，避免誤認為已完成索引。
 
 驗證包含從 Phase 9 升級、批次中途錯誤完整回復、重試及舊片段保留。程式回退不刪除新表／欄位／索引，也不假設會回退資料庫。Production 仍要求 preflight、復原能力實測與人工確認；本次只在隔離資料庫驗證。詳見 [Phase 10 紀錄](PHASE_10.md)。
+
+## Phase 12 AI 工作執行
+
+[0012 migration](../site/drizzle/0012_phase_12_ai_jobs.sql) 在既有 ai_jobs 增加成對去重、啟動者／授權版本、前次來源版本、Provider／model／prompt 設定及用量／耗時欄位，並建立 pair／audience unique index 與執行資料守衛。仍為 48 張關聯表，合計 13 份 migration、兩個 FTS5 索引。
+
+既有 regeneration requests 保留原狀，新增欄位為 NULL，不能被 consumer 自動領取；首次手動啟動時建立完整授權與設定的工作。這避免 migration 自行授權生成或啟動付費 API。成對內容沿用 ai_advices 的 audience／version，兩筆及引用與完成狀態以同一 D1 batch 寫入；歷史內容不可改寫。
+
+失敗／重試只保存安全錯誤，不保存供應者原始錯誤或未驗證生成文字。未回報的用量為 NULL。Purge 沿用既有 ai_jobs／ai_advices／ai_advice_references 刪除路徑；新欄位隨其原資料列一併刪除，不能另留私有快取。正式 migration 前仍需 preflight、人工確認及 recovery 實測。程式回退不回退 schema，也不應讓舊 consumer 讀取新工作；回退前停止 consumer，保留工作與歷史資料，不用破壞性 rollback。

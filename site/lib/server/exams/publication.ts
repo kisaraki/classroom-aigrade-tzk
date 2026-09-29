@@ -11,6 +11,7 @@ import {
   SESSION_IDLE_TIMEOUT_MS,
 } from "../auth/policy.ts";
 import type { AuthSession, ScopeResource } from "../auth/types.ts";
+import { aiRegenerationStatements } from "../ai/regeneration.ts";
 
 type Row = Record<string, string | number | null>;
 type Edit = {
@@ -522,6 +523,7 @@ export class PublicationService {
             student,
           ),
         );
+    writes.push(...aiRegenerationStatements(this.deps.db, String(e.id), now));
     writes.push(
       this.sql(
         "UPDATE publication_previews SET result_version_id=? WHERE id=? AND result_version_id IS NULL",

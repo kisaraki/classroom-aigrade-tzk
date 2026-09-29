@@ -29,7 +29,7 @@ Windows PowerShell 可使用 `npm.cmd`。若 npm shim 找不到自身模組，�
 - 複製 [.env.example](.env.example) 為本機 `.env`；真實值不提交 Git。雲端 Secret 由 Sites Settings 管理，變更不代表已套用至執行中的版本。
 - Phase 3A 的 auth routes 需要部署平台注入 `GOOGLE_OAUTH_CLIENT_ID`、`GOOGLE_OAUTH_CLIENT_SECRET`、`GOOGLE_OAUTH_REDIRECT_URI` 與 `ADMIN_BOOTSTRAP_SECRET`；目前未填入真實值。
 - 管理員僅使用 Google OAuth／OIDC；未啟用 starter 的 ChatGPT 登入模擬，也沒有本地密碼登入。
-- [db/schema.ts](db/schema.ts) 已定義資料表；`drizzle/` 保存十二份 migration、journal 與 snapshots。ER 圖、欄位表示及復原計畫見 [DATABASE.md](../docs/DATABASE.md)。
+- [db/schema.ts](db/schema.ts) 已定義資料表；`drizzle/` 保存十三份 migration、journal 與 snapshots。ER 圖、欄位表示及復原計畫見 [DATABASE.md](../docs/DATABASE.md)。
 - `npm run db:verify` 僅建立一次性 Miniflare D1，套用 migration、虛構 seed 並檢查重跑；結束即銷毀，不寫入本機預覽 DB 或雲端。伺服器不自動 migration。
 - 姓名與生日可重複；分數以百分之一分整數儲存。身分證只儲存密文、key 版本與 HMAC，key 在測試程序中隨機產生；不得將測試 key 當成正式 key。
 - `tests` 中的 migration、日期、身分證加密與 D1／R2 測試 使用暫時 Miniflare 實例與虛構資料；不接觸雲端資料庫。
@@ -194,3 +194,13 @@ Starter 原有第三方程式與授權檔保留；MIT 專案授權見 [LICENSE](
 - `OPENAI_API_KEY`／`GEMINI_API_KEY` 由平台 Env／Secret 注入，僅相應 Adapter 讀取；未設定不影響 Google 登入或成績核心。不提供金鑰查詢、上傳或測試付費 API 的 HTTP 入口。
 - 內部 `configuredAIProvider()` 回傳設定版本與 Provider；後續 Job 必須先授權、清除個資、保存來源版本，完成時重驗版本。Adapter 本身不處理學生成績、RAG、工作排程或建議持久化。
 - 已核准限制與錯誤／取消行為見 [Phase 11 紀錄](../docs/PHASE_11.md) 及 [主規格 §29](../PROJECT_SPEC.md#spec-29)。
+
+## Phase 12 Advice／Jobs API
+
+- `POST /api/admin/ai/jobs`：`{ examId, studentId, confirmed: true, retry?: boolean }`。只建立或明確重試 durable Job，不在 HTTP 內生成；需要該歷史班級的 `ai.manage`、有效 Session 與同源 Origin。同來源／前次／模型設定／prompt 組合去重。
+- `GET /api/admin/ai/jobs?examId=...&studentId=...`：要求 `ai.read` 與 Scope，回傳成對建議版本及工作狀態／安全錯誤／已知用量。內容是已驗證的段落 JSON；不得當作 HTML。公開家長 UI 由 Phase 13 整合，不可直接公開此管理 API。
+- `AIJobService.consumeOne()` 是獨立 consumer 介面，每次領取一組家長／學生工作；5 分鐘租約、同組原子領取、最多 3 次自動執行、1／5 分鐘退避。過期租約可重新領取，舊 lease 無法完成或覆蓋新 worker。
+- 每組先後生成兩版，兩者均滿 500 漢字且通过個資與來源檢查後，同一 D1 batch 保存內容、引用、版本與完成狀態。任一版失敗不發布半套。重試可能重新呼叫兩版並增加 API 用量。
+- 首次須管理員手動啟動。後續發布／改分在同一交易為已啟動的學生評量保存重生請求；也使同學期下一次評量的前次比較失效。背景工作使用持久化的啟動者及 auth_version，重驗 active Google 綁定、ai.manage、Scope 與學生狀態；撤權後須重新核准 Job，不能借用其他管理員權限。
+- 用量為供應者成功回應所回報的 tokens，未回報為 NULL。包含失敗／中斷呼叫的完整帳單用量不一定可知，不能將 NULL 當 0；duration 為該次成功呼叫耗時，api_attempts 為 Provider 當次嘗試數。
+- 正式排程／consumer 未啟用；沒有用 `waitUntil` 或延長 HTTP 假裝可靠排程。授權範圍與驗證見 [Phase 12 紀錄](../docs/PHASE_12.md)。

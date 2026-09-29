@@ -172,6 +172,35 @@ export class AuthorizationService {
   rolePermissions(role: AdminRole): readonly Permission[] {
     return [...ROLE_PERMISSIONS[role]];
   }
+  /** Internal AI consumer only: a persisted initiating principal, never a client identity header. */
+  async assertAIBackgroundPrincipal(
+    adminId: string,
+    authVersion: number,
+    resource: ScopeResource,
+  ) {
+    const row = await this.db
+      .prepare(
+        "SELECT role,status,google_subject_id,auth_version FROM admin_users WHERE id=?",
+      )
+      .bind(adminId)
+      .first<Row>();
+    if (
+      !row ||
+      row.status !== "active" ||
+      !row.google_subject_id ||
+      row.auth_version !== authVersion ||
+      !ROLE_PERMISSIONS[row.role as AdminRole]?.includes("ai.manage")
+    )
+      throw new AuthError("ACCESS_DENIED", 403);
+    if (
+      await this.db
+        .prepare("SELECT id FROM purge_jobs WHERE status<>'DONE' LIMIT 1")
+        .first()
+    )
+      throw new AuthError("PURGE_IN_PROGRESS", 503);
+    if (await this.assertScope(adminId, row.role as AdminRole, resource))
+      throw new AuthError("HISTORICAL_SCOPE_DENIED", 403);
+  }
   private async assertScope(
     adminId: string,
     role: AdminRole,

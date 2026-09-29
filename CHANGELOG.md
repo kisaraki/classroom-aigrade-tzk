@@ -2,6 +2,10 @@
 
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
 
+## Phase 12 實作中 — 2026-09-29
+
+使用者核准啟動 AI Advice／Jobs。建立 Context 允許欄位、同學期比較、建議中文字數與結構驗證，5 項專項測試及型別檢查通過；已核准 5 分鐘租約、最多 3 次 Job 執行、1／5 分鐘重試，以及先完成本機佇列核心；正式排程仍待平台方案與部署核准。詳見 [Phase 12 進行紀錄](docs/PHASE_12.md)，尚未完成整個 Phase。
+
 ## Phase 11 AI Provider Layer — 2026-09-29
 
 使用者於 2026-09-28 核准 Phase 11 與 §29 的 D-11 Provider 門檻。完成 OpenAI／Gemini Adapter、Secret 讀取、逾時／重試、輸出與安全錯誤檢查，以及全校 ai.manage 的原子設定切換。200 項完整回歸、型別、lint、格式及建置通過，見 [Phase 11 紀錄](docs/PHASE_11.md)。沿用既有 schema，沒有新增套件、付費 API 呼叫或正式部署。
