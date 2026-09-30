@@ -102,7 +102,8 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 10 | RAG 參考資料核心；184 項測試通過，PDF／Markdown、中文 FTS 與授權檢索 |
 | Phase 11 | AI Provider Layer；200 項完整回歸通過，含 16 項 Provider／設定測試 |
 | Phase 12 | 核准的本機核心範圍完成；223 項回歸通過，正式 consumer 未啟用，見 [驗證紀錄](docs/PHASE_12.md) |
-| Phase 13～19 | 尚未開始 |
+| Phase 13 | 公開查詢與 UI 實作完成、整合驗證中；正式入口關閉，見 [紀錄](docs/PHASE_13.md) |
+| Phase 14～19 | 尚未開始 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
 

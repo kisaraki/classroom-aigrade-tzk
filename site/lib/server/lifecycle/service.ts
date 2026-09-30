@@ -828,6 +828,8 @@ export class LifecycleService {
           ),
         );
       // Remove snapshots in FK order. Self-linked undo operations use deferred FK checks within this batch.
+      // HMAC query keys have no student index; discard the short-lived shared limit history on Purge.
+      writes.push(this.sql("DELETE FROM public_lookup_attempts"));
       writes.push(this.sql("PRAGMA defer_foreign_keys=ON"));
       for (const table of ORDER)
         for (const target of p.deletes[table] ?? []) {

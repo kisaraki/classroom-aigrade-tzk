@@ -31,7 +31,7 @@ test("Phase 12 migration is atomic/retryable and legacy requests remain unauthor
       "INSERT INTO ai_jobs(id,student_id,exam_id,audience,dedupe_key,source_version) VALUES('fictional-legacy','fictional-a','exam-1','parent','fictional-dedupe',1)",
     )
     .run();
-  assert.equal((await migrationPreflight(db)).pending, 1);
+  assert.equal((await migrationPreflight(db)).pending, 2);
   await assert.rejects(
     db.batch([
       ...migrations[12].sql.filter((s) => s.trim()).map((s) => db.prepare(s)),

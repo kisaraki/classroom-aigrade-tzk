@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { PublicLookupService } from "../lib/server/public/service.ts";
 import {
   LifecycleService,
   COPY_CATEGORIES,
@@ -188,6 +189,14 @@ test("Purge: capability and promises block before destructive work", async (t) =
 });
 test("Purge: permanent relational cleanup, fixed ranks, frozen recalculation, minimal evidence", async (t) => {
   const f = await fixture(t);
+  await run(
+    f.db,
+    "INSERT INTO public_lookup_attempts(id,ip_hash,query_hash,created_at) VALUES(?,?,?,?)",
+    "fictional-attempt",
+    "a".repeat(64),
+    "b".repeat(64),
+    now,
+  );
   const pub = new PublicationService({ db: f.db, now: () => now });
   // Publish a real snapshot using the Phase 7 service.
   const exam = await one(f.db, "SELECT version FROM exams WHERE id='exam-1'");
@@ -211,6 +220,33 @@ test("Purge: permanent relational cleanup, fixed ranks, frozen recalculation, mi
     p.confirmation,
   );
   assert.equal(result.status, "DONE");
+  assert.equal(
+    (await one(f.db, "SELECT count(*) n FROM public_lookup_attempts")).n,
+    0,
+  );
+  const publicLookup = new PublicLookupService({
+    db: f.db,
+    hmacSecret: "fictional-public-lookup-secret-independent",
+    now: () => now,
+  });
+  const preserved = await publicLookup.lookup(
+    {
+      year: "115",
+      term: 1,
+      sequence: 1,
+      classCode: "701",
+      name: "虛構同名學生",
+      birthDate: "2013-05-10",
+    },
+    "192.0.2.1",
+  );
+  assert.equal(preserved.historicalInputsRemoved, true);
+  assert.equal(preserved.classStatistics.average, null);
+  assert.equal(preserved.semester.average, null);
+  assert.equal(
+    preserved.classRank,
+    before.students.find((s) => s.studentId === "fictional-b").classRank,
+  );
   assert.equal(
     await one(f.db, "SELECT id FROM students WHERE id='fictional-a'"),
     null,
@@ -634,7 +670,7 @@ test("Phase 9 migration: Phase 8 data preserved, soft deletion backfill, failure
     now,
   );
   const before = await one(db, "SELECT * FROM students WHERE id='fictional-a'");
-  assert.equal((await migrationPreflight(db)).pending, 3);
+  assert.equal((await migrationPreflight(db)).pending, 4);
   await assert.rejects(
     db.batch([
       ...migrations[10].sql.filter((s) => s.trim()).map((s) => db.prepare(s)),

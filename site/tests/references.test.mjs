@@ -587,7 +587,7 @@ test("Phase 10 migration: atomic retry, existing chunks preserved and review reb
   const original = await db
     .prepare("SELECT * FROM ai_reference_chunks")
     .first();
-  assert.equal((await migrationPreflight(db)).pending, 2);
+  assert.equal((await migrationPreflight(db)).pending, 3);
   await assert.rejects(
     db.batch([
       ...migrations[11].sql.filter((s) => s.trim()).map((s) => db.prepare(s)),

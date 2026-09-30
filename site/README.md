@@ -1,6 +1,6 @@
 # Sites 應用程式
 
-此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；進度及限制見 [Phase 11 驗證紀錄](../docs/PHASE_11.md)。
+此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；進度及限制見 [Phase 13 驗證紀錄](../docs/PHASE_13.md)。
 
 ## 本機開發
 
@@ -29,7 +29,7 @@ Windows PowerShell 可使用 `npm.cmd`。若 npm shim 找不到自身模組，�
 - 複製 [.env.example](.env.example) 為本機 `.env`；真實值不提交 Git。雲端 Secret 由 Sites Settings 管理，變更不代表已套用至執行中的版本。
 - Phase 3A 的 auth routes 需要部署平台注入 `GOOGLE_OAUTH_CLIENT_ID`、`GOOGLE_OAUTH_CLIENT_SECRET`、`GOOGLE_OAUTH_REDIRECT_URI` 與 `ADMIN_BOOTSTRAP_SECRET`；目前未填入真實值。
 - 管理員僅使用 Google OAuth／OIDC；未啟用 starter 的 ChatGPT 登入模擬，也沒有本地密碼登入。
-- [db/schema.ts](db/schema.ts) 已定義資料表；`drizzle/` 保存十三份 migration、journal 與 snapshots。ER 圖、欄位表示及復原計畫見 [DATABASE.md](../docs/DATABASE.md)。
+- [db/schema.ts](db/schema.ts) 已定義資料表；`drizzle/` 保存十四份 migration、journal 與 snapshots。ER 圖、欄位表示及復原計畫見 [DATABASE.md](../docs/DATABASE.md)。
 - `npm run db:verify` 僅建立一次性 Miniflare D1，套用 migration、虛構 seed 並檢查重跑；結束即銷毀，不寫入本機預覽 DB 或雲端。伺服器不自動 migration。
 - 姓名與生日可重複；分數以百分之一分整數儲存。身分證只儲存密文、key 版本與 HMAC，key 在測試程序中隨機產生；不得將測試 key 當成正式 key。
 - `tests` 中的 migration、日期、身分證加密與 D1／R2 測試 使用暫時 Miniflare 實例與虛構資料；不接觸雲端資料庫。
@@ -204,3 +204,11 @@ Starter 原有第三方程式與授權檔保留；MIT 專案授權見 [LICENSE](
 - 首次須管理員手動啟動。後續發布／改分在同一交易為已啟動的學生評量保存重生請求；也使同學期下一次評量的前次比較失效。背景工作使用持久化的啟動者及 auth_version，重驗 active Google 綁定、ai.manage、Scope 與學生狀態；撤權後須重新核准 Job，不能借用其他管理員權限。
 - 用量為供應者成功回應所回報的 tokens，未回報為 NULL。包含失敗／中斷呼叫的完整帳單用量不一定可知，不能將 NULL 當 0；duration 為該次成功呼叫耗時，api_attempts 為 Provider 當次嘗試數。
 - 正式排程／consumer 未啟用；沒有用 `waitUntil` 或延長 HTTP 假裝可靠排程。授權範圍與驗證見 [Phase 12 紀錄](../docs/PHASE_12.md)。
+
+## Phase 13 公開查詢
+
+首頁提供六項查詢條件；`POST /api/public/lookup` 只接受同源 JSON：year、term、classCode、sequence、name、birthDate。禁止 URL 查詢參數及 GET。伺服器只回傳匹配者的已發布成績、班級名次、群體彙總、趨勢與可用 AI 建議；歧義及一般查詢失敗不揭露候選資訊。回應禁止快取，前端不使用持久儲存。
+
+`PUBLIC_LOOKUP_VERIFIED=false` 為預設；正式平台可信 IP、請求紀錄、清理排程與備份保存尚未實測，入口維持關閉。必須提供獨立 `PUBLIC_LOOKUP_HMAC_SECRET`（至少 32 字元）；無可信 IP 或限流儲存不可用時拒絕查詢。10 分鐘內每 IP 30 次、每完整條件 5 次，成功與失敗均計入。
+
+`cleanupLookupLimits(db, now)` 必須由正式平台至少每小時呼叫，刪除滿 23 小時紀錄；請求時另清除满 24 小時紀錄。只有核心函式，尚未配置正式排程。Purge 同一交易清除共用 HMAC 紀錄；歷史快照清理後不重算殘缺群體資料。完整驗證與殘餘風險見 [Phase 13](../docs/PHASE_13.md)。

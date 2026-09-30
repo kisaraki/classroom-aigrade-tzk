@@ -10,6 +10,25 @@ import {
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 
+export const publicLookupAttempts = sqliteTable(
+  "public_lookup_attempts",
+  {
+    id: text("id").primaryKey().notNull(),
+    ipHash: text("ip_hash").notNull(),
+    queryHash: text("query_hash").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("public_lookup_ip_window").on(t.ipHash, t.createdAt),
+    index("public_lookup_query_window").on(t.queryHash, t.createdAt),
+    index("public_lookup_expiry").on(t.createdAt),
+    check(
+      "public_lookup_hashes",
+      sql`length(${t.ipHash})=64 AND ${t.ipHash} NOT GLOB '*[^0-9a-f]*' AND length(${t.queryHash})=64 AND ${t.queryHash} NOT GLOB '*[^0-9a-f]*'`,
+    ),
+  ],
+);
+
 // Business dates are Taipei YYYY-MM-DD; technical timestamps are UTC Unix ms.
 // Cross-row invariants and FTS5 are journaled in the second, custom migration.
 const id = () => text("id").primaryKey().notNull();

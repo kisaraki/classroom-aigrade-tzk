@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "學生成績與 AI 學習建議｜環境預覽",
-  description: "classroom-aigrade-tzk Phase 0 基礎環境預覽，尚未開放成績查詢。",
+  title: "成績與學習建議",
+  description: "查詢已發布的評量成績與學習建議。",
+  robots: { index: false, follow: false, noarchive: true },
   other: {
     "codex-preview": "development",
   },

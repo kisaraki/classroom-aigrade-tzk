@@ -233,3 +233,11 @@ Purge 開始後鎖住業務寫入；外部副本逐一刪除並驗證，再以�
 既有 regeneration requests 保留原狀，新增欄位為 NULL，不能被 consumer 自動領取；首次手動啟動時建立完整授權與設定的工作。這避免 migration 自行授權生成或啟動付費 API。成對內容沿用 ai_advices 的 audience／version，兩筆及引用與完成狀態以同一 D1 batch 寫入；歷史內容不可改寫。
 
 失敗／重試只保存安全錯誤，不保存供應者原始錯誤或未驗證生成文字。未回報的用量為 NULL。Purge 沿用既有 ai_jobs／ai_advices／ai_advice_references 刪除路徑；新欄位隨其原資料列一併刪除，不能另留私有快取。正式 migration 前仍需 preflight、人工確認及 recovery 實測。程式回退不回退 schema，也不應讓舊 consumer 讀取新工作；回退前停止 consumer，保留工作與歷史資料，不用破壞性 rollback。
+
+## Phase 13 公開查詢限流
+
+[0013 migration](../site/drizzle/0013_phase_13_public_lookup.sql) 新增 `public_lookup_attempts`，共 49 張關聯表、14 份 migration，FTS 索引不變。僅保存隨機 ID、IP HMAC、完整條件 HMAC 與 UTC 時間；兩個 HMAC 均檢查 64 位十六進位格式，提供 IP／條件時間索引與清理索引，不保存原始 IP 或查詢條件。
+
+計數与條件 INSERT 在 D1 batch 中執行，併發超額不寫入。隔離測試涵蓋 migration 重跑、失敗 batch 回復與原資料保留。查詢時清除滿 24 小時紀錄；正式至少每小時呼叫清理函式，提早清除滿 23 小時紀錄。排程與備份保存能力未實測前禁止啟用公開入口。
+
+HMAC 不可按學生反查，因此受控 Purge 同一交易清空限流紀錄，短期額度會重設；不影響學生復原承諾。程式回退不回退 schema，必要復原先關閉公開入口、保留 migration history，再依平台實測備份方案處理。未套用 Production migration，詳見 [Phase 13 紀錄](PHASE_13.md)。
