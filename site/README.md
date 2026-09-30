@@ -211,4 +211,4 @@ Starter 原有第三方程式與授權檔保留；MIT 專案授權見 [LICENSE](
 
 `PUBLIC_LOOKUP_VERIFIED=false` 為預設；正式平台可信 IP、請求紀錄、清理排程與備份保存尚未實測，入口維持關閉。必須提供獨立 `PUBLIC_LOOKUP_HMAC_SECRET`（至少 32 字元）；無可信 IP 或限流儲存不可用時拒絕查詢。10 分鐘內每 IP 30 次、每完整條件 5 次，成功與失敗均計入。
 
-`cleanupLookupLimits(db, now)` 必須由正式平台至少每小時呼叫，刪除滿 23 小時紀錄；請求時另清除满 24 小時紀錄。只有核心函式，尚未配置正式排程。Purge 同一交易清除共用 HMAC 紀錄；歷史快照清理後不重算殘缺群體資料。完整驗證與殘餘風險見 [Phase 13](../docs/PHASE_13.md)。
+`cleanupLookupLimits(db, now)` 必須由正式平台至少每小時呼叫，刪除滿 23 小時紀錄；請求時另清除滿 24 小時紀錄。只有核心函式，尚未配置正式排程。Purge 同一交易清除共用 HMAC 紀錄；歷史快照清理後不重算殘缺群體資料。完整驗證與殘餘風險見 [Phase 13](../docs/PHASE_13.md)。

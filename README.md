@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 12 AI Advice／Jobs 已完成核准的本機核心範圍。** 截至 2026-09-29，Context、家長／學生版成對建議、持久化工作、租約／重試、版本／重生及用量追蹤已實作；223 項完整回歸通過，驗證與限制見 [Phase 12 紀錄](docs/PHASE_12.md)。正式 consumer／排程待平台方案與部署核准。Production Purge 因副本／備份能力尚未實測而停用；OAuth Client 與 Sites callback 實測仍依指示暫緩，沒有真實學生資料、付費 API 呼叫或 Sites Production 部署。
+**Phase 13 Public UI 已完成本機實作與驗證。** 截至 2026-09-30，六條件查詢、HMAC 限流、已發布成績／統計／趨勢與家長／學生 AI 介面已建立；235 項完整回歸通過，驗證與限制見 [Phase 13 紀錄](docs/PHASE_13.md)。正式查詢入口仍關閉，可信 IP、限流清理排程與備份保存待平台實測。正式 AI consumer 與 Production Purge 未啟用；OAuth Client／Sites callback 實測仍暫緩，沒有真實學生資料、付費 API 呼叫或 Sites Production 部署。
 
 ## 文件入口
 
@@ -27,6 +27,7 @@
 | [Phase 10 驗證紀錄](docs/PHASE_10.md) | RAG 上傳、PDF／Markdown、中文 FTS、有效期與安全檢索 |
 | [Phase 11 驗證紀錄](docs/PHASE_11.md) | OpenAI／Gemini Adapter、逾時／重試、Secret 與設定切換 |
 | [Phase 12 驗證紀錄](docs/PHASE_12.md) | Context、成對建議、持久化 Jobs、重生與用量 |
+| [Phase 13 驗證紀錄](docs/PHASE_13.md) | 公開查詢、限流、成績／趨勢／AI 呈現與隱私邊界 |
 | [資料模型與 ER 圖](docs/DATABASE.md) | 資料表對照、migration、加密輪替與復原方式 |
 | [Sites 開發說明](site/README.md) | 安裝、預覽、建置、測試與環境設定 |
 | [待決策清單](PROJECT_SPEC.md#spec-72-2) | 尚未定案的業務選擇與確認關卡 |
@@ -51,9 +52,9 @@
 | 項目 | 規劃 | 狀態 |
 |---|---|---|
 | 正式執行平台 | ChatGPT Sites | 專案已建立，尚未發布 |
-| 後端 | Vinext／Cloudflare Workers | 已建立 Google-only auth、管理員與草稿評量 API、health route；僅本機預覽 |
-| 前端 | React／HTML／CSS | 已建立開發進度預覽頁 |
-| 關聯式資料庫 | D1／SQLite，binding `DB` | 48 張關聯表、兩個 FTS5 索引與十三份 migration；隔離本機驗證 |
+| 後端 | Vinext／Cloudflare Workers | 已建立 Google-only auth、管理 API、公開查詢 API 與 health route；僅本機預覽 |
+| 前端 | React／HTML／CSS | 已建立公開查詢與結果介面；正式入口關閉 |
+| 關聯式資料庫 | D1／SQLite，binding `DB` | 49 張關聯表、兩個 FTS5 索引與十四份 migration；隔離本機驗證 |
 | 檔案儲存 | R2，binding `FILES` | 本機測試；雲端尚未配置 |
 | AI | OpenAI API、Google Gemini API adapter | Provider、Context 與 Jobs 核心已建立；僅 mock，正式 consumer 待驗證 |
 | 參考資料搜尋 | D1 FTS 優先 | Phase 10 上傳、分段與中文 FTS 檢索已建立 |
@@ -73,7 +74,7 @@ npm run dev
 
 Windows PowerShell 可使用 `npm.cmd`。預覽僅監聽本機；以終端顯示 URL 為準。建置使用 `npm run build`，建置後本機預覽使用 `npm start`。不會自動部署。
 
-驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；最新結果見 [Phase 11 紀錄](docs/PHASE_11.md)。
+驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；最新結果見 [Phase 13 紀錄](docs/PHASE_13.md)。
 
 環境欄位見 [site/.env.example](site/.env.example)，真實值只填入忽略提交的 `.env` 或 Sites Settings；本次預覽與測試不需要真實 Secret。migration 位於 `site/drizzle/`，不由應用程式啟動時自動套用，未套用至雲端。
 
@@ -102,7 +103,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 10 | RAG 參考資料核心；184 項測試通過，PDF／Markdown、中文 FTS 與授權檢索 |
 | Phase 11 | AI Provider Layer；200 項完整回歸通過，含 16 項 Provider／設定測試 |
 | Phase 12 | 核准的本機核心範圍完成；223 項回歸通過，正式 consumer 未啟用，見 [驗證紀錄](docs/PHASE_12.md) |
-| Phase 13 | 公開查詢與 UI 實作完成、整合驗證中；正式入口關閉，見 [紀錄](docs/PHASE_13.md) |
+| Phase 13 | 本機實作與 235 項回歸驗證完成；正式入口關閉，見 [紀錄](docs/PHASE_13.md) |
 | Phase 14～19 | 尚未開始 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
@@ -138,7 +139,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 - 測試、示例、截圖及版本庫只使用虛構資料。
 - 真實 Secret、學生／教師個資、Production DB dump 不進 Git 或公開頁面。
 - 管理端須驗證身分、操作權限及資料範圍；不得只靠前端或角色名稱控制。
-- 公開查詢須包含學期；多筆命中不提供候選名單，處理流程仍有待決策。
+- 公開查詢須包含學期；多筆命中與一般失敗相同，不提供候選名單，統一提示核對資料／聯絡校方。
 - AI 輸入採允許欄位清單，排除直接識別資料，並檢查 RAG 內容。
 - 封存可復原；Purge 不可 Undo，必須完成期限、Preflight、權限、重新驗證、二次確認及稽核。
 

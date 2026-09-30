@@ -1,6 +1,6 @@
 # Phase 13 驗證紀錄
 
-日期：2026-09-30。使用者於 2026-09-29 核准 Phase 13，以及 D-02 歧義處理／D-11 查詢限流。本機實作已建立，完整 CI 驗證中；未正式開放查詢或部署 Sites。
+日期：2026-09-30。使用者於 2026-09-29 核准 Phase 13，以及 D-02 歧義處理／D-11 查詢限流。本機實作及完整 CI 驗證完成；未正式開放查詢或部署 Sites。
 
 ## 零、模型／推理強度
 
@@ -36,9 +36,10 @@ PROJECT_SPEC／D-02／D-11、CHANGELOG、README、資料庫及 site 說明、首
 
 - `node --import ./scripts/sites-env.mjs --test --test-concurrency=2 --test-timeout=180000 tests/public-*.test.mjs tests/migrations.test.mjs`：29 passed、0 failed。
 - 補齊 Purge 與原校呈現後，`node --import ./scripts/sites-env.mjs --test --test-timeout=180000 --test-name-pattern='Phase 13|Purge: permanent' tests/public-result.test.mjs tests/public-lookup.test.mjs tests/lifecycle.test.mjs`：13 passed、0 failed。
-- `npm run typecheck`、`npm run lint`、`npm run build`：已通過；最終改動以完整 CI 再驗證。
-- 瀏覽器：查詢表單六欄、鍵盤提交安全錯誤、清除條件及 390px 單欄／無水平溢出；獨立虛構資料 harness 驗證成績表、趨勢與家長／學生版本切換。這不是正式平台測試，也不使用真實學生資料。
-- 文件、格式、安全掃描與完整回歸驗證中。
+- `npm run typecheck`、`npm run lint`、`npm run build`：已通過；最終實作已由完整 CI 驗證。
+- 瀏覽器：查詢表單六欄、鍵盤提交安全錯誤、清除條件及 390px 單欄／無水平溢出；獨立虛構資料 harness 驗證成績表、趨勢模式／數值表同步及家長／學生版本切換。這不是正式平台測試，也不使用真實學生資料。最後截圖工具多次回報無法擷取，因此沒有可交付的最終截圖；保留 DOM／鍵盤操作與先前畫面檢查證據，不宣稱完成最終截圖驗收。
+- `npm test`：235 passed、0 failed；`npm run format:check`、`node scripts/check-docs.mjs`、`node scripts/check-safety.mjs` 與建置均通過，見 [實作 CI](https://github.com/kisaraki/classroom-aigrade-tzk/actions/runs/36678059379)（commit `3f0d0fb`）。文件檢查涵蓋 21 份 Markdown／442 個連結，安全掃描涵蓋 299 份 source；前端 bundle 未找到抽查的 Secret／身分密文字段。掃描並非完整安全稽核。
+- `git diff --check` 通過；Pages 僅同步文件，Sites 正式部署及 Production migration 不適用／未執行。
 
 ## 六、安全性檢查與殘餘風險
 
