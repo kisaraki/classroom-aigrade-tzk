@@ -6,7 +6,7 @@
 
 Recommended／Minimum：MEDIUM。模型切換後 Current 無法由工具直接讀取；使用者於 2026-10-01 確認目前為 MEDIUM 或更高，Action：KEEP。沒有宣稱自動切換或精確強度。
 
-建立 `/admin` 管理工作區，整合既有服務。Reports 只提供入口，匯出實作屬 Phase 15。Audit 查看政策已於 2026-10-01 定案為僅 active super_admin；介面及授權驗收仍未完成，入口保留說明，不回傳稽核資料。
+建立 `/admin` 管理工作區，整合既有服務。Reports 只提供入口，匯出實作屬 Phase 15。Audit 查看政策已於 2026-10-01 定案為僅 active super_admin；使用者另批准本輪 API／介面／授權測試補做，已完成本機驗證，詳見本文末補充。
 
 ## 已建立項目
 
@@ -36,9 +36,35 @@ Recommended／Minimum：MEDIUM。模型切換後 Current 無法由工具直接�
 
 ## 未完成與限制
 
-1. Audit 查看角色已由使用者定案為僅 active super_admin；待完成讀取介面、伺服器 Session／Permission／Scope 與未登入／其他角色／撤權測試。本次僅文件同步，未新增 Audit API。
+1. Audit 已完成本機讀取介面、API 及授權測試，角色仍僅 active super_admin；最新瀏覽器互動驗收另依第 2 項，不以 SSR 替代。
 2. 最新操作流程與手機版視覺驗證尚未完成，瀏覽器工具存取受限。
 3. 正式 Google callback、可信 IP、限流清理、AI consumer 與副本／備份能力仍沿用既有平台待驗證事項。
 4. Production Purge 停用。沒有真實學生資料、付費 API 呼叫、正式 Release 或 Sites 部署。
 
 Phase 14 尚未完成；使用者後續已核准 Phase 15／16，這些授權不消除本節未完成事項。
+
+## 2026-10-01 Audit 補做
+
+使用者回報「驗收完成，批准執行」，並於範圍澄清中確認本輪補齊 Audit 介面、API 與授權測試。僅執行 Phase 14 Audit，不自動進入其他開發 Phase 或正式部署。此前的驗收回報不冒用為本次新增程式之瀏覽器工具實測。
+
+Recommended／Minimum MEDIUM；Current XHIGH（沿用確認）；KEEP，無額外風險升級。
+
+- 新增 site/lib/server/admin/audit.ts 及 site/app/admin/audit.tsx；透過既有 POST /api/admin/workspace 的 audit 操作查閱。
+- 增加 audit.read，只授予 super_admin；從 DB 重驗 Session、active 狀態、Google binding、角色／Permission 及全校 Scope，拒絕前端角色與班級宣告，查詢與回傳前均重驗。
+- 固定每頁 50 筆，以 created_at／id 游標穩定排序；拒絕不合法／SQL 注入游標，排除到期及未來紀錄。查詢跨臺北午夜拒絕舊頁面，要求重讀。
+- SQL 僅選取稽核編號、時間、操作者帳號代號、動作、類型與結果；不讀 metadata、學生 entity_id、operation_id、Email 或憑證。UI 顯示臺北時間、欄位標題、空狀態與翻頁，錯誤清除資料；沿用工作區的離頁／Scope 切換清除及 no-store。
+- 修改 auth/types／authorization、admin/service／http、Panels／Workspace 與 admin-workspace tests；跨模組僅為專用 Permission、路由串接及錯誤提示。無 schema、migration、dependency 或 Secret 變更。
+
+實際指令（site 目錄）：
+
+| 指令                                                                                                                                                | 結果                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| node --import ./scripts/sites-env.mjs --test --test-concurrency=2 --test-timeout=180000 tests/admin-workspace.test.mjs tests/authorization.test.mjs | 26 通過／0 失敗／skip，98,442 ms；涵蓋工作區與既有 Google 授權回歸 |
+| node --import ./scripts/sites-env.mjs --test --test-timeout=180000 --test-name-pattern='Audit' tests/admin-workspace.test.mjs                       | 新增午夜邊界後，最終 6 Audit 項全通過，31,084 ms                   |
+| npm run typecheck／npm run lint／npm run build                                                                                                      | 最終版本通過；lint 0 warnings，本機 build 不代表正式部署           |
+
+六項涵蓋合法 super_admin、所有其他角色／偽造 role、未登入／Origin／未知 Scope、最小投影與敏感資料隔離、保存期限／未來紀錄、相同 timestamp 分頁、游標驗證、停權／降級／Session 撤銷、查詢後撤權、午夜界線及 SSR 的 XSS escaping／表格標題／無權限入口。開發中測試曾用錯 status=suspended，CHECK 拒絕；修正為既有 disabled 後通過，沒有改動 schema。
+
+Phase 18 的 276 全套結果為補做前基底證據。本輪只執行受影響的 26 項回歸與新增後的 6 項 Audit 重驗，沒有宣稱完整 282 項已執行。SSR 是程式渲染檢查，沒有繞過 browser 政策，不能當作手機／點擊／翻頁的實際瀏覽器驗收。
+
+最終 npm run format:check、git diff --check 通過；check-docs 驗證 28 份文件／482 個本機連結，check-safety 掃描 345 份原始檔未發現指定 Secret／身分證模式（非完整安全稽核）。check-client-bundle 檢查 24 個 client 檔案通過，check-build-config 確認 request logs／traces 關閉；Migration／正式 OAuth／正式 smoke 不適用。RC-01 的本機實作阻擋可解除，新增 Audit 互動與其他 UI／平台 gates 保留，不把 Phase 14 或 18 標成全部完成。

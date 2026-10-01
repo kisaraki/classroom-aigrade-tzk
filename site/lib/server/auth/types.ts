@@ -57,6 +57,7 @@ export type AdminRole =
   | "viewer";
 
 export type Permission =
+  | "audit.read"
   | "admin.read"
   | "admin.manage"
   | "admin.rebind"

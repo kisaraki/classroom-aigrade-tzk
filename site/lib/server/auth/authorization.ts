@@ -11,6 +11,7 @@ import {
 
 const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
   super_admin: [
+    "audit.read",
     "admin.read",
     "admin.manage",
     "admin.rebind",

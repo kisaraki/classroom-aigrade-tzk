@@ -5,6 +5,7 @@ import { SESSION_COOKIE, parseCookieHeader } from "../auth/cookies.ts";
 import type { AuthService } from "../auth/service.ts";
 import type { AdminWorkspaceService } from "./service.ts";
 const fields: Record<string, string[]> = {
+  audit: ["cursor"],
   profile: [],
   terms: [],
   context: ["termId", "onDate"],

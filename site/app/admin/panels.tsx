@@ -7,6 +7,7 @@ import Imports from "./imports";
 import Users from "./users";
 import References from "./references";
 import Reports from "./reports";
+import Audit from "./audit";
 const f = (
   name: string,
   label: string,
@@ -36,6 +37,7 @@ export default function Panels(p: WorkspaceProps & { section: string }) {
   const [roster, setRoster] = useState<Item[]>([]);
   const permissions = profile.permissions as string[];
   const access: Record<string, string> = {
+    audit: "audit.read",
     years: "academic.read",
     classes: "academic.read",
     students: "academic.read",
@@ -673,10 +675,10 @@ export default function Panels(p: WorkspaceProps & { section: string }) {
       </>
     );
   if (section === "reports") return <Reports {...p} />;
+  if (section === "audit") return <Audit {...p} />;
   return (
     <section className="admin-panel">
-      <h3>稽核紀錄</h3>
-      <p>等待確認指定可查看角色，尚未開放此資料入口。</p>
+      <h3>功能尚未提供</h3>
     </section>
   );
 }

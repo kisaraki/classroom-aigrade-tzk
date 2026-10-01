@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-01 — Phase 14 Audit 補做（本機完成）
+
+- 使用者確認批准 Audit 介面、API 與授權測試，僅補做此功能。新增 audit.read 及工作區 audit 入口，限制 active super_admin 全校 Scope，讀取與回傳前重驗。
+- 分頁、保存期限／午夜切換、最小投影與 UI escaping；26 項相關回歸及最後 6 Audit 重驗通過，typecheck／lint／build 通過。沒有 migration 或 dependency 變更。
+- RC-01 本機實作阻擋解除；最新瀏覽器互動及其他 RC 平台 gates 保留，未正式部署。見 [Phase 14 紀錄](docs/PHASE_14.md)。
+
 ## 2026-10-01 — Phase 18 Release Candidate（部分完成／受阻）
 
 - 使用者後續同意 Audit 僅 active super_admin 查看；同步 §38／D-10／驗收要求及候選文件。介面及授權驗收仍未完成，本次僅文件修改，不解除 RC gate。

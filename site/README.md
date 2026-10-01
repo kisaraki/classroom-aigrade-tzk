@@ -1,5 +1,9 @@
 # Sites 應用程式
 
+## Phase 14 Audit 補做（本機完成）
+
+POST /api/admin/workspace 的 audit 操作接受可選 cursor（createdAt／id），每頁 50 筆、僅 active super_admin 的 audit.read 可查閱；查詢及輸出前重驗授權。最小摘要排除 metadata／學生識別／憑證，保存日期切換要求重讀。26 項相關回歸及最後 6 Audit 重驗通過；服務／SSR 證據不替代最新瀏覽器互動，詳見 [Phase 14 紀錄](../docs/PHASE_14.md)。
+
 ## Phase 18 Release Candidate（部分完成／受阻）
 
 候選 `phase18-rc1` 只保存本機版本，沒有 Sites deployment 或 Production migration。Release Notes、Migration Summary、Known Issues 與 Test Summary 見 [RC 紀錄](../docs/RELEASE_CANDIDATE.md)；Phase 14／15 驗收與平台阻擋保留。
@@ -22,7 +26,7 @@
 
 ## Phase 14 管理工作區（進行中）
 
-本機 `/admin` 提供 Google 登入與管理功能。`POST /api/admin/workspace` 以 Session、同源 Origin、操作／欄位白名單及伺服器 Permission／Scope 提供選單、名冊、學籍 Preview／Confirm 與排名計算；回應禁止快取。其他管理功能沿用各模組 API。Audit 查看角色未定案，Reports 匯出屬 Phase 15，Production Purge 停用。
+本機 `/admin` 提供 Google 登入與管理功能。`POST /api/admin/workspace` 以 Session、同源 Origin、操作／欄位白名單及伺服器 Permission／Scope 提供選單、名冊、學籍 Preview／Confirm 與排名計算；回應禁止快取。其他管理功能沿用各模組 API。Audit 僅 active super_admin 可查看，已完成本機介面／API／授權驗證；Reports 匯出依 Phase 15，Production Purge 停用。
 
 ## 本機開發
 

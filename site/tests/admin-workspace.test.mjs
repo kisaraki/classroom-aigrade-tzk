@@ -531,3 +531,299 @@ test("Phase 14 Google browser initiation returns JSON only on explicit Accept an
   );
   assert.equal(calls, 2);
 });
+
+test("Phase 14 Audit: only active super_admin has the dedicated permission, forged role and foreign scope cannot grant it", async (t) => {
+  const f = await fixture(t);
+  assert.equal((await f.call(null, "audit")).status, 401);
+  const ownerView = await f.call(f.owner, "audit");
+  assert.equal(ownerView.status, 200);
+  assert.equal(ownerView.headers.get("Cache-Control"), "no-store, private");
+  assert.ok((await ownerView.json()).rows.length > 0);
+  assert.ok(f.authz.rolePermissions("super_admin").includes("audit.read"));
+  for (const role of [
+    "system_admin",
+    "academic_admin",
+    "score_admin",
+    "ai_admin",
+    "archive_admin",
+    "viewer",
+  ]) {
+    const staff = await f.user("audit-" + role, role, "school");
+    assert.ok(!f.authz.rolePermissions(role).includes("audit.read"));
+    await assert.rejects(
+      f.workspace.execute({ ...staff, role: "super_admin" }, "audit", {}),
+      { code: "PERMISSION_DENIED" },
+    );
+    assert.equal((await f.call(staff, "audit")).status, 403);
+  }
+  assert.equal(
+    (await f.call(f.owner, "audit", { role: "super_admin" })).status,
+    400,
+  );
+  assert.equal(
+    (await f.call(f.owner, "audit", { classId: "class-702" })).status,
+    400,
+  );
+  assert.equal(
+    (
+      await f.call(
+        f.owner,
+        "audit",
+        {},
+        {
+          headers: {
+            Origin: "https://foreign.test",
+            "Content-Type": "application/json",
+            Cookie: "__Host-admin_session=" + f.owner.token,
+          },
+        },
+      )
+    ).status,
+    403,
+  );
+});
+
+test("Phase 14 Audit: safe projection, expired/future exclusion and stable pagination do not expose metadata or student identifiers", async (t) => {
+  const f = await fixture(t);
+  const forbidden = [
+    "fictional-session-token-hidden",
+    "fictional-cookie-hidden",
+    "fictional-oauth-code-hidden",
+    "fictional-student-identifier-hidden",
+    "fictional-email-hidden@example.test",
+  ];
+  for (let n = 0; n < 65; n++)
+    await f.db
+      .prepare(
+        "INSERT INTO audit_logs (id,actor_id,action,entity_type,entity_id,operation_id,outcome,metadata_json,created_at,retention_until) VALUES (?,?,?,?,?,?,?,?,?,?)",
+      )
+      .bind(
+        crypto.randomUUID(),
+        f.owner.adminId,
+        "SCORE_UPDATE",
+        "student",
+        forbidden[3],
+        forbidden[2],
+        "success",
+        JSON.stringify({
+          secret: forbidden[0],
+          cookie: forbidden[1],
+          email: forbidden[4],
+        }),
+        now - 1000 - Math.floor(n / 2),
+        "2026-11-30",
+      )
+      .run();
+  for (const [id, created, until] of [
+    ["fictional-expired", now - 1, "2026-09-30"],
+    ["fictional-future", now + 1, "2026-11-30"],
+  ])
+    await f.db
+      .prepare(
+        "INSERT INTO audit_logs (id,action,entity_type,operation_id,outcome,created_at,retention_until) VALUES (?,'LOGIN','admin_auth',?,'success',?,?)",
+      )
+      .bind(id, id, created, until)
+      .run();
+  const expected = (
+    await f.db
+      .prepare(
+        "SELECT id FROM audit_logs WHERE retention_until>'2026-09-30' AND created_at<=? ORDER BY created_at DESC,id DESC",
+      )
+      .bind(now)
+      .all()
+  ).results.map((r) => r.id);
+  const first = await f.workspace.execute(f.owner, "audit", {});
+  assert.equal(first.rows.length, 50);
+  assert.ok(first.nextCursor);
+  const second = await f.workspace.execute(f.owner, "audit", {
+    cursor: first.nextCursor,
+  });
+  assert.equal(second.nextCursor, null);
+  assert.deepEqual(
+    [...first.rows, ...second.rows].map((r) => r.id),
+    expected,
+  );
+  for (const row of [...first.rows, ...second.rows])
+    assert.deepEqual(
+      Object.keys(row).sort(),
+      ["id", "createdAt", "actor", "action", "entityType", "outcome"].sort(),
+    );
+  const body = JSON.stringify([first, second]);
+  for (const value of forbidden) assert.ok(!body.includes(value));
+  for (const field of [
+    "metadata_json",
+    "entity_id",
+    "operation_id",
+    "actor_id",
+    "authorized_email",
+  ])
+    assert.ok(!body.includes(field));
+  assert.ok(first.rows.some((r) => r.actor === "admin"));
+  for (const cursor of [
+    "invalid",
+    [],
+    { createdAt: -1, id: "valid" },
+    { createdAt: now + 1, id: "valid" },
+    { createdAt: now, id: "' OR 1=1" },
+    { createdAt: now, id: "valid", role: "super_admin" },
+  ])
+    assert.equal((await f.call(f.owner, "audit", { cursor })).status, 400);
+});
+
+test("Phase 14 Audit: suspension, role reduction and session revocation reject subsequent reads", async (t) => {
+  const f = await fixture(t);
+  for (const mutation of ["status='disabled'", "role='viewer'"]) {
+    const staff = await f.user(
+      "audit-super-" + mutation.split("=")[0],
+      "super_admin",
+      "school",
+    );
+    assert.equal((await f.call(staff, "audit")).status, 200);
+    await f.db
+      .prepare(`UPDATE admin_users SET ${mutation} WHERE id=?`)
+      .bind(staff.adminId)
+      .run();
+    const response = await f.call(staff, "audit");
+    assert.ok([401, 403].includes(response.status));
+    assert.ok(!Object.hasOwn(await response.json(), "rows"));
+  }
+  await f.db
+    .prepare("UPDATE admin_sessions SET revoked_at=? WHERE id=?")
+    .bind(now, f.owner.sessionId)
+    .run();
+  assert.equal((await f.call(f.owner, "audit")).status, 401);
+});
+
+test("Phase 14 Audit: revocation after the query is caught before returning any record", async (t) => {
+  const f = await fixture(t);
+  let queried = false;
+  const db = {
+    prepare(sql) {
+      const statement = f.db.prepare(sql);
+      if (!sql.includes("FROM audit_logs l")) return statement;
+      return {
+        bind(...args) {
+          const bound = statement.bind(...args);
+          return {
+            async all() {
+              const result = await bound.all();
+              queried = true;
+              await f.db
+                .prepare("UPDATE admin_sessions SET revoked_at=? WHERE id=?")
+                .bind(now, f.owner.sessionId)
+                .run();
+              return result;
+            },
+          };
+        },
+      };
+    },
+  };
+  const workspace = new AdminWorkspaceService({ db, now: () => now });
+  const response = await handleWorkspace(
+    new Request("https://fictional.test/api/admin/workspace", {
+      method: "POST",
+      headers: {
+        Origin: "https://fictional.test",
+        "Content-Type": "application/json",
+        Cookie: "__Host-admin_session=" + f.owner.token,
+      },
+      body: JSON.stringify({ operation: "audit", input: {} }),
+    }),
+    { auth: f.auth, workspace },
+  );
+  assert.equal(queried, true);
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { error: "ACCESS_DENIED" });
+});
+
+test("Phase 14 Audit table renders escaped text and accessible columns without exposing hidden fields", async () => {
+  const { build } = await import("esbuild");
+  const { mkdir, writeFile } = await import("node:fs/promises");
+  const { resolve } = await import("node:path");
+  const { pathToFileURL } = await import("node:url");
+  const output = resolve(".wrangler/phase14-audit-render.mjs");
+  await mkdir(".wrangler", { recursive: true });
+  const bundle = await build({
+    entryPoints: ["app/admin/audit.tsx"],
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    packages: "external",
+    write: false,
+    jsx: "automatic",
+  });
+  await writeFile(output, bundle.outputFiles[0].contents);
+  const { AuditTable, default: Audit } = await import(
+    pathToFileURL(output).href
+  );
+  const React = await import("react"),
+    { renderToStaticMarkup } = await import("react-dom/server");
+  const html = renderToStaticMarkup(
+    React.createElement(AuditTable, {
+      rows: [
+        {
+          id: "fictional-audit",
+          createdAt: now,
+          actor: "<script>fictional()</script>",
+          action: "LOGIN",
+          entityType: "admin_auth",
+          outcome: "success",
+          metadata_json: "fictional-hidden-metadata",
+        },
+      ],
+    }),
+  );
+  assert.match(html, /scope="col"/);
+  assert.match(html, /時間（臺北）/);
+  assert.match(html, /&lt;script&gt;/);
+  assert.ok(!html.includes("<script>fictional"));
+  assert.ok(!html.includes("fictional-hidden-metadata"));
+  assert.match(html, /成功/);
+  const denied = renderToStaticMarkup(
+    React.createElement(Audit, { profile: { permissions: [] } }),
+  );
+  assert.match(denied, /沒有稽核查看權限/);
+  assert.ok(!denied.includes("讀取最新紀錄"));
+});
+
+test("Phase 14 Audit: crossing Taipei retention midnight during a read refuses the old page", async (t) => {
+  const f = await fixture(t);
+  let time = Date.UTC(2026, 8, 30, 15, 59, 59);
+  const auth = new AuthService({ db: f.db, now: () => time });
+  const owner = await auth.loginVerifiedGoogle({
+    ...identity("owner"),
+    issuedAt: time / 1000,
+    authTime: time / 1000,
+    expiresAt: time / 1000 + 3600,
+  });
+  let queried = false;
+  const db = {
+    prepare(sql) {
+      const statement = f.db.prepare(sql);
+      if (!sql.includes("FROM audit_logs l")) return statement;
+      return {
+        bind(...args) {
+          const bound = statement.bind(...args);
+          return {
+            async all() {
+              const result = await bound.all();
+              queried = true;
+              time += 1000;
+              return result;
+            },
+          };
+        },
+      };
+    },
+  };
+  await assert.rejects(
+    new AdminWorkspaceService({ db, now: () => time }).execute(
+      owner,
+      "audit",
+      {},
+    ),
+    { code: "AUDIT_SOURCE_CHANGED" },
+  );
+  assert.equal(queried, true);
+});

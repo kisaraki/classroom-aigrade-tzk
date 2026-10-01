@@ -6,7 +6,7 @@
 
 Recommended HIGH／Minimum HIGH／Current XHIGH（沿用使用者已確認設定）；Action KEEP，無額外風險升級。保留目前設定完成跨模組審查，沒有宣稱自動切換。
 
-僅執行 §65 的全套測試、本機 production build、migration／Secret names／Sites config 與 GitHub／Pages 唯讀審查，準備候選文件及本機 Save Version。沒有補做其他 Phase 的未授權功能或啟動 Phase 19。
+初次 Phase 18 工作僅執行 §65 的全套測試、本機 production build、migration／Secret names／Sites config 與 GitHub／Pages 唯讀審查，準備候選文件及本機 Save Version。沒有補做其他 Phase 的未授權功能或啟動 Phase 19。
 
 ## 一、候選與檔案
 
@@ -55,6 +55,10 @@ Migration Manifest 另以 journal 檔名／timestamp 與 SQL 全文 SHA-256 核�
 
 所有測試資料皆虛構，Google／AI 為 mock；沒有真實 Secret、學生資料、付費 API、Production migration／Purge、Sites deployment 或正式 smoke test。
 
-Audit 介面及授權驗收（角色已定案為僅 active super_admin）、D-11 復原演練（已核准 RPO≤24 小時／RTO≤8 小時）、D-09 真實 Google 平台政策／流程、最新版 UI／Print 驗收、正式 DB／備份、可信 IP／清理、consumer／用量、Purge 副本及 1,000 人報表容量保留阻擋。使用者已採用 RPO≤24 小時／RTO≤8 小時，已回寫正文／D-11／RC，但平台演練未通過，gate 不解除；使用者後續同意 Audit 僅 super_admin 查看，已同步 §38／D-10／驗收要求與 RC；介面及授權驗收仍未完成，gate 不解除。本次為純文件政策同步，不重跑未受影響的 runtime／migration tests。
+Audit 本機介面／API／授權驗證已於使用者另行核准的 Phase 14 補做完成；最新瀏覽器互動、D-11 復原演練（RPO≤24 小時／RTO≤8 小時）、D-09 真實 Google 政策／流程、正式 DB／備份、可信 IP／清理、consumer／用量、Purge 副本及 1,000 人報表容量仍保留阻擋。先前 Audit 政策同步屬純文件工作；其後補做的程式與驗證另記於下節。
 
 Phase 18 不能標為完成或請求進入正式部署；繼續可完成的本機準備，本輪保存可審查的本機 commit，沒有遠端同步或正式 Release。下一 Phase 19 仍須解除適用 gates，並另取得明確「確認正式部署」。
+
+## 後續 Phase 14 Audit 補做
+
+使用者明確核准 Audit 介面、API 與授權測試後，僅補做該功能，沒有啟動 Phase 19。26 項相關回歸及新增午夜邊界後最終 6 項 Audit 重驗通過；typecheck／lint／build／bundle／config 通過，沒有 schema 或 dependency 變更。RC-01 本機實作阻擋解除，RC-02 最新瀏覽器互動及其他平台 gates 保留。上表的 276 全套結果是補做前基底，不宣稱補做後完整 282 項已執行。詳細檔案、命令與限制見 [Phase 14 紀錄](PHASE_14.md)。

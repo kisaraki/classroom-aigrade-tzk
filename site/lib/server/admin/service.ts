@@ -18,6 +18,7 @@ import type { IdentityKeys } from "../identity.ts";
 import { RankingService } from "../exams/ranking-service.ts";
 import { assertBusinessDate, taipeiBusinessDate } from "../../domain/dates.ts";
 import { SUBJECTS } from "../../domain/scores.ts";
+import { readAudit } from "./audit.ts";
 type Row = Record<string, string | number | null>;
 type Input = Record<string, unknown>;
 const invalid = (): never => {
@@ -235,6 +236,12 @@ export class AdminWorkspaceService {
     });
   }
   async execute(session: AuthSession, operation: string, input: Input) {
+    if (operation === "audit")
+      return readAudit(
+        { db: this.db, authorization: this.authz, now: this.now },
+        session,
+        input,
+      );
     if (operation === "user-details") {
       await this.authz.assertPermission(session, "admin.read");
       const user = await this.one(

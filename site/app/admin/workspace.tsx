@@ -46,6 +46,7 @@ export type WorkspaceProps = {
   refresh: () => void;
 };
 const messages: Record<string, string> = {
+  AUDIT_SOURCE_CHANGED: "稽核保存日期已切換，請重新讀取。",
   AUTHENTICATION_REQUIRED: "登入已失效，請重新登入。",
   AUTH_NOT_CONFIGURED: "Google 登入尚未完成平台設定。",
   AUTH_DATABASE_UNAVAILABLE: "管理資料庫尚未就緒。",
