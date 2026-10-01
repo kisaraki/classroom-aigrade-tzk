@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 18 Release Candidate 部分完成／受阻。** 本機 Phase 17 整合已完成，候選 `phase18-rc1` 保留未解的驗收與平台阻擋項目，沒有正式 Release／Sites 部署。詳見 [候選紀錄](docs/RELEASE_CANDIDATE.md) 與 [Phase 18 紀錄](docs/PHASE_18.md)。
+**Phase 19 已取得正式部署授權，部署前查核受阻。** 本機 Phase 17 整合已完成，候選 `phase18-rc1` 保留未解的驗收與平台阻擋項目，沒有正式 Release／Sites 部署。詳見 [候選紀錄](docs/RELEASE_CANDIDATE.md)、[Phase 18 紀錄](docs/PHASE_18.md) 與 [Phase 19 部署前紀錄](docs/PHASE_19.md)。
 
 ## 文件入口
 
@@ -119,7 +119,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 16 | 本機安全／隱私審查完成；正式平台實測保留 |
 | Phase 17 | 完整生命週期與分類鎖定本機整合完成 |
 | Phase 18 | 含 Audit 的目前候選全套 282 項 tests 通過；build 沿用同一 runtime 成功結果，RC 尚有驗收與正式平台阻擋，詳見候選紀錄 |
-| Phase 19 | 尚未啟動；正式部署另需明確授權 |
+| Phase 19 | 已取得正式部署授權；部署前查核因環境設定、正式 DB／preflight／recovery 與相依驗收受阻，尚未部署 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
 

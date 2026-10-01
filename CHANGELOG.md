@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-01 — Phase 19 正式部署授權／前置查核受阻
+
+- 使用者明確「確認正式部署」，已取得並記錄授權，不重複要求。Sites 唯讀查核仍版本 0／無網址／D1 空；正式環境 entries 空，Google Client 狀態未確認。
+- 平台文件指出 migration 在 Worker upload 前逐檔套用，發布失敗也可能留下部分 schema；尚缺正式 DB／preflight／人工確認／備份復原的受控流程與證據，未直接發布。
+- 沒有程式、migration、套件、Secret、Push／Release 或部署變更；詳見 [Phase 19 紀錄](docs/PHASE_19.md)。
+
 ## 2026-10-01 — Phase 18 接續驗收準備（候選仍受阻）
 
 - 使用者確認接續 Phase 18 剩餘驗收準備；含 Audit 的目前候選全套 282 項測試通過（0 失敗／skip／取消），runtime 基底 850aa9d，沒有新增程式、schema、dependency 或平台旗標變更。

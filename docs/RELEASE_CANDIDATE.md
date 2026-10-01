@@ -66,8 +66,8 @@ hosting.json 的 DB／FILES 是邏輯 binding；本機生成 config 的 placehol
 | RC-06 | 正式 durable AI consumer／排程與用量限制未驗證                                               | 持久 claim／重試／去重／撤權與工作版本實測；mock 不作正式證據。                                      |
 | RC-07 | Production Purge 副本／備份清點及刪除能力未驗證                                              | 完整 copy adapter、共享副本承諾與逐項刪除／缺失驗證；全部驗證前保持停用。                            |
 | RC-08 | 1,000 人 PDF／Excel 的正式 CPU／記憶體／時間容量未驗證                                       | 在正式平台能力下的合成資料容量驗收，不能以受控 1,001 人查詢模擬代替。                                |
-| RC-09 | 本機候選未同步 GitHub／Pages；本次 RC 沒有遠端 CI 結果                                       | 取得對應範圍授權後同步，等待同一候選 commit 的 CI／Pages，驗證版本與 URL。                           |
-| RC-10 | 沒有正式部署授權或已驗證 Sites URL                                                           | 使用者明確「確認正式部署」，且先解除上述適用阻擋，再依 §66 執行。                                    |
+| RC-09 | 本機候選未同步 GitHub／Pages；本次 RC 沒有遠端 CI 結果                                       | 同步已納入 Phase 19 部署授權；依 §66 順序完成，等待同一候選 commit 的 CI／Pages，驗證版本與 URL。    |
+| RC-10 | 2026-10-01 已取得正式部署授權；尚無已驗證 Sites URL                                          | 授權持續有效、不重複要求；先解除適用阻擋並完成正式 DB／preflight／recovery，再依 §66 執行。          |
 | RC-11 | D-11 其餘查詢／容量門檻與正式服務能力尚未定案或驗證                                          | 依實際平台量測與使用者決策完成；不能以本機測試或程式暫時上限宣稱正式容量。                           |
 
 使用者已採用 RPO≤24 小時／RTO≤8 小時的復原目標；最多可能失去 24 小時內資料。這是驗收目標，尚未完成平台演練，不宣稱已達標。使用者後續同意 Audit 僅 super_admin 查看，政策及本機介面／API／授權驗證已完成，使用者已回報 Audit 補做驗收完成；其他 Admin／手機／報表流程仍缺完整步驟結果。即使決策定案，必要實作／平台驗收仍須完成，不能只更新文字就解除 gate。
@@ -101,4 +101,4 @@ hosting.json 的 DB／FILES 是邏輯 binding；本機生成 config 的 placehol
 
 本機 README 最新部署區塊及 pages/index.html 已準備候選內容。Pages workflow 只上傳 pages/ 靜態文件，不承載登入、查詢、D1 或 AI。僅 README 變更不會觸發 Pages；正式同步需包含 Pages 內容。未 Push／觸發 workflow 前，遠端仍是 Phase 13，不宣稱 RC 或 Sites 已發布。
 
-下一階段仍是 Phase 19；本候選受阻，不請求或執行正式部署。正式 URL、日期及三網址驗證只能在實際成功後填入。
+使用者已明確授權 Phase 19 正式部署；[部署前查核](PHASE_19.md) 仍受阻，尚未執行部署。正式 URL、日期及三網址驗證只能在實際成功後填入。

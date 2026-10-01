@@ -2794,6 +2794,8 @@ Codex：
 
 ## 66. Phase 19 — Production Deployment
 
+2026-10-01 使用者明確回覆「確認正式部署」，已取得 Phase 19 正式部署授權，不需重複要求同一授權。部署前查核仍受相依條件阻擋：Sites 版本 0、無 live／preview URL、D1 bindings 空、正式環境 entries 空；Google Client 狀態未確認，正式 migration preflight／人工確認、備份復原及其他適用 RC gates 未完成。授權不等於驗收已通過；先完成前置條件，不直接發布或略過保存／授權／復原要求。實際結果見 [Phase 19 部署前紀錄](docs/PHASE_19.md)。
+
 ### Codex 能力提示
 
 - Recommended Effort：`XHIGH`
