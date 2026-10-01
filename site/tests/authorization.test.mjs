@@ -746,7 +746,7 @@ test("Phase 3B HTTP handlers reject CSRF, identity forgery, unknown fields and p
   assert.equal((await call(tooLarge)).status, 413);
 });
 
-test("Phase 3B migration upgrades Phase 3A in place and preserves outstanding OAuth states", async (t) => {
+test("Migration upgrades Phase 3A in place and retires outstanding OAuth states for Sites", async (t) => {
   const { mf, db } = await createIsolatedDatabase();
   t.after(() => mf.dispose());
   const migrations = readMigrationFiles({ migrationsFolder });
@@ -782,7 +782,9 @@ test("Phase 3B migration upgrades Phase 3A in place and preserves outstanding OA
     db,
     "SELECT * FROM auth_oauth_states WHERE id='old-state'",
   );
-  for (const key of Object.keys(before)) assert.equal(after[key], before[key]);
+  for (const key of Object.keys(before).filter((key) => key !== "used_at"))
+    assert.equal(after[key], before[key]);
+  assert.notEqual(after.used_at, null);
   assert.equal(after.admin_session_id, null);
   assert.equal(after.identity_request_id, null);
   await assert.rejects(
@@ -792,7 +794,7 @@ test("Phase 3B migration upgrades Phase 3A in place and preserves outstanding OA
     ),
     /INVALID_OAUTH_STATE_PURPOSE/,
   );
-  assert.equal((await migrationPreflight(db)).applied, 16);
+  assert.equal((await migrationPreflight(db)).applied, 17);
   assert.equal(
     (
       await one(

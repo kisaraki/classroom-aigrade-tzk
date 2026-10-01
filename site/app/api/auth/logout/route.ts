@@ -15,7 +15,7 @@ export async function POST(request: Request): Promise<Response> {
         { error: "CSRF_ORIGIN_MISMATCH" },
         { status: 403, headers: { "Cache-Control": "no-store" } },
       );
-    await authService().logout(
+    await authService(request).logout(
       parseCookieHeader(request.headers.get("Cookie"))[SESSION_COOKIE] ?? null,
     );
     const headers = new Headers({ "Cache-Control": "no-store" });

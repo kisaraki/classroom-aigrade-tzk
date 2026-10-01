@@ -1,9 +1,9 @@
 {
-  "candidate": "phase18-rc1",
+  "candidate": "phase19-sites-auth-local",
   "reviewDate": "2026-10-01",
   "scope": "local-review-only",
-  "migrationCount": 16,
-  "relationalTableCount": 50,
+  "migrationCount": 17,
+  "relationalTableCount": 53,
   "ftsIndexes": ["ai_reference_chunks_fts", "reference_search"],
   "migrations": [
     {
@@ -101,6 +101,12 @@
       "file": "site/drizzle/0015_phase_16_auth_limits.sql",
       "journalTimestamp": 1790822369528,
       "sha256": "77ebb66dd97ddb8a92709cf0d3abda920e824bb7797428f66bad0236d901707c"
+    },
+    {
+      "index": 16,
+      "file": "site/drizzle/0016_phase_19_sites_passkeys.sql",
+      "journalTimestamp": 1790853818867,
+      "sha256": "8fbf7e5f1f0b79c251fbdfb58f5d704615740929be9ec738aea02ad3e80ca1c8"
     }
   ]
 }

@@ -7,7 +7,7 @@ import { AuthError } from "../../../../lib/server/auth/types.ts";
 
 export async function GET(request: Request): Promise<Response> {
   try {
-    const session = await authService().validateSession(
+    const session = await authService(request).validateSession(
       parseCookieHeader(request.headers.get("Cookie"))[SESSION_COOKIE] ?? null,
     );
     return Response.json(

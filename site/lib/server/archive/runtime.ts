@@ -13,7 +13,10 @@ export async function archiveRoute(
     if (!env.DB) throw new AuthError("AUTH_DATABASE_UNAVAILABLE", 503);
     return await handleArchiveRequest(
       request,
-      { auth: authService(), archive: new ArchiveService({ db: env.DB }) },
+      {
+        auth: authService(request),
+        archive: new ArchiveService({ db: env.DB }),
+      },
       operation,
       id,
     );

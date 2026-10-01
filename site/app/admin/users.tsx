@@ -88,15 +88,16 @@ export default function Users(p: WorkspaceProps) {
         fields={[
           { name: "username", label: "內部帳號代號" },
           { name: "displayName", label: "顯示名稱" },
+          { name: "sitesSubject", label: "Sites 使用者 ID" },
           {
             name: "authorizedEmail",
-            label: "授權 Google Email",
+            label: "聯絡 Email",
             type: "email",
           },
           { name: "role", label: "角色", options: roles },
         ]}
         run={(v) => p.request("/api/admin/users", { ...v, confirmed: true })}
-        note="不建立本地密碼。一般管理員建立後需另設定有效 Scope，首次登入綁定 Google 身分。"
+        note="不建立本地密碼。一般管理員建立後需另設定有效 Scope，首次登入核對已指派的 Sites 身分。"
       />
       <section className="admin-panel">
         <h3>選擇管理員</h3>
@@ -228,11 +229,12 @@ export default function Users(p: WorkspaceProps) {
             }}
           />
           <ActionForm
-            title="核准 Google 身分重新綁定"
+            title="核准 Sites 身分重新綁定"
             fields={[
+              { name: "sitesSubject", label: "Sites 使用者 ID" },
               {
                 name: "authorizedEmail",
-                label: "新的授權 Email",
+                label: "新的聯絡 Email",
                 type: "email",
               },
               { name: "reason", label: "原因", type: "textarea" },

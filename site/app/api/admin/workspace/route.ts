@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   try {
     if (!env.DB) throw new Error();
     return await handleWorkspace(request, {
-      auth: authService(),
+      auth: authService(request),
       workspace: new AdminWorkspaceService({
         db: env.DB,
         identityKeys: () =>

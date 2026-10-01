@@ -14,7 +14,11 @@ export async function POST(
   try {
     return await handleAuthRequest(
       request,
-      { auth: authService(), management: adminManagementService() },
+      {
+        auth: authService(request),
+        management: adminManagementService(),
+        requireSitesBinding: true,
+      },
       "rebind",
       (await context.params).id,
     );

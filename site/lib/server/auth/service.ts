@@ -41,7 +41,7 @@ type AdminRow = {
 
 export type AuthDependencies = {
   db: D1Database;
-  oidc: GoogleOidcClient;
+  oidc?: GoogleOidcClient;
   bootstrapSecret: string;
   now?: () => number;
   idleTimeoutMs?: number;
@@ -76,7 +76,7 @@ function sessionCookieMaxAge(absoluteTimeoutMs: number): number {
 
 export class AuthService {
   private readonly db: D1Database;
-  private readonly oidc: GoogleOidcClient;
+  private readonly oidc?: GoogleOidcClient;
   private readonly bootstrapSecret: string;
   private readonly now: () => number;
   private readonly idleTimeoutMs: number;
@@ -110,6 +110,7 @@ export class AuthService {
     adminSessionId: string | null = null,
     identityRequestId: string | null = null,
   ): Promise<OAuthStart> {
+    if (!this.oidc) throw new AuthError("AUTH_PROVIDER_REMOVED", 410);
     const now = this.now();
     const state = randomBase64Url();
     const nonce = randomBase64Url();
@@ -179,6 +180,7 @@ export class AuthService {
     state: string;
     cookieHeader: string | null;
   }): Promise<AuthResult | null> {
+    if (!this.oidc) throw new AuthError("AUTH_PROVIDER_REMOVED", 410);
     const state = await this.consumeOAuthState(input.state, input.cookieHeader);
     const idToken = await this.oidc.exchangeCode(
       input.code,

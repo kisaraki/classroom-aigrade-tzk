@@ -18,23 +18,33 @@
       <p class="lead">專案規格、開發進度與版本資訊。</p>
       <section aria-labelledby="progress">
         <h2 id="progress">開發進度</h2>
-        <p><strong>Phase 18 Release Candidate 準備稿</strong> · 2026-10-01</p>
+        <p><strong>Phase 19 基礎設施已部署</strong> · 2026-10-02</p>
         <p>
-          候選 phase18-rc1 僅保存本機。Phase 17 生命週期整合已完成；Audit
-          介面／API／授權測試已於本機通過；最新瀏覽器驗收及正式平台能力仍有阻擋，本候選尚未取得正式發布資格。
+          Sites 版本 1 部署成功，D1 DB 已建立。管理認證已改為 Sites／ChatGPT
+          登入與
+          Passkey。正式可信身分、裝置互動及備份／復原等驗收尚未完成，業務服務保持關閉，尚無正式軟體
+          Release。
         </p>
         <p>
           RPO 最多 24 小時、RTO 最多 8
           小時為已核准的復原驗收目標；平台備份／復原演練尚未通過，不宣稱達標。
         </p>
         <p>
-          含 Audit 的目前候選全套 282 項測試通過；本機 build 沿用同一 runtime
-          的成功結果。Release Candidate 仍受阻。所有測試皆使用虛構資料及
-          mock；正式查詢、登入驗證開關、AI 排程與 Production Purge 仍未啟用。
+          新候選 300
+          項案例經首次全套及失敗項修正／隔離重驗均已有通過證據，並非一次全套零失敗；typecheck、lint、build
+          與候選 bundle 檢查通過。測試使用虛構資料、模擬 AI
+          與合成認證裝置；正式查詢、登入驗證開關、AI 排程與 Production Purge
+          仍未啟用。
         </p>
         <p>
-          目前沒有正式系統版本或已驗證 Sites
-          URL。本頁是本機準備內容，尚未同步線上 Pages；線上版本仍為 Phase 13。
+          <a href="https://classroom-aigrade-tzk.kisaraki.chatgpt.site"
+            >Sites 系統入口</a
+          >
+          沿用原有存取範圍；尚未登入的請求由平台拒絕。部署成功不代表所有業務驗收完成；詳細限制見
+          <a
+            href="https://github.com/kisaraki/classroom-aigrade-tzk/blob/main/docs/PHASE_19.md"
+            >Phase 19 紀錄</a
+          >。
         </p>
       </section>
       <nav aria-label="專案文件">

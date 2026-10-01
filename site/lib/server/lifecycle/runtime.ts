@@ -15,7 +15,10 @@ export async function lifecycleRoute(
     // A request body or environment flag must never bypass this integration gate.
     return await handleLifecycleRequest(
       request,
-      { auth: authService(), lifecycle: new LifecycleService({ db: env.DB }) },
+      {
+        auth: authService(request),
+        lifecycle: new LifecycleService({ db: env.DB }),
+      },
       operation,
       id,
     );

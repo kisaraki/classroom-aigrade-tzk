@@ -22,11 +22,11 @@ POST /api/admin/workspace 的 audit 操作接受可選 cursor（createdAt／id�
 
 伺服器重新檢查 Session／Scope／來源，不持久保存產出。疑似公式文字會加上「文字：」前綴；不輸出生日、身分證或內部 ID。原校個人成績依目前有效學籍授權並另標示來源，不進本校排名。限制與驗證見 [Phase 15 紀錄](../docs/PHASE_15.md)。
 
-此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；最新進度及限制見 [Phase 18 工作紀錄](../docs/PHASE_18.md)。
+此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；最新進度及限制見 [Phase 19 工作紀錄](../docs/PHASE_19.md)。
 
 ## Phase 14 管理工作區（進行中）
 
-本機 `/admin` 提供 Google 登入與管理功能。`POST /api/admin/workspace` 以 Session、同源 Origin、操作／欄位白名單及伺服器 Permission／Scope 提供選單、名冊、學籍 Preview／Confirm 與排名計算；回應禁止快取。其他管理功能沿用各模組 API。Audit 僅 active super_admin 可查看，已完成本機介面／API／授權驗證；Reports 匯出依 Phase 15，Production Purge 停用。
+`/admin` 提供 Sites／ChatGPT 登入與 Passkey 管理介面；平台可信來源未確認前預設拒絕。`POST /api/admin/workspace` 以 Session、同源 Origin、操作／欄位白名單及伺服器 Permission／Scope 提供選單、名冊、學籍 Preview／Confirm 與排名計算；回應禁止快取。其他管理功能沿用各模組 API。Audit 僅 active super_admin 可查看，已完成本機介面／API／授權驗證；Reports 匯出依 Phase 15，Production Purge 停用。
 
 ## 本機開發
 
@@ -53,9 +53,9 @@ Windows PowerShell 可使用 `npm.cmd`。若 npm shim 找不到自身模組，�
 
 - `.openai/hosting.json` 保存 Sites project_id 與邏輯 bindings：D1 `DB`、R2 `FILES`。
 - 複製 [.env.example](.env.example) 為本機 `.env`；真實值不提交 Git。雲端 Secret 由 Sites Settings 管理，變更不代表已套用至執行中的版本。
-- Phase 3A 的 auth routes 需要部署平台注入 `GOOGLE_OAUTH_CLIENT_ID`、`GOOGLE_OAUTH_CLIENT_SECRET`、`GOOGLE_OAUTH_REDIRECT_URI` 與 `ADMIN_BOOTSTRAP_SECRET`；目前未填入真實值。
-- 管理員僅使用 Google OAuth／OIDC；未啟用 starter 的 ChatGPT 登入模擬，也沒有本地密碼登入。
-- [db/schema.ts](db/schema.ts) 已定義資料表；`drizzle/` 保存十四份 migration、journal 與 snapshots。ER 圖、欄位表示及復原計畫見 [DATABASE.md](../docs/DATABASE.md)。
+- 正式 auth runtime 需要 SITES_AUTH_VERIFIED、WEBAUTHN_ORIGIN 與 ADMIN_BOOTSTRAP_SECRET；可信 gateway 未實測前 SITES_AUTH_VERIFIED 必須為 false。不再配置 Google Client。
+- 管理員以 Sites／ChatGPT 平台穩定使用者 ID 綁定，Passkey 作五分鐘內高風險重驗，沒有本地密碼。平台 Email 僅為聯絡資訊。
+- [db/schema.ts](db/schema.ts) 已定義資料表；`drizzle/` 保存十七份 migration、journal 與 snapshots。ER 圖、欄位表示及復原計畫見 [DATABASE.md](../docs/DATABASE.md)。
 - `npm run db:verify` 僅建立一次性 Miniflare D1，套用 migration、虛構 seed 並檢查重跑；結束即銷毀，不寫入本機預覽 DB 或雲端。伺服器不自動 migration。
 - 姓名與生日可重複；分數以百分之一分整數儲存。身分證只儲存密文、key 版本與 HMAC，key 在測試程序中隨機產生；不得將測試 key 當成正式 key。
 - `tests` 中的 migration、日期、身分證加密與 D1／R2 測試 使用暫時 Miniflare 實例與虛構資料；不接觸雲端資料庫。
@@ -77,14 +77,14 @@ Windows PowerShell 可使用 `npm.cmd`。若 npm shim 找不到自身模組，�
 - PATCH /api/admin/users/[id]：原子修改 displayName、role、status、assignments。
 - POST /api/admin/users/[id]/revoke：強制撤銷目標 Sessions。
 - POST /api/admin/users/[id]/rebind：核准新 authorizedEmail 與一次性驗證 request。
-- POST /api/auth/identity/start：提交 requestToken，前往 Google；callback 必須符合核准 Email，新身分不由前端提交。
-- POST /api/auth/reauth/start：以現有 Session 啟動 Google 重新驗證；callback 檢查同一瀏覽器 Session、subject、Email 與 auth_time。
+- POST /api/auth/sites：login／bootstrap、register-options／register-verify、reauth-options／reauth-verify、identity-options／identity-verify。後者以 requestToken 啟動 Sites 身分重新綁定與新 Passkey 註冊。
+- 舊 google/start、google/callback、bootstrap/start、identity/start、reauth/start 路由回應 410；Sites 登入使用平台保留的 /signin-with-chatgpt 頂層導覽。
 
-所有新增 POST／PATCH 要求同源 Origin 與 application/json。建立帳號需 confirmed=true；修改、撤銷與 Rebind 另需清單的 auth_version 作為 expectedVersion，拒絕未知欄位。帳號管理只限近期 Google 驗證的 super_admin；其他角色由 AuthorizationService 檢查 Permission 及資源 Scope。
+所有新增 POST／PATCH 要求同源 Origin 與 application/json。建立帳號需 confirmed=true；修改、撤銷與 Rebind 另需清單的 auth_version 作為 expectedVersion，拒絕未知欄位。帳號管理只限近期 Passkey 驗證的 super_admin；其他角色由 AuthorizationService 檢查 Permission 及資源 Scope。
 
-Recovery 核准只有 [AdminManagementService.approveRecovery](lib/server/auth/admin-management.ts) 的受控伺服器維護入口，沒有公開核准 route。維護者在可信程序注入 D1 與 ADMIN_RECOVERY_SECRET，提供保留帳號 ID、目前版本、核准 Email、confirmed=true、非敏感 approvedBy／evidenceReference。回傳 requestToken 僅交給核准的新身分持有人，不寫入一般 log 或 URL；新身分持有人透過 identity/start 的 JSON body 啟動 Google 驗證。伺服器只保存隨機 token hash，核准與 Google 驗證都必須在 5 分鐘內完成。Production 維護執行環境與證據保存政策須在正式啟用前確認，不能用公開 API 代替受控維護程序。
+Recovery 核准只有 [AdminManagementService.approveRecovery](lib/server/auth/admin-management.ts) 的受控伺服器維護入口，沒有公開核准 route。維護者在可信程序注入 D1 與 ADMIN_RECOVERY_SECRET，提供保留帳號 ID、目前版本、sitesSubject、聯絡 Email、confirmed=true、非敏感 approvedBy／evidenceReference。回傳 requestToken 僅交給核准的新身分持有人，不寫入一般 log 或 URL；新身分持有人透過 /api/auth/sites 的 identity-options／identity-verify 完成平台身分與新 Passkey 驗證。伺服器只保存隨機 token hash，核准與 Passkey challenge 均為一次性 5 分鐘有效。Production 維護執行環境與證據保存政策須在正式啟用前確認，不能用公開 API 代替受控維護程序。
 
-一般登入及帳號管理不依賴 Recovery Secret 是否配置；只有受控 Recovery 核准會要求該 Secret。Google auth_time 需依 [官方 OIDC 文件](https://developers.google.com/identity/openid-connect/reference) 請求；沒有有效 auth_time 時一般登入仍可成立，但高風險操作會拒絕。真實 Google 設定與 Sites 實測仍暫緩。
+一般登入及帳號管理不依賴 Recovery Secret，只有受控 Recovery 核准需要該 Secret。一般 Sites 登入不代表近期驗證；Passkey 完成時間由伺服器核定，滿五分鐘失效。正式 gateway 防偽、Cookie、裝置互動及受控維護程序仍待平台實測。
 
 ## Phase 4 草稿評量 API
 
@@ -163,7 +163,7 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 | POST `/api/admin/exams/[id]/publication/confirm`    | `{previewId,confirmed:true}`；來源版本改變須重新預覽，重送不重複提交                                                                                                          |
 | GET `/api/admin/exams/[id]/publication?classId=...` | 只讀取已提交的班級結果，不回傳其他班級或全年段個人名次；尚無版本則 published=false                                                                                            |
 
-發布須全校 score.write；修改逐列驗證班級／科目權限。兩者皆要求 5 分鐘內 Google Recent Authentication。部分發布後未發布分類的後續填分也走 EDIT；其分數不進入公開快照。編輯一律保存原因及 History，在同一交易內解鎖、重算、保存完整版本與 AI 請求、重新鎖定。歷史年度僅 super_admin 可依正式修改流程處理，封存評量拒絕。
+發布須全校 score.write；修改逐列驗證班級／科目權限。兩者皆要求 5 分鐘內 Passkey Recent Authentication。部分發布後未發布分類的後續填分也走 EDIT；其分數不進入公開快照。編輯一律保存原因及 History，在同一交易內解鎖、重算、保存完整版本與 AI 請求、重新鎖定。歷史年度僅 super_admin 可依正式修改流程處理，封存評量拒絕。
 
 `regenerationRequest(jobId)` 僅供 Phase 12 內部消費契約，回傳版本／audience，不呼叫 AI，亦不能取代消費者完成時的原子版本及學生狀態檢查。詳見 [Phase 7 紀錄](../docs/PHASE_7.md)。
 
@@ -183,7 +183,7 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 - READMIT：target 同時指定 studentId、目標 classId，加上 seatNumber。建立新學籍、保留舊期限事件並暫停套用截止日；需 archive.manage 與 academic.write。
 - UNDO／RESTORE：`{action,batchId,reason}`；前者限提交起未滿 30 天，後者不受快速 Undo 時窗限制，但皆不得覆蓋後續修改或已 Purge 項目。
 
-一般封存／畢業／延長／復原須 archive.manage 與 Scope，皆要求 5 分鐘內 Google Recent Authentication；歷史年度遵守既有 super_admin 限制。已封存項目不能重複封存，Restore 衝突需先釐清，不提供強制覆蓋。publicEligibility 是 Phase 13 對接用的內部期限 helper，不是公開查詢 API。詳見 [Phase 8 紀錄](../docs/PHASE_8.md)。
+一般封存／畢業／延長／復原須 archive.manage 與 Scope，皆要求 5 分鐘內 Passkey Recent Authentication；歷史年度遵守既有 super_admin 限制。已封存項目不能重複封存，Restore 衝突需先釐清，不提供強制覆蓋。publicEligibility 是 Phase 13 對接用的內部期限 helper，不是公開查詢 API。詳見 [Phase 8 紀錄](../docs/PHASE_8.md)。
 
 ## Phase 9 Recycle Bin 與 Purge API
 
@@ -191,7 +191,7 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 - `POST /api/admin/lifecycle/confirm`：`{ previewId, confirmed: true, confirmation? }`；Purge 另要求 Preview 回傳的確認文字。
 - `GET /api/admin/lifecycle/list`：依 archive.read 與所有受影響歷史 Scope 篩選回收紀錄。
 - `GET /api/admin/lifecycle/jobs/[id]`：super_admin 查看 Purge 狀態及最小證據。
-- `POST /api/admin/lifecycle/jobs/[id]/retry`：`{ confirmed: true }`；重試仍要求 Google Recent Authentication。
+- `POST /api/admin/lifecycle/jobs/[id]/retry`：`{ confirmed: true }`；重試仍要求 Passkey Recent Authentication。
 
 Purge 目前僅透過 server-owned mock adapter 在隔離測試執行。runtime 未配置已驗證副本／備份 adapter，會拒絕 Production Purge；客戶端不能用欄位或環境開關略過。開始後至完成期間鎖住業務寫入，PARTIAL 可重試、不可 Undo。其他學生的已發布名次保留，受影響評量停止重算，原始群體統計移除。詳見 [Phase 9 紀錄](../docs/PHASE_9.md)。
 
@@ -217,7 +217,7 @@ Starter 原有第三方程式與授權檔保留；MIT 專案授權見 [LICENSE](
 - `GET /api/admin/ai/settings`：回傳 `{ version, configuration }`；尚未設定時 `version: 0`、`configuration: null`。
 - `POST /api/admin/ai/settings`：接受 `{ configuration: { provider, model }, expectedVersion, confirmed: true }`。provider 僅 `openai` 或 `gemini`；model 必須由管理員明確指定，不接受 URL、路徑或其他欄位。
 - 讀寫皆須目前學期的全校 `ai.manage`；POST 另驗證同源 Origin、JSON、4 KiB 本文與版本。切換為整批原子提交，衝突不覆蓋，Audit 只記錄版本與供應者。API 不讀寫 Secret。
-- `OPENAI_API_KEY`／`GEMINI_API_KEY` 由平台 Env／Secret 注入，僅相應 Adapter 讀取；未設定不影響 Google 登入或成績核心。不提供金鑰查詢、上傳或測試付費 API 的 HTTP 入口。
+- `OPENAI_API_KEY`／`GEMINI_API_KEY` 由平台 Env／Secret 注入，僅相應 Adapter 讀取；未設定不影響 Sites 登入或成績核心。不提供金鑰查詢、上傳或測試付費 API 的 HTTP 入口。
 - 內部 `configuredAIProvider()` 回傳設定版本與 Provider；後續 Job 必須先授權、清除個資、保存來源版本，完成時重驗版本。Adapter 本身不處理學生成績、RAG、工作排程或建議持久化。
 - 已核准限制與錯誤／取消行為見 [Phase 11 紀錄](../docs/PHASE_11.md) 及 [主規格 §29](../PROJECT_SPEC.md#spec-29)。
 
@@ -227,7 +227,7 @@ Starter 原有第三方程式與授權檔保留；MIT 專案授權見 [LICENSE](
 - `GET /api/admin/ai/jobs?examId=...&studentId=...`：要求 `ai.read` 與 Scope，回傳成對建議版本及工作狀態／安全錯誤／已知用量。內容是已驗證的段落 JSON；不得當作 HTML。公開家長 UI 由 Phase 13 整合，不可直接公開此管理 API。
 - `AIJobService.consumeOne()` 是獨立 consumer 介面，每次領取一組家長／學生工作；5 分鐘租約、同組原子領取、最多 3 次自動執行、1／5 分鐘退避。過期租約可重新領取，舊 lease 無法完成或覆蓋新 worker。
 - 每組先後生成兩版，兩者均滿 500 漢字且通过個資與來源檢查後，同一 D1 batch 保存內容、引用、版本與完成狀態。任一版失敗不發布半套。重試可能重新呼叫兩版並增加 API 用量。
-- 首次須管理員手動啟動。後續發布／改分在同一交易為已啟動的學生評量保存重生請求；也使同學期下一次評量的前次比較失效。背景工作使用持久化的啟動者及 auth_version，重驗 active Google 綁定、ai.manage、Scope 與學生狀態；撤權後須重新核准 Job，不能借用其他管理員權限。
+- 首次須管理員手動啟動。後續發布／改分在同一交易為已啟動的學生評量保存重生請求；也使同學期下一次評量的前次比較失效。背景工作使用持久化的啟動者及 auth_version，重驗 active 帳號與 Sites 綁定、ai.manage、Scope 與學生狀態；撤權後須重新核准 Job，不能借用其他管理員權限。
 - 用量為供應者成功回應所回報的 tokens，未回報為 NULL。包含失敗／中斷呼叫的完整帳單用量不一定可知，不能將 NULL 當 0；duration 為該次成功呼叫耗時，api_attempts 為 Provider 當次嘗試數。
 - 正式排程／consumer 未啟用；沒有用 `waitUntil` 或延長 HTTP 假裝可靠排程。授權範圍與驗證見 [Phase 12 紀錄](../docs/PHASE_12.md)。
 

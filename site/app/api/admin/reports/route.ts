@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         { status: 503, headers: { "Cache-Control": "no-store" } },
       );
     return handleReport(request, {
-      auth: authService(),
+      auth: authService(request),
       reports: new ReportService({ db: env.DB }),
       font: async () => {
         if (!font) {

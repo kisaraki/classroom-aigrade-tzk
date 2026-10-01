@@ -15,7 +15,9 @@ Software Requirements Specification（SRS）暨 Codex 分階段開發規格
 > 圖表：Chart.js 或同等輕量圖表庫  
 > AI Provider：OpenAI API、Google Gemini API  
 > 文件語言：繁體中文（臺灣用語）
-> 修訂重點（v1.6）：管理員認證改為僅 Google OAuth／OIDC；移除 ChatGPT／Gemini 認證、AI 身分欄位與人工核驗需求，同步 Bootstrap、Session、Rebind、驗收與 Phase 關卡。AI 建議提供者維持獨立。詳細變更見 [CHANGELOG.md](CHANGELOG.md)。
+> 修訂重點（v1.6）：原 Google-only 政策已由 2026-10-01 Sites／ChatGPT 平台登入及 Passkey 決策取代。AI 建議提供者維持獨立。詳細變更見 [CHANGELOG.md](CHANGELOG.md)。
+
+> 認證政策更新：Sites／ChatGPT 登入與 Passkey 高風險重驗已核准，規則見 §32–35。正式部署授權持續有效；認證遷移完成驗證及平台可信身分／復原等前置條件通過前不得上線。歷史 Google 實作與已提交 migration 保留為相容基線，正式入口不再要求 Google Client。
 
 ## 文件導覽
 
@@ -173,15 +175,13 @@ OPENAI_API_KEY
 GEMINI_API_KEY
 ADMIN_BOOTSTRAP_SECRET
 ADMIN_RECOVERY_SECRET
-GOOGLE_OAUTH_CLIENT_ID
-GOOGLE_OAUTH_CLIENT_SECRET
 IDENTITY_HMAC_SECRET
 IDENTITY_ENCRYPTION_KEY
 PUBLIC_LOOKUP_HMAC_SECRET
 AUTH_RATE_HMAC_SECRET
 ```
 
-Secrets 不得存入一般設定表。`GOOGLE_OAUTH_REDIRECT_URI` 是非 Secret 的精確 callback 設定；只能於 D-09 平台路徑驗證後登錄。`AUTH_RATE_VERIFIED` 是非 Secret 的正式登入限流驗證開關，預設 false，啟用條件依 §63；`AUTH_RATE_HMAC_SECRET` 使用至少 32 字元的獨立高熵 Secret，不得與公開查詢或身分證金鑰共用。
+Secrets 不得存入一般設定表。WEBAUTHN_ORIGIN 為精確 HTTPS origin，SITES_AUTH_VERIFIED 預設 false，可信 gateway 防偽實測通過後才可啟用。AUTH_RATE_VERIFIED 亦預設 false，啟用條件依 §63；AUTH_RATE_HMAC_SECRET 採至少 32 字元獨立高熵 Secret，不與公開查詢或身分證金鑰共用。
 
 公開查詢另使用非 Secret 的 `PUBLIC_LOOKUP_VERIFIED` 開關，預設 false；可信來源 IP、平台紀錄與限流清理／備份保存能力實測完成後才能啟用。查詢 HMAC 使用獨立高熵 Secret，至少 32 字元，不得沿用身分證金鑰。
 
@@ -978,113 +978,59 @@ D-11 Phase 10 門檻已於 2026-09-28 核准：PDF／UTF-8 Markdown 每份最多
 
 ## 32. 管理員身分驗證總則
 
-管理員唯一的外部身分認證方式為 Google OAuth 2.0 / OpenID Connect（OIDC）。OIDC 是 Google OAuth 登入的身分驗證契約，不是新增另一個服務認證。
+2026-10-01 使用者取消 Google OAuth Client，核准 Sites／ChatGPT 平台登入及 Passkey 高風險重新驗證。此決策取代先前 Google-only 規則；Phase 3A／3B 等歷史紀錄保留當時測試證據，不作為目前部署要求。
 
-所有可登入 `/admin` 的管理員帳號，必須同時符合：
+登入須同時具備可信 Sites gateway 身分、明確授權的 Sites ID 綁定及允許登入的帳號狀態。每個管理端 API 仍檢查應用程式 Session、Permission／Scope；平台登入不會自動建立管理員。Bootstrap 是唯一一次性初始化例外。不建立本地密碼或匿名管理入口。
 
-1. Google 身分結果已由伺服器驗證。
-2. Google 回傳的 Email 為已驗證狀態。
-3. Email 符合 `AdminUsers.authorized_email` 授權紀錄。
-4. 帳號狀態允許登入；首次綁定帳號須完成 §35.5 的啟用流程。
-5. 已綁定帳號的 Google subject 必須一致，不得只憑相同 Email 靜默更換綁定。
-6. 每個管理端操作仍須在 Server-side 檢查 Role、Permission 與 Scope。
 
-登入條件：
 
-```text
-Google Verified (including email_verified)
-AND Authorized Email
-AND Allowed Admin Status
-AND Google Binding Valid
-```
+### Sites 登入與 Passkey（2026-10-01 核准）
 
-首次 Bootstrap 是建立第一筆授權紀錄的受控例外，依 §35.1 執行。
+管理員改以 Sites／ChatGPT 平台身分登入，使用穩定且由可信 gateway 提供的 Sites 使用者 ID 作授權綁定；平台 Email／名稱僅為顯示或聯絡資料，不能自動映射管理員。新增管理員與 Rebind／Recovery 明確指定 Sites 使用者 ID，不以相同 Email 合併。首次 Bootstrap 仍以平台身分加 Bootstrap Secret 一次性建立保留 admin；不重新開放已使用的 Bootstrap。
 
-不得要求 ChatGPT 或 Gemini 的登入、帳號可用資格、人工核驗或 API Key 作為管理員登入條件。管理端不得提供本地密碼登入備援。
+使用者核准 Passkey 作高風險重新驗證：伺服器隨機一次性 challenge，5 分鐘到期；要求 user verification、精確 Origin／RP ID、合法簽章及目前帳號／Session／auth_version／Sites 身分一致。驗證完成的伺服器時間才可寫入 Recent Authentication，仍採 5 分鐘有效期。Challenge 不能跨 Session／操作重用；到期、失敗或撤權拒絕，challenge 以原子更新先消耗；credential counter／Session／Audit 再以同一交易及版本守衛防止競爭。一般 Sites 登入不自動給予近期驗證。
 
----
+Passkey 以每位管理員一筆目前有效憑證實作；初次註冊須已授權的 Sites 身分與有效 Session，替換已有憑證另須既有 Passkey 近期驗證及明確確認。私鑰由裝置／Passkey 提供者保管，D1 僅存 credential ID、公鑰及驗證所需 metadata。Recovery 仍須受控維護核准、一次性 5 分鐘 request、指定新 Sites ID 及新 Passkey 的使用者驗證；不得僅憑 Recovery Secret 登入。Rebind／Recovery 撤銷舊 Session 與舊憑證，不改名／刪除保留 admin。
+
+遷移不改寫已提交的 SQL，新增 migration 清除舊 Session 的有效性並新增 Sites binding／Passkey／challenge 資料。舊 Google 欄位與測試支援可作相容基線保留，但正式入口不使用 Google Client／OIDC；Google 舊路由關閉，不將 legacy 欄位內容當作 Sites 身分。新平台綁定為唯一正式身分依據。部署前仍須實測 gateway 標頭不可偽造與 WebAuthn 在正式 Origin 的行為，未驗證前預設拒絕。
+
+### Sites 身分轉接驗證邊界
+
+本機可先建立 Sites 身分轉接：由部署端已驗證的 gateway 契約控制啟用，設定預設拒絕且不能由 HTTP 欄位開啟；僅讀取平台穩定使用者 ID，缺漏、重複／歧義、控制字元或超限值拒絕，不將 service credential 視為管理員身分。輸出不含角色、Scope 或驗證時間，不會自動建立管理員／Session。登入導向僅允許同源相對路徑，使用平台擁有的 `/signin-with-chatgpt`；不能建立自有同名路由。此轉接層測試不代表平台防偽標頭或端到端登入已實測。
 
 <a id="spec-33"></a>
 
-## 33. Google 驗證
+## 33. Sites 平台身分驗證
 
-Google 驗證為所有管理員的必要條件，不可跳過。
+伺服器僅接受經部署實測確認防偽的 gateway 所提供之穩定 Sites 使用者 ID。未完成此查核，SITES_AUTH_VERIFIED 預設 false，所有管理端入口拒絕。不得以任意 HTTP 身分標頭、平台 service credential、Email、前端角色或返回時間取代身分證據。
 
-採標準 OAuth / OpenID Connect 流程。
-
-至少取得並驗證：
-
-```text
-google_subject_id
-google_email
-google_email_verified
-```
-
-必要條件：
-
-```text
-google_email_verified = true
-```
-
-否則不得登入管理端。
-
-不得只接受使用者手動輸入 Email。
-
-Server 必須驗證 Google 所簽發之身分結果。
-
-Google OAuth Client Secret 等敏感設定必須存放於 Secrets / Environment Values，不得寫入 D1、Git、README 或前端程式。
+登入使用平台保留的 /signin-with-chatgpt 頂層導覽；應用程式不得覆蓋平台登入／登出／callback 路由。WEBAUTHN_ORIGIN 須為精確 HTTPS origin；RP ID 取其 hostname。不得要求 Google Client 或保存外部平台 Cookie。
 
 ---
 
 <a id="spec-34"></a>
 
-## 34. Google 身分綁定與認證範圍
-
-使用者於 2026-09-22 明確核准：管理員只需 Google OAuth 認證，取消 ChatGPT 與 Gemini 認證條件。本節取代舊版第二層服務認證，涵蓋登入、Bootstrap、Rebind、Recovery 與高風險重新驗證。
+## 34. Sites 身分綁定與認證範圍
 
 <a id="spec-34-1"></a>
 
-### 34.1 Google 帳號綁定
+### 34.1 Sites 帳號綁定
 
-Google OIDC 的 `sub` 對應本系統 `google_subject_id`。首次合法綁定時保存此識別值，後續登入驗證該值與已授權帳號一致；Email 用於授權名單比對，不取代已綁定的 subject。
-
-```text
-normalize(google_email)
-=
-normalize(AdminUsers.authorized_email)
-```
-
-伺服器驗證 `email_verified = true`；已綁定帳號另須符合：
-
-```text
-verified_google_sub = AdminUsers.google_subject_id
-```
-
-任一必要條件不符時拒絕登入，不得自動建立管理員或合併帳號。Email 正規化與 Google 帳號政策的實作細節依 D-09 確認。
+admin_sites_bindings 的 subject 是唯一正式身分映射；一個 Sites ID 只能綁定一位管理員。authorized_email 保留作聯絡欄位，相同 Email 不能建立、切換或合併管理員。舊 google_subject_id 僅為 schema 相容欄位，不作平台身分證據。
 
 <a id="spec-34-2"></a>
 
-### 34.2 Google Identity Rebind
+### 34.2 Sites Identity Rebind
 
-更換 authorized_email 或 Google subject 須走受控 Rebind：
+另一位 active super_admin 經五分鐘內 Passkey 驗證與明確確認後，指定新 Sites ID、聯絡 Email、原因及目前帳號版本，產生一次性核准。新身分必須由可信 Sites gateway 驗證並註冊新 Passkey。完成時重新檢查核准者權限／Session／時窗、目標版本、憑證版本與綁定唯一性；以交易更新、消耗核准、撤銷舊 Sessions／憑證並保存 Audit。任何衝突均不部分寫入。
 
-1. 驗證操作人的權限與 Recent Authentication。
-2. 新 Google 帳號完成 OAuth／OIDC，Email 已驗證且符合新授權紀錄。
-3. 檢查綁定唯一性，避免同一身分誤綁多個管理員。
-4. 更新授權與 Google 綁定，保存必要 Audit。
-5. 撤銷舊 Sessions。
-
-`admin` 保留帳號與最後一位 super_admin 的保護依 §35.3；Emergency Recovery 的核准程序依已核准 D-01 執行。不得因 Rebind 或 Recovery 而新增其他外部服務認證。
+保留 admin／最後一位 super_admin 保護與 D-01 受控維護 Recovery 不變。Recovery 限既有保留 admin、需獨立維護核准及證據、新 Sites 身分與新 Passkey，不因持有 Secret 就允許登入或重開 Bootstrap。
 
 <a id="spec-34-3"></a>
 
 ### 34.3 管理員認證與 AI 功能獨立
 
-OpenAI API 與 Google Gemini API 僅作 AI 建議的提供者，依 §29 及 Phase 11／12 管理。管理員不必擁有 ChatGPT 或 Gemini 帳號。
-
-管理員資料模型、登入流程與 Session 不保存或檢查 AI 身分提供者、AI 帳號識別碼、Gemini 人工核驗方法或 AI 身分驗證日期。切換 AI 提供者、缺少 AI API Key 或 AI 服務故障，不得阻止合法管理員登入或使其 Session 失效。
-
-此調整保留 authorized_email 授權名單、Google 綁定、帳號狀態、Permission／Scope、Bootstrap Secret、Recent Authentication 與 Audit 要求。
+OpenAI API／Google Gemini API 僅供 AI 建議使用。Sites／ChatGPT 平台帳號僅用於管理員身分，不代表 AI API 用量資格；不要求 Gemini 登入或 AI API Key 作登入證據。不保存 AI 身分認證欄位，切換 AI 提供者或 AI 故障不影響管理員登入／Session。
 
 ---
 
@@ -1092,96 +1038,37 @@ OpenAI API 與 Google Gemini API 僅作 AI 建議的提供者，依 §29 及 Pha
 
 ## 35. 管理員帳號授權清單
 
-Google 驗證成功不等於自動成為管理員。除 §35.1 首次 Bootstrap 外，系統須先有一筆 AdminUsers 授權紀錄。
-
-建議至少保存：
-
-```text
-id
-username
-display_name
-authorized_email
-google_subject_id
-role
-status
-identity_bound_at
-last_login_at
-created_by
-created_at
-updated_at
-```
-
-所有管理員的已驗證 Google Email 必須符合 authorized_email；已綁定者的 Google subject 也必須一致。驗證成功不得自行新增帳號。
+Sites 驗證成功不等於成為管理員。除一次性 Bootstrap 外，須先有 AdminUsers 授權紀錄與明確 Sites ID 綁定。保存內部 ID、username、display_name、聯絡 authorized_email、role、status、auth_version、必要登入／異動時間與操作者；Sites binding／Passkey 另表管理。
 
 <a id="spec-35-1"></a>
 
 ### 35.1 首次部署與 admin
 
-只有「從未完成 Bootstrap」且 AdminUsers 為 0 時，系統可進入 `BOOTSTRAP_REQUIRED`。首次帳號固定為 `username = admin`、`role = super_admin`；`admin` 只是內部代號，不是登入憑證。
-
-```text
-開啟 /admin
-→ 驗證 ADMIN_BOOTSTRAP_SECRET
-→ Google OAuth / OIDC
-→ 伺服器驗證 Google 身分及 email_verified
-→ 使用已驗證 Email 建立 authorized_email
-→ 建立 username = admin、role = super_admin
-→ 綁定 Google subject，啟用帳號
-→ Bootstrap 永久關閉
-```
-
-此流程是先有授權紀錄要求的唯一初始化例外。不得建立本地密碼、預設密碼、Password Hash 或本地密碼備援。Google 驗證失敗、Secret 錯誤或已初始化時，不建立管理員。
+只有從未完成 Bootstrap 且 AdminUsers 為零時，才可初始化。流程為可信 Sites 身分 → 驗證 ADMIN_BOOTSTRAP_SECRET → 檢查聯絡資料 → 原子建立 username=admin、role=super_admin 與 Sites binding → 持久關閉 Bootstrap → 發行一般 Session。高風險操作前另須註冊 Passkey 並完成 user verification。錯誤 Secret、未驗證身分、已初始化或併發競爭均不得建立額外管理員。
 
 <a id="spec-35-2"></a>
 
 ### 35.2 Bootstrap Secret
 
-`ADMIN_BOOTSTRAP_SECRET` 是防止第一位管理員被搶先初始化的控制，並非第二個外部認證服務。首次初始化必須同時符合：
-
-```text
-Never Bootstrapped
-AND AdminUsers = 0
-AND Valid Bootstrap Secret
-AND Google Verified
-```
-
-帳號建立、綁定與關閉 Bootstrap 須防止併發競爭，並持久保存一次性初始化狀態。之後即使沒有 active super_admin，也不得重新開放 Bootstrap；不能只憑 Secret 再建立初始管理員。
+須同時符合 Never Bootstrapped、AdminUsers=0、有效 Secret 及可信 Sites 身分。Secret 不是登入密碼；之後即使沒有 active super_admin 也不得重新開放 Bootstrap。Secret 只存平台 Secret 機制，不進 D1、log 或 bundle。
 
 <a id="spec-35-3"></a>
 
 ### 35.3 admin 保留帳號
 
-`admin` 不得 rename 或 delete，不使用本地密碼；可修改 display_name，或在受控程序下重新綁定 authorized_email／Google identity。
-
-若另有 active super_admin，可停權 admin；若 admin 是最後一位 active super_admin，不得停權或降級。
-
-更換 admin 身分須由另一位 active super_admin 執行，或走 D-01 核准的 Emergency Recovery。新帳號須通過 Google 驗證，操作人員須重新驗證，並留下 Audit、撤銷舊 Sessions。Recovery Secret 不能單獨作為登入憑證，也不能跳過 Google 認證。
+admin 不得 rename／delete，不使用本地密碼。只有另有 active super_admin 時才能停權或降級。身分異動由另一位近期 Passkey 驗證的 super_admin Rebind，或 D-01 受控維護 Recovery；新 Sites 身分及新 Passkey 必須驗證，舊 Sessions 全數撤銷。
 
 <a id="spec-35-4"></a>
 
 ### 35.4 第二位 super_admin
 
-首次 admin 建立後提示建立第二位 super_admin。由第一位 super_admin 建立 authorized_email、role 與必要 Scope，帳號先為 `pending_identity_binding`。
-
-第二位管理員首次登入：
-
-```text
-Google OAuth / OIDC
-→ Google Email verified
-→ 符合已授權 Email
-→ 綁定 Google subject
-→ 啟用管理員帳號
-```
+首次 admin 建立後提示建立第二位 super_admin。第一位管理員完成 Passkey 驗證，指定第二位的 Sites ID、聯絡資料與角色，狀態先為 pending_identity_binding。第二位以該 Sites 身分登入後啟用；高風險操作前註冊自己的 Passkey。
 
 <a id="spec-35-5"></a>
 
 ### 35.5 新增一般管理員
 
-super_admin 建立授權紀錄，指定 authorized_email、display_name、role、Scope，狀態為 `pending_identity_binding`。不建立本地密碼。
-
-首次登入時，伺服器驗證 Google 身分、email_verified、授權 Email 與綁定唯一性。成功後保存 google_subject_id、identity_bound_at，並將狀態改為 active。
-
-pending_identity_binding 只允許合法的首次綁定流程，完成前不授予一般管理端 Session 或資料操作權限。disabled、locked、identity_rebind_required 不得藉首次綁定流程自行啟用。
+super_admin 指定 Sites ID、聯絡資料、角色與 Scope。首次登入重驗可信 Sites ID、唯一綁定與目前狀態後才轉 active 並建立 Session。pending_identity_binding 在完成前不取得一般資料權限。disabled、locked、identity_rebind_required 不得自行啟用。
 
 <a id="spec-35-6"></a>
 
@@ -1189,43 +1076,35 @@ pending_identity_binding 只允許合法的首次綁定流程，完成前不授�
 
 | 狀態 | 意義 |
 |---|---|
-| pending_identity_binding | 已授權 Email，尚未完成 Google 綁定 |
-| active | 可依授權範圍正常登入及操作 |
+| pending_identity_binding | 已指派 Sites ID，尚未完成該身分首次登入 |
+| active | 可依授權範圍登入及操作 |
 | disabled | super_admin 手動停權 |
 | locked | 因安全事件暫時鎖定 |
-| identity_rebind_required | Google 身分須經受控程序重新綁定 |
+| identity_rebind_required | 須受控重新綁定 Sites 身分 |
 
-離職或不再使用者手動停權；已有操作歷史的 AdminUser 不得真正 DELETE。
+已有操作歷史的管理員不得實體 DELETE。
 
 <a id="spec-35-7"></a>
 
 ### 35.7 管理員 Session
 
-完成 Google 驗證、授權清單、帳號狀態及綁定檢查後，才可建立應用程式自己的 Admin Session。
+可信 Sites 身分、授權、狀態及綁定均通過後才建立應用程式 Session。隨機 token 僅以 hash 存 D1，Cookie 為 HttpOnly、Secure、SameSite；閒置 30 分鐘與絕對 8 小時期限。每次使用另核對目前 Sites 身分，不接受跨帳號搬用 Cookie。Sites 登入初始 recent_auth_at=0。
 
-- 使用安全隨機 token；D1 只保存 token hash。
-- Cookie 使用 HttpOnly、Secure 及適當 SameSite。
-- Idle timeout 建議 30 分鐘；Absolute timeout 建議 8 小時。
-
-以下事件撤銷相關 Sessions：管理員停權、Role 改變、Scope 改變、Email／Google identity 重新綁定、super_admin 強制登出或重大安全事件。任何權限縮限須立即生效，不得等待舊 Session 自然到期。
+停權、Role／Scope 變更、身分 Rebind、強制登出及重大安全事件立即撤銷相關 Sessions。平台身分消失／不符也拒絕。不得等到舊 Session 自然到期才執行權限縮限。
 
 <a id="spec-35-8"></a>
 
 ### 35.8 高風險操作重新驗證
 
-建立／修改／停權 super_admin、重新綁定 Google 身分、全年段封存、Purge，以及修改安全／OAuth 設定，須 Recent Authentication。
+權限異動、Rebind、發布／解鎖、封存與 Purge 等高風險操作沿用既有權限及確認要求，另需五分鐘內 Passkey user verification。以伺服器完成驗證時間計算，滿五分鐘失效；不得以 Sites 回跳或一般請求時間冒充。
 
-重新驗證只使用 Google re-authentication，並檢查其結果與目前操作人身分一致。2026-09-24 使用者核准 D-11：Google 重新驗證有效 5 分鐘，以已驗證 ID token 的 `auth_time` 判定，滿 5 分鐘即失效；缺少或未來的驗證時間不得視為 Recent Authentication。一次性 Recovery 核准同樣有效 5 分鐘，到期或使用後不可重放。登入開始／callback 與 Bootstrap／身分驗證開始的 IP 限流依 §63 已核准門檻執行，正式平台驗證前入口維持關閉。不得退回本地密碼，亦不新增其他外部服務認證。Rebind 的新帳號驗證與操作人的重新驗證須分開檢查；Google `auth_time` 與 Sites callback 的真實平台驗證仍依 D-09 暫緩，不以 mock 當作平台實測。
+Passkey challenge 與 Recovery 核准各為一次性五分鐘有效。Rebind 另核對核准者的近期驗證，不能以目標帳號的新 Passkey 取代。正式 gateway、IP、Cookie、Passkey 裝置互動仍需平台實測，不能以本機虛構簽章測試宣稱正式通過。登入限流見 §63。
 
 <a id="spec-35-9"></a>
 
 ### 35.9 管理員身分資料最小化
 
-只保存必要的 authorized_email、google_subject_id、綁定日期及登入／稽核資料。display_name 可在本系統維護，不作為授權依據。
-
-不得要求或保存 Google 密碼、外部 Session Cookie 或不必要的服務內容。外部 token 僅在官方驗證流程必要的短期處理中使用，不長期保存或寫入一般 log。
-
-登入只請求所需的 Google 身分／Email 權限，不藉登入擴張為存取 Drive、信件或 AI 對話的授權。
+只保存聯絡資料、穩定 Sites ID、Passkey 公鑰／credential ID／counter／version 與必要稽核。Challenge 僅存 hash，短效到期且不可重放。私鑰、外部密碼／Cookie、Bootstrap／Recovery Secret 不進 D1、一般 log 或前端 bundle。display_name 與 Email 不授予權限。平台登入不擴張為讀取 AI 對話、Drive 或信件的授權。
 
 <a id="spec-35-10"></a>
 
@@ -1255,7 +1134,7 @@ viewer
 | archive_admin | archive.read、archive.manage | 指定範圍；高風險操作另驗 Recent Authentication |
 | viewer | academic.read、score.read、ai.read、archive.read | 指定範圍，無修改及管理員名單權限 |
 
-Permission 與 Scope 取自資料庫，不接受前端 role、Email、Google identity 或資源快照作授權憑據。混合批次的每個目標都須通過；科目與班級必須由同一筆或完整各自符合的 Assignment 覆蓋，不可交叉拼接。
+Permission 與 Scope 取自資料庫，不接受前端 role、Email、身分欄位 或資源快照作授權憑據。混合批次的每個目標都須通過；科目與班級必須由同一筆或完整各自符合的 Assignment 覆蓋，不可交叉拼接。
 
 ---
 
@@ -1286,7 +1165,7 @@ Permission 與 Scope 取自資料庫，不接受前端 role、Email、Google ide
 
 Phase 3B 以學期、業務日期及半開區間檢查 Assignment；缺少必要資源範圍時拒絕。學生範圍由相符學期／日期的學籍解析，既有評量範圍由評量參與快照解析，不採目前班級替代。歷史讀取依該次日期的有效 Assignment；歷史寫入仍受 §5 的 super_admin、Recent Authentication 與原因限制。
 
-帳號與 Assignment 修改使用目標 `auth_version`、明確確認及原子交易；交易內重驗操作人的 Session／權限與目標版本，衝突不留下部分更新。Role／Scope／綁定變更撤銷既有 Sessions。Rebind 先核准新授權 Email，再由一次性 OAuth 流程驗證新身分並重驗操作人；Recovery 核准只提供給受控伺服器維護程序，保存核准者與證據的非敏感參照，不提供公開核准 API。Google 新身分須符合核准 Email，完成時原子消費 request、更新綁定、撤銷舊 Sessions 及 Audit；不重開 Bootstrap。
+帳號與 Assignment 修改使用目標 `auth_version`、明確確認及原子交易；交易內重驗操作人的 Session／權限與目標版本，衝突不留下部分更新。Role／Scope／綁定變更撤銷既有 Sessions。Rebind 先核准新 Sites ID 與聯絡 Email，再驗證可信平台身分及新 Passkey，並重驗操作人；Recovery 核准只提供給受控伺服器維護程序，保存核准者與證據的非敏感參照，不提供公開核准 API。Sites 新身分須符合核准 ID，完成時原子消費 request、更新綁定、撤銷舊 Sessions 及 Audit；不重開 Bootstrap。
 
 ---
 
@@ -1296,11 +1175,11 @@ Phase 3B 以學期、業務日期及半開區間檢查 Assignment；缺少必要
 
 一般管理員由 super_admin 手動建立 authorized_email、display_name、role 及 Scope 授權紀錄，不建立本地密碼。
 
-每位管理員首次登入只需 Google OAuth / OIDC 認證，加上本系統的授權、狀態與 Google 綁定檢查：
+每位管理員首次登入須 Sites 平台身分，加上本系統的授權、狀態與 Sites 綁定檢查：
 
 ```text
-Verified Google Email = authorized_email
-AND Google Binding Valid
+Verified Sites ID = explicitly assigned Sites subject
+AND Sites Binding Valid
 AND Allowed Admin Status
 ```
 
@@ -1314,7 +1193,7 @@ AND Allowed Admin Status
 
 一般 Audit Log 保存 2 個月。
 
-2026-10-01 使用者採用 Audit 查看政策：僅 active super_admin 可查看。伺服器仍須驗證 Google Session、Permission 及 Scope，不能只依前端選單或傳入的角色判定。
+2026-10-01 使用者採用 Audit 查看政策：僅 active super_admin 可查看。伺服器仍須驗證 Sites 與應用程式 Session、Permission 及 Scope，不能只依前端選單或傳入的角色判定。
 
 2026-10-01 使用者確認「批准執行」指補齊 Audit 查看介面、API 與授權測試；本輪僅補做 Phase 14 Audit，不執行正式部署。採專用 audit.read Permission，僅 active super_admin 有權限；Scope 為伺服器判定的全校稽核，不接受前端角色或班級宣告。
 
@@ -1547,7 +1426,7 @@ GitHub Pages **不是正式成績系統執行環境**。
 
 - D1 Database API。
 - 管理員登入。
-- Google OAuth / OIDC 管理員認證。
+- Sites 平台登入與 Passkey 高風險重新驗證。
 - 學生成績查詢 API。
 - AI API Key。
 - Server-side AI 呼叫。
@@ -2187,7 +2066,7 @@ Phase 0 的 Sites 原始碼位於 `site/`，GitHub Pages 原始碼位於 `pages/
 - 若轉班生效日之後已有凍結的評量名冊，拒絕直接轉班並回報名冊衝突，避免違反「下一次定評歸新班」或改寫既有快照；名冊調整流程留待 Phase 4。轉出狀態僅在生效日已到達時執行，未提供未來日期排程。
 - 轉出處理未封存的 active 學生，保存轉出事件並計算 3 個曆年的查詢／保存期限；不封存、不刪除。Phase 8 依已核准 D-05 與既有有效事件分別取兩期限最大值，不縮短先前承諾；缺少來源事件的異常期限拒絕靜默覆蓋。
 - 提供學籍新增、轉班／座號、升班與誤標轉出的撤銷預覽。撤銷必須核對受影響資料的提交後版本及內容，不覆蓋後續合法異動；保留已確認的評量快照。誤標轉出恢復其操作前狀態並撤銷該事件；與 Phase 8 依 D-05 建立新學籍、保留舊承諾的正式重新入學分開。
-- 歷史年度寫入只接受 super_admin、Google Recent Authentication 的可信授權結果與原因；授權僅限當次交易，完成或失敗後均不留下持久可寫鎖。Google 認證、Recent Authentication 時窗及完整 Role／Permission／Scope 政策由 Phase 3A／3B 注入，預設授權為拒絕。
+- 歷史年度寫入只接受 super_admin、Passkey Recent Authentication 的可信授權結果與原因；授權僅限當次交易，完成或失敗後均不留下持久可寫鎖。Google 認證、Recent Authentication 時窗及完整 Role／Permission／Scope 政策由 Phase 3A／3B 注入，預設授權為拒絕。
 - 新生身分識別字串先 trim、NFC 與大寫正規化再加密／HMAC；不自行推斷未規定的國籍或證號格式。每筆同時保存目前全部查重 key 版本；未配置 key 時拒絕建檔。測試只使用明確虛構識別字串，既有 Phase 1 seed 仍僅供獨立 schema 測試。
 
 ---
@@ -2370,7 +2249,7 @@ Phase 5 本機計算與授權讀取的驗證、交付邊界見 [PHASE_5.md](docs
 
 2026-09-25 使用者核准啟動 Phase 7 並確認採用 D-08：任一分類先發布為 PROVISIONAL，兩者皆明確發布才為 FINAL；全部 NOT_HELD 仍須明確發布。發布／修改重算失敗整筆不生效，保留上一完整公開版本，首次發布失敗則不公開。
 
-狀態轉換與本機驗證見 [PHASE_7.md](docs/PHASE_7.md)。發布以整份評量分類為單位，需涵蓋評量全校範圍的 score.write；列級修改沿用班級／科目 Scope。發布及修改確認均須 5 分鐘內 Google Recent Authentication。修改採 Preview／Confirm，在同一原子交易內解鎖、寫入 History、重算／保存完整版本、標記 AI stale 與保存重生請求，最後重新鎖定；不提供跨請求持續開啟的解鎖狀態。歷史年度修改僅 super_admin 可在填寫原因後執行，沿用原始班級、資格及統計母體快照。封存評量須先完成後續正式 Restore，不由本階段入口繞過。
+狀態轉換與本機驗證見 [PHASE_7.md](docs/PHASE_7.md)。發布以整份評量分類為單位，需涵蓋評量全校範圍的 score.write；列級修改沿用班級／科目 Scope。發布及修改確認均須 5 分鐘內 Passkey Recent Authentication。修改採 Preview／Confirm，在同一原子交易內解鎖、寫入 History、重算／保存完整版本、標記 AI stale 與保存重生請求，最後重新鎖定；不提供跨請求持續開啟的解鎖狀態。歷史年度修改僅 super_admin 可在填寫原因後執行，沿用原始班級、資格及統計母體快照。封存評量須先完成後續正式 Restore，不由本階段入口繞過。
 
 ### Codex 能力提示
 
@@ -2401,7 +2280,7 @@ Phase 5 本機計算與授權讀取的驗證、交付邊界見 [PHASE_5.md](docs
 
 2026-09-25 使用者核准啟動 Phase 8，並同意 D-05 兩項建議。延長公開查詢時必要即同步延長保存期限，僅可延長，須原因、預覽、確認及稽核。轉出三年、畢業一年與人工延長分別留存有效事件，兩期限各取最晚日期；後續畢業不縮短轉出承諾。誤標撤銷只撤銷該事件，且不覆蓋後續合法修改。正式恢復在籍期間不套用舊事件截止日，保留事件供日後再次轉出／畢業比較。Phase 9 Purge 與 Production 操作不在本次授權範圍。
 
-交付與驗證見 [PHASE_8.md](docs/PHASE_8.md)。封存、畢業、延長、Undo／Restore 均採 Preview／Confirm、archive.manage、Scope 與 5 分鐘 Google Recent Authentication；強制只可接受業務警告。正式恢復在籍另要求 academic.write，建立新學籍而不重寫原快照。歷史年度沿用 super_admin 與原因限制；使用舊名單仍須涵蓋學生目前班級。封存／畢業／恢復在籍不接受未來日期，不自動提前執行。Undo／Restore 遇後續合法修改整批阻擋，不提供強制覆蓋。公開期限 helper 留供 Phase 13 對接完整身分比對，不構成公開查詢入口。
+交付與驗證見 [PHASE_8.md](docs/PHASE_8.md)。封存、畢業、延長、Undo／Restore 均採 Preview／Confirm、archive.manage、Scope 與 5 分鐘 Passkey Recent Authentication；強制只可接受業務警告。正式恢復在籍另要求 academic.write，建立新學籍而不重寫原快照。歷史年度沿用 super_admin 與原因限制；使用舊名單仍須涵蓋學生目前班級。封存／畢業／恢復在籍不接受未來日期，不自動提前執行。Undo／Restore 遇後續合法修改整批阻擋，不提供強制覆蓋。公開期限 helper 留供 Phase 13 對接完整身分比對，不構成公開查詢入口。
 
 ### Codex 能力提示
 
@@ -2663,7 +2542,7 @@ Phase 5 本機計算與授權讀取的驗證、交付邊界見 [PHASE_5.md](docs
 
 2026-10-01 使用者明確批准啟動 Phase 16，並確認推理強度為 XHIGH。本階段針對既有模組進行安全審查、依賴修補與回歸驗證；Phase 14／15 尚未完成的驗收維持原狀，不代表正式部署或 Phase 17 授權。
 
-本機安全修正與驗證見 [Phase 16 工作紀錄](docs/PHASE_16.md)。2026-10-01 使用者接受 D-11 Phase 16 建議：報表文字來源合計最多 UTF-8 10 MiB，逐批讀取與累計，超限整次拒絕，不能輸出部分報表；即使壓縮後小於檔案上限也拒絕。Google 登入開始、重新驗證開始及 callback 共用每可信 IP 每 10 分鐘 60 次；Bootstrap 與一次性身分驗證開始另共用每 IP 每 10 分鐘 5 次，原子消耗兩個額度。成功／失敗皆計入，專用 HMAC、不存原始 IP、Email 或 Secret，紀錄最多保存 24 小時。可信 IP 或儲存不可確認時拒絕；正式平台可信 IP、紀錄／備份與清理排程驗證完成前不得開啟。本機安全範圍與適用驗證已完成，270 項逐項驗證通過（268 完整回歸通過、2 項 migration 數量斷言修正後重驗通過）。正式平台能力仍未驗證，不代表正式開放或 Phase 17 授權。
+本機安全修正與驗證見 [Phase 16 工作紀錄](docs/PHASE_16.md)。2026-10-01 使用者接受 D-11 Phase 16 建議：報表文字來源合計最多 UTF-8 10 MiB，逐批讀取與累計，超限整次拒絕，不能輸出部分報表；即使壓縮後小於檔案上限也拒絕。Sites 登入與 Passkey API 共用每可信 IP 每 10 分鐘 60 次；Bootstrap 與一次性身分復原 API 另共用每 IP 每 10 分鐘 5 次，原子消耗兩個額度。成功／失敗皆計入，專用 HMAC、不存原始 IP、Email 或 Secret，紀錄最多保存 24 小時。可信 IP 或儲存不可確認時拒絕；正式平台可信 IP、紀錄／備份與清理排程驗證完成前不得開啟。本機安全範圍與適用驗證已完成，270 項逐項驗證通過（268 完整回歸通過、2 項 migration 數量斷言修正後重驗通過）。正式平台能力仍未驗證，不代表正式開放或 Phase 17 授權。
 
 ### Codex 能力提示
 
@@ -2794,7 +2673,7 @@ Codex：
 
 ## 66. Phase 19 — Production Deployment
 
-2026-10-01 使用者明確回覆「確認正式部署」，已取得 Phase 19 正式部署授權，不需重複要求同一授權。部署前查核仍受相依條件阻擋：Sites 版本 0、無 live／preview URL、D1 bindings 空、正式環境 entries 空；Google Client 狀態未確認，正式 migration preflight／人工確認、備份復原及其他適用 RC gates 未完成。授權不等於驗收已通過；先完成前置條件，不直接發布或略過保存／授權／復原要求。實際結果見 [Phase 19 部署前紀錄](docs/PHASE_19.md)。
+2026-10-01 使用者明確回覆「確認正式部署」，已取得 Phase 19 正式部署授權，不需重複要求同一授權。部署前查核仍受相依條件阻擋：Sites 版本 0、無 live／preview URL、D1 bindings 空、正式環境 entries 空；Sites／Passkey 真實平台身分與重驗尚未驗證，正式 migration preflight／人工確認、備份復原及其他適用 RC gates 未完成。授權不等於驗收已通過；先完成前置條件，不直接發布或略過保存／授權／復原要求。實際結果見 [Phase 19 部署前紀錄](docs/PHASE_19.md)。
 
 ### Codex 能力提示
 
@@ -2883,6 +2762,12 @@ DEPLOYED_WITH_DOC_SYNC_ERROR
 
 ---
 
+### Phase 19 D1 建置授權補充（2026-10-02）
+
+使用者明確表示「無，正式授權實施建置D1相關流程」，授權執行既有 Sites 專案的 D1 建置、受控 migration、preflight 與復原流程建置，沿用既有正式部署授權。初次平台建置以工具再次確認版本 0／無 D1 binding 為前提，保存 17 份 migration 的 manifest 與本機全量驗證證據，僅透過平台正式部署機制建立空資料庫，不載入真實個資／seed，不更改存取 audience。
+
+此授權允許先建立平台資源以取得正式 preflight／復原證據；不代表 RPO／RTO 已達標或可以開放業務入口。平台 verified 開關、管理登入、公开查詢、付費 AI 與 Purge 仍須符合各自門檻。若發現既有遠端資料／history、平台拒絕或無法確認 migration 已套用邊界，停止受影響寫入，保留證據，不手動改 schema 或無條件重試。不能將初始化空庫或本機還原當作正式備份復原演練。
+
 <a id="spec-67"></a>
 
 ## 67. Acceptance Invariants
@@ -2922,10 +2807,10 @@ DEPLOYED_WITH_DOC_SYNC_ERROR
 33. Purge 不可復原。
 34. Production migration 需人工確認。
 35. Production deployment 需人工確認。
-36. 所有 AdminUser 必須通過 Google OAuth / OIDC 驗證。
-37. Google OAuth / OIDC 是管理員唯一外部認證，不再要求 ChatGPT 或 Gemini 認證。
-38. 已驗證 Google Email 必須符合 AdminUsers.authorized_email。
-39. 已綁定帳號的 Google subject 必須一致；變更須受控 Rebind。
+36. 所有管理端操作仍須經核准方式的伺服器身分驗證；取消 Google 不授予匿名管理權限。
+37. Google-only 政策已取消；替代認證依 D-09 決策，不自行恢復先前取消的服務認證。
+38. 平台 Email 只作聯絡資訊；可信 Sites ID 必須符合明確授權綁定。
+39. 已綁定帳號的 Sites subject 必須一致；變更須受控 Rebind。
 40. AI 帳號、提供者設定、API Key 與 AI 服務可用性不影響合法管理員登入或 Session。
 41. 管理端不得提供本地密碼登入備援。
 42. `admin` 僅為內部保留帳號代號，不是登入憑證。
@@ -2947,34 +2832,21 @@ DEPLOYED_WITH_DOC_SYNC_ERROR
 
 <a id="spec-67-1"></a>
 
-### 67.1 管理員 Google 認證必測案例
+### 67.1 Sites／Passkey 認證必測案例
 
-至少包含：
+1. 可信 gateway 未確認、缺少／歧義 Sites ID、service credential 或偽造角色／Email，皆不能取得管理員資格。
+2. 只有預先指派的 Sites ID 且狀態允許時能登入；Email 相同不自動綁定，錯誤身分不能使用其他管理員 Cookie。
+3. Bootstrap 需 Sites 身分、有效 Secret、從未初始化及零帳號；併發僅一位成功，Recovery 不重開。
+4. 一般登入 recent_auth_at 為零；高風險須 Passkey。驗證 Origin、RP ID、challenge、簽章、user verification、userHandle、counter 與五分鐘時窗。
+5. Challenge 綁定帳號／Session／目的／版本；失敗後不可重播，併發僅一次成功；撤權、憑證替換或到期不得完成。
+6. 初次 Passkey 註冊須已授權 Session；替換須既有近期 Passkey 驗證與確認，不接受過期／競爭覆蓋。
+7. Rebind／Recovery 驗證指定新 Sites ID、新 Passkey、一次性核准、最新版本；Rebind 另重驗核准者 Session／權限／時窗；全部原子提交且撤銷舊 Sessions。
+8. 保留 admin 不可 rename／delete；最後一位 active super_admin 不可停權或降級，Role／Scope 縮限立即生效。
+9. Migration 撤銷舊 Session／OAuth state／Recovery 核准，不以 Email 自動遷移身分；保留 Bootstrap 已使用狀態，可重複確認 history。
+10. 舊 Google HTTP 入口關閉；正式 runtime 不要求 Google Client；Secrets／私鑰／Session token 不進 log 或 bundle，登入 JSON 不回傳 token。
+11. AI Key／提供者／服務故障不影響管理員登入，Permission／Scope、CSRF、限流與錯誤輸出仍必測。
 
-1. Google 驗證成功、Email 已驗證且符合授權、active、subject 一致 → 可登入，不需其他服務認證。
-2. 未完成 Google 驗證 → 拒絕登入。
-3. Google `email_verified = false` 或缺少必要 Email／subject → 拒絕登入。
-4. Google 驗證成功但 Email 不在授權名單 → 拒絕，不能自動建立 AdminUser。
-5. 偽造簽章、錯誤 issuer／audience、過期 ID token → 分別拒絕。
-6. state／nonce 不一致、callback 重放 → 拒絕。
-7. 前端 Email、角色或偽造身分標頭不能取代 Google 身分結果。
-8. pending_identity_binding 經合法 Google 首次綁定後才轉 active 並建立 Session。
-9. 已綁定帳號以不同 Google subject 登入 → 拒絕，須受控 Rebind。
-10. 相同 Google subject 的 Email 不再符合授權紀錄 → 拒絕，不能靜默改寫授權。
-11. disabled、locked、identity_rebind_required 帳號不能直接取得管理端 Session。
-12. 首次 Bootstrap：有效 Secret＋Google 已驗證＋從未初始化＋零帳號 → 建立第一位 admin。
-13. Bootstrap Secret 錯誤或 Google 驗證失敗 → 不建立帳號。
-14. Bootstrap 完成後不能重啟；併發初始化不產生多位初始管理員。
-15. `admin` 不可 rename／delete，且不存在本地密碼欄位或本地登入 route。
-16. 管理員停權後既有 Session 立即失效；Role／Scope 變更立即依 Server 最新資料生效。
-17. Google Rebind 後撤銷舊 Sessions；新帳號須通過 Google 驗證與授權。
-18. 最後一位 active super_admin 不可被停權或降級。
-19. 高風險重新驗證使用 Google，檢查操作人與驗證新鮮度；Recovery Secret 不可單獨登入。
-20. OAuth code、token、Cookie 不進一般 Audit Log；前端 bundle 不含 OAuth Client Secret；登入不取得不必要服務內容。
-21. 管理員沒有 ChatGPT／Gemini 帳號，或 AI API Key 缺少／錯誤、AI 服務故障 → 合法 Google 登入仍成功。
-22. 切換 AI 提供者不撤銷管理員 Session，也不觸發任何 AI 帳號綁定或資格驗證。
-
-以上案例以 [Phase 3A](docs/PHASE_3A.md) 與 [Phase 3B](docs/PHASE_3B.md) 紀錄區分本機契約測試與尚未執行的真實 Google／Sites 實測。
+歷史 Google 契約證據保留於 [Phase 3A](docs/PHASE_3A.md)／[Phase 3B](docs/PHASE_3B.md)；目前 Sites 遷移與尚缺平台驗證見 [Phase 19](docs/PHASE_19.md)。
 
 ---
 
@@ -3014,8 +2886,8 @@ Codex 不得：
 
 除非另行要求：
 
-- 額外企業級 SSO／SAML 整合（本規格要求的 Google OAuth / OIDC 登入不在排除範圍）。
-- Google Workspace 企業目錄整合與組織級 SSO；不排除符合 §32–37 的 Google OAuth / OIDC 登入。實際帳號政策仍須於 Phase 0 確認。
+- 額外企業級 SSO／SAML 整合（本規格要求的 Sites 登入與 Passkey 不在排除範圍）。
+- Google Workspace 企業目錄整合與組織級 SSO；管理員身分依 §32–35 的 Sites／Passkey 政策。
 - Microsoft Entra。
 - 自訂 Role Builder。
 - SCIM。
@@ -3112,7 +2984,7 @@ Codex 不得：
 
 2026-09-22 使用者核准文件審查提出的修訂範圍：統一主規格、完善主規格與 AGENTS，新增 README、CHANGELOG；尚未定案的業務選擇先列為待決策，不由 Codex 代為核准。
 
-同日使用者進一步確認管理員僅需 Google OAuth 認證。此決策已納入 v1.6-draft，取消全部 ChatGPT／Gemini 認證前置條件；D-01、D-09 已移除相關未決部分，僅保留 Recovery 與 Google 登入實作政策。
+2026-09-22 曾核准 Google-only；2026-10-01 使用者以 Sites／ChatGPT 登入及 Passkey 決策取代，現行規則見 §32–35，歷史 Phase 記錄不改作新的平台實測證據。
 
 | 文件 | 責任 | 不得宣稱 |
 |---|---|---|
@@ -3133,7 +3005,7 @@ Codex 不得：
 
 | ID | 待決定事項及影響 | 建議方案／可選方案 | 最遲確認關卡 |
 |---|---|---|---|
-| D-01 | **已核准（2026-09-23）**：失去全部可用管理身分時的 Emergency Recovery 核准者、流程與必要證據 | 由受控維護程序核准一次性 Recovery request；新 Google 身分仍須完成伺服器驗證及 authorized email 檢查。Recovery 只可受控重新綁定既有保留管理員、撤銷舊 Sessions 並留下 Audit；Recovery Secret 不得單獨登入、不得建立本地密碼、不得重新開啟 Bootstrap。 | Phase 3B |
+| D-01 | **已核准（2026-09-23）**：失去全部可用管理身分時的 Emergency Recovery 核准者、流程與必要證據 | 由受控維護程序核准一次性 Recovery request；新 Sites 身分仍須完成可信 gateway 驗證、指定 ID 比對及新 Passkey 註冊。Recovery 只可受控重新綁定既有保留管理員、撤銷舊 Sessions 並留下 Audit；Recovery Secret 不得單獨登入、不得建立本地密碼、不得重新開啟 Bootstrap。 | Phase 3B |
 | D-02 | **已核准（2026-09-29）**：歧義與一般查詢失敗相同 | 所有查詢失敗均提示核對資料／聯絡校方，校方受控協助；不新增識別欄位或揭露多筆命中 | Phase 13 |
 | D-03 | **已核准（2026-09-23）**：排名資格優先序與快照 | 單次 → 學期 → 學生預設，空值繼承，學生預設納入；名單確認時固定來源與最終資格快照。開始後轉入自下一次參加；撤銷轉班不改既有快照。原校成績仍不排名 | Phase 1 模型與約束；Phase 5 計算驗證 |
 | D-04 | **已核准（2026-09-24）**：無有效分數之平均／總分為 NULL、不排名；0 分有效；科目比序有數值優先於缺值，雙缺值續比 | 統計分開列示開始日在籍、LOCAL 參與、快照合格及各指標有效分數人數；一般成績統計包含不排名但有分數者，排名統計只含合格且有分數者；原校成績另列，不混入本校群體統計 | Phase 5 |
@@ -3141,9 +3013,9 @@ Codex 不得：
 | D-06 | **已核准（2026-09-26）**：僅 super_admin；全部保存及 30 天復原承諾均須滿足，資格不明拒絕 | 刪除個人與可識別副本，保留他人已發布名次並凍結受影響評量重算；一般 Audit 兩個月去識別，最小 Purge 證據兩年。副本能力不明阻擋、部分失敗可重試且不得假稱完成，正式備份實測前禁止 Production Purge；詳見 §14 | Phase 9；Production Purge 前平台實測仍必要 |
 | D-07 | **已核准（2026-09-24）**：Commit 與 30 天內 Rollback 均整批原子執行 | 任一列有錯即整批不寫入；匯入後若有手動修改、再次匯入或發布，先顯示衝突並阻擋整批回復，不覆蓋後續合法修改 | Phase 6；Phase 9 整合 |
 | D-08 | **已核准（2026-09-25）**：任一分類先發布為 PROVISIONAL，兩者皆明確發布才為 FINAL；Phase 17 分類鎖定補充已核准（2026-10-01） | 僅計已發布分類；全部 NOT_HELD 仍須明確發布；缺分不阻擋且不視為 0。發布／修改重算失敗整筆不生效，保留上一完整公開版本；首次發布失敗不公開 | Phase 7 |
-| D-09 | Google OAuth／OIDC 的平台 callback／Cookie 相容性、Email 正規化與允許的 Google 帳號政策 | Google sub 作綁定識別鍵已定義；Email 用於授權比對，不自行去除點號或加號別名。確認 Google-only 登入不被平台額外認證門檻阻擋；不能以訪客可偽造的 Email 標頭授權。2026-09-23 使用者指示暫緩 OAuth 設定與登入實測，尚未通過 | Phase 0 保存文件／存取選項證據；Phase 3A 前補實測與驗證契約 |
+| D-09 | **已核准（2026-10-01）：取消 Google，改用 Sites／ChatGPT 平台登入；高風險採 Passkey** | 穩定 Sites 使用者 ID 作身分綁定；平台可信來源未驗證前預設拒絕，Email／名稱不作角色或權限依據。登入不授予管理員資格，仍須帳號允許、綁定、Permission／Scope 與 Session 檢查。平台未提供可信近期登入時間；使用者已核准獨立 Passkey，不能由回跳／請求時間偽造 Recent Authentication。 | 認證遷移及 Phase 19 部署前；本機登入切換與安全回歸進行中；平台實測尚未完成 |
 | D-10 | **已核准（2026-09-23）**：預設角色對各項操作的權限矩陣、多任教範圍組合，以及教師異動後歷史資料 Scope                                                                                                                                                                                                                                                              | 採最小權限 Role × Permission × Scope × 時間範圍矩陣；未授權預設拒絕。導師限自己的班級但可操作全科；任課教師限任教班級與任教科目；Scope 變更立即撤銷既有 Sessions，歷史資料依有效日期與既有快照判定。2026-10-01 核准 Audit 僅 active super_admin 查看；Audit 本機 API／介面及授權測試已於 Phase 14 補做通過；使用者已回報 Audit 補做驗收完成，不冒稱工具實測；其他 Admin／手機／報表瀏覽器驗收保留。                                                                                                                                                                                                                                                                                                           | Phase 3B；Phase 14 補做／瀏覽器驗收                                        |
-| D-11 | **日期已核准（2026-09-23）；認證時窗與 Phase 6 上傳門檻已核准（2026-09-24）**；Phase 10 RAG 與 Phase 11 Provider 門檻已核准（2026-09-28）；Phase 12 Job 門檻與本機核心範圍、Phase 13 查詢限流已核准（2026-09-29）；Phase 15 報表門檻已核准（2026-10-01）；Phase 16 來源容量與登入限流已核准（2026-10-01）；Phase 18 RPO／RTO 已核准（2026-10-01）；其餘門檻待決策 | 業務日期 Asia/Taipei；技術時間戳 UTC；含起不含迄；月／年期限依曆月／曆年，無對應日期時取該月最後一天。Google Recent Authentication 與一次性 Recovery 核准均 5 分鐘，滿時失效。CSV／XLSX：5 MiB、10 sheets、5,000 資料列、30 欄、展開 25 MiB／1,000 ZIP 項目；格式限制見 §73.4。RAG PDF／MD 與檢索限制依 §31；Provider 逾時、重試、容量依 §29；Job 租約、重試與執行範圍依 §30；公開查詢限流依 §24；Phase 15 報表每次一個評量、1,000 位學生、10 MiB，即時下載且不持久保存，依 §40；Phase 16 來源文字合計 UTF-8 10 MiB，登入限流及驗證門檻依 §63；RPO≤24 小時、RTO≤8 小時已核准為正式演練驗收目標，未達標不得上線；其他查詢、容量及正式平台實測仍待確認 | 日期於 Phase 1；認證時窗於 Phase 3B；匯入門檻於 Phase 6；其餘最晚 Phase 18 |
+| D-11 | **日期已核准（2026-09-23）；認證時窗與 Phase 6 上傳門檻已核准（2026-09-24）**；Phase 10 RAG 與 Phase 11 Provider 門檻已核准（2026-09-28）；Phase 12 Job 門檻與本機核心範圍、Phase 13 查詢限流已核准（2026-09-29）；Phase 15 報表門檻已核准（2026-10-01）；Phase 16 來源容量與登入限流已核准（2026-10-01）；Phase 18 RPO／RTO 已核准（2026-10-01）；其餘門檻待決策 | 業務日期 Asia/Taipei；技術時間戳 UTC；含起不含迄；月／年期限依曆月／曆年，無對應日期時取該月最後一天。Passkey Recent Authentication 與一次性 Recovery 核准均 5 分鐘，滿時失效。CSV／XLSX：5 MiB、10 sheets、5,000 資料列、30 欄、展開 25 MiB／1,000 ZIP 項目；格式限制見 §73.4。RAG PDF／MD 與檢索限制依 §31；Provider 逾時、重試、容量依 §29；Job 租約、重試與執行範圍依 §30；公開查詢限流依 §24；Phase 15 報表每次一個評量、1,000 位學生、10 MiB，即時下載且不持久保存，依 §40；Phase 16 來源文字合計 UTF-8 10 MiB，登入限流及驗證門檻依 §63；RPO≤24 小時、RTO≤8 小時已核准為正式演練驗收目標，未達標不得上線；其他查詢、容量及正式平台實測仍待確認 | 日期於 Phase 1；認證時窗於 Phase 3B；匯入門檻於 Phase 6；其餘最晚 Phase 18 |
 
 <a id="spec-72-3"></a>
 
@@ -3238,8 +3110,8 @@ Codex 不得：
 
 ### 73.6 管理端驗證與授權契約
 
-- Google OAuth / OIDC 須驗證簽章、issuer、audience、效期、state、nonce 與 `email_verified`；採用官方支援的安全流程與 PKCE，具體契約於 Phase 0／3A 驗證。
-- 管理員名稱、Email 或角色的前端值不能當作登入證明；必須驗證 Google 身分結果，不接受可由訪客偽造的身分標頭。Sites 代理、直連與存取設定須實測，避免在 Google 登入之前額外要求另一個外部服務認證。
+- Sites gateway 身分可信度及 Passkey 簽章、Origin／RP ID、challenge、user verification、時窗與版本契約須依 §32–35 驗證。
+- 管理員名稱、Email 或角色的前端值不能當作登入證明；Sites gateway 代理與直連標頭防偽必須實測。
 - 已授權、首次綁定、active、disabled、locked 及 rebind 狀態有獨立轉換條件；帳號停權及權限縮限立即生效。
 - 每個管理端 API、檔案下載、報表、背景工作與批次操作都必須檢查 Permission＋Scope；拒絕時不能先洩漏目標資料。
 - Phase 3B 交付 D-10 核准後的權限矩陣。導師限自己的班且可操作全科；任課教師限任教班及任教科目。
@@ -3273,7 +3145,7 @@ Codex 不得：
 
 | 項目 | 文件可支持的內容 | 本專案仍須驗證 |
 |---|---|---|
-| Google 登入 | Google OAuth 2.0 支援 OIDC；以 sub 識別帳號，Email 用於授權比對 | Sites 上的 callback、Cookie、Google-only 登入與帳號政策；不能用平台其他服務的登入結果代替 Google 認證 |
+| Sites／Passkey 登入 | 平台文件提供穩定 Sites 使用者 ID；未提供可信近期登入時間，已核准以 Passkey 承接 | gateway 標頭防偽、直連隔離、Cookie、正式 Origin 的裝置驗證仍未實測 |
 | Sites 發布 | 保存版本與部署分開；所有 Sites 部署 URL 都是 Production deployment | 實際帳號能力、建置相容性、D1／R2、Secrets、工作排程及復原方式 |
 | Codex 模型 | 桌面介面提供模型／推理控制；互動 CLI 可用 `/model` | 目前執行設定與代理是否擁有可驗證的切換工具 |
 

@@ -49,6 +49,7 @@ export type AuthorizationDependencies = {
   db: D1Database;
   now?: () => number;
   allowPurgeMaintenance?: boolean;
+  requireSitesBinding?: boolean;
 };
 type Row = Record<string, string | number | null>;
 const deny = (): never => {
@@ -80,16 +81,18 @@ export class AuthorizationService {
   private readonly db: D1Database;
   private readonly now: () => number;
   private readonly allowPurgeMaintenance: boolean;
+  private readonly requireSitesBinding: boolean;
   constructor(dependencies: AuthorizationDependencies) {
     this.db = dependencies.db;
     this.now = dependencies.now ?? Date.now;
     this.allowPurgeMaintenance = dependencies.allowPurgeMaintenance === true;
+    this.requireSitesBinding = dependencies.requireSitesBinding === true;
   }
   async authorize(input: AuthorizationRequest): Promise<AuthorizationGrant> {
     const now = this.now();
     const row = await this.db
       .prepare(
-        "SELECT a.id, a.role, a.status, a.google_subject_id, a.auth_version, s.auth_version AS session_auth_version, s.revoked_at, s.expires_at, s.last_seen_at, s.recent_auth_at FROM admin_users a JOIN admin_sessions s ON s.admin_user_id = a.id WHERE a.id = ? AND s.id = ?",
+        "SELECT a.id, a.role, a.status, a.google_subject_id, a.auth_version, EXISTS(SELECT 1 FROM admin_sites_bindings b WHERE b.admin_user_id=a.id) AS sites_bound, s.auth_version AS session_auth_version, s.revoked_at, s.expires_at, s.last_seen_at, s.recent_auth_at FROM admin_users a JOIN admin_sessions s ON s.admin_user_id = a.id WHERE a.id = ? AND s.id = ?",
       )
       .bind(input.adminId, input.sessionId)
       .first<Row>();
@@ -97,6 +100,7 @@ export class AuthorizationService {
       !row ||
       row.status !== "active" ||
       !row.google_subject_id ||
+      (this.requireSitesBinding && !row.sites_bound) ||
       row.revoked_at !== null ||
       row.auth_version !== row.session_auth_version ||
       Number(row.expires_at) <= now ||

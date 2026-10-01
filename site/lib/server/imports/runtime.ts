@@ -27,7 +27,7 @@ export async function importRoute(
     });
     return await handleImportRequest(
       request,
-      { auth: authService(), imports },
+      { auth: authService(request), imports },
       operation,
       id,
     );

@@ -10,7 +10,11 @@ export async function GET(request: Request): Promise<Response> {
   try {
     return await handleAuthRequest(
       request,
-      { auth: authService(), management: adminManagementService() },
+      {
+        auth: authService(request),
+        management: adminManagementService(),
+        requireSitesBinding: true,
+      },
       "list",
     );
   } catch (error) {
@@ -21,7 +25,11 @@ export async function POST(request: Request): Promise<Response> {
   try {
     return await handleAuthRequest(
       request,
-      { auth: authService(), management: adminManagementService() },
+      {
+        auth: authService(request),
+        management: adminManagementService(),
+        requireSitesBinding: true,
+      },
       "create",
     );
   } catch (error) {

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-02 — Sites／ChatGPT 登入與 Passkey 遷移、D1 建置
+
+- 使用者核准 Sites 平台登入、Passkey 五分鐘高風險重驗，並確認 XHIGH；正式部署授權沿用。
+- 新增 Sites ID 綁定、Passkey 真實簽章驗證、Bootstrap／Rebind／Recovery 與介面，正式 runtime 關閉 Google HTTP 路由及 Client 設定依賴。已提交的 Google migration 與歷史測試保留。
+- 新增 0016 migration，撤銷舊 Session／核准，保留 Bootstrap 關閉狀態，身分異動使 Session 與背景授權失效。現為 53 張關聯表／17 migrations。
+- 新增 18 項 Sites 身分／簽章／重播／撤權／復原／升級測試。全套首次 300 項中 282 通過，失敗項修正或隔離重驗後均通過；這不是一次全套零失敗結果。typecheck／lint／format／build 通過，runtime dependency audit 為 0 vulnerabilities，實際候選 client bundle 24 檔及停用 logs 設定檢查通過。
+- 使用者授權實施 D1 建置；Sites 版本 1 部署成功，DB binding／新認證表可見。新增 [D1 維運流程](docs/D1_OPERATIONS.md)，記錄實際版本／archive、migration 邊界及復原待驗證項目。平台防偽、装置實測、完整 history、備份／復原等門檻未解除，尚未開放業務服務，詳見 [Phase 19 紀錄](docs/PHASE_19.md)。
+
 ## 2026-10-01 — Phase 19 正式部署授權／前置查核受阻
 
 - 使用者明確「確認正式部署」，已取得並記錄授權，不重複要求。Sites 唯讀查核仍版本 0／無網址／D1 空；正式環境 entries 空，Google Client 狀態未確認。

@@ -615,6 +615,7 @@ export const authIdentityRequests = sqliteTable(
       .notNull()
       .references(() => adminUsers.id),
     authorizedEmail: text("authorized_email").notNull(),
+    sitesSubject: text("sites_subject"),
     approvalHash: text("approval_hash").notNull(),
     status: text("status").notNull().default("approved"),
     expiresAt: integer("expires_at").notNull(),
@@ -1411,3 +1412,66 @@ export const purgedExams = sqliteTable("purged_exams", {
     .references(() => exams.id),
   frozenAt: integer("frozen_at").notNull(),
 });
+
+// Sites identity is independent of legacy Google fields retained for migration history.
+export const adminSitesBindings = sqliteTable(
+  "admin_sites_bindings",
+  {
+    adminUserId: text("admin_user_id")
+      .primaryKey()
+      .references(() => adminUsers.id),
+    subject: text("subject").notNull().unique(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check("sites_subject_bounded", sql`length(${t.subject}) BETWEEN 1 AND 512`),
+  ],
+);
+export const adminPasskeys = sqliteTable(
+  "admin_passkeys",
+  {
+    adminUserId: text("admin_user_id")
+      .primaryKey()
+      .references(() => adminUsers.id),
+    credentialId: text("credential_id").notNull().unique(),
+    publicKey: text("public_key").notNull(),
+    counter: integer("counter").notNull(),
+    transportsJson: text("transports_json").notNull(),
+    version: version(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check("passkey_counter", sql`${t.counter} >= 0`),
+    check("passkey_version", positiveVersion(t.version)),
+    check("passkey_transports", json(t.transportsJson)),
+  ],
+);
+export const authSitesChallenges = sqliteTable(
+  "auth_sites_challenges",
+  {
+    id: id(),
+    challengeHash: text("challenge_hash").notNull().unique(),
+    adminUserId: text("admin_user_id")
+      .notNull()
+      .references(() => adminUsers.id),
+    sessionId: text("session_id").references(() => adminSessions.id),
+    subject: text("subject").notNull(),
+    purpose: text("purpose").notNull(),
+    identityRequestId: text("identity_request_id"),
+    authVersion: integer("auth_version").notNull(),
+    credentialVersion: integer("credential_version"),
+    expiresAt: integer("expires_at").notNull(),
+    usedAt: integer("used_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check("sites_challenge_hash", hexHash(t.challengeHash)),
+    check(
+      "sites_challenge_purpose",
+      sql`${t.purpose} IN ('register','reauth','identity')`,
+    ),
+    check("sites_challenge_expiry", sql`${t.expiresAt} > ${t.createdAt}`),
+    index("sites_challenge_expiry_idx").on(t.expiresAt),
+  ],
+);

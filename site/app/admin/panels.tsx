@@ -418,7 +418,7 @@ export default function Panels(p: WorkspaceProps & { section: string }) {
                   { previewId: (v as Item).previewId, confirmed: true },
                 )
               }
-              note="需全校成績權限與近期 Google 驗證。請核對預覽後再提交。"
+              note="需全校成績權限與近期 Passkey 驗證。請核對預覽後再提交。"
             />
           </>
         )}

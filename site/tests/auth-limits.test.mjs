@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readFileSync } from "node:fs";
 import {
   guardAuthAttempt,
   cleanupAuthLimits,
@@ -141,26 +140,16 @@ test("Phase 16 Bootstrap and Identity share five attempts and rejected starts do
   );
 });
 
-test("Phase 16 all OAuth routes count attempts before code, body or auth service dispatch", () => {
-  for (const [route, restricted] of [
-    ["google/start", false],
-    ["google/callback", false],
-    ["bootstrap/start", true],
-    ["identity/start", true],
-    ["reauth/start", false],
+test("Retired OAuth routes reject all attempts without OAuth dispatch", async () => {
+  for (const name of [
+    "google/start",
+    "google/callback",
+    "bootstrap/start",
+    "identity/start",
+    "reauth/start",
   ]) {
-    const source = readFileSync(
-      new URL(`../app/api/auth/${route}/route.ts`, import.meta.url),
-      "utf8",
-    );
-    const guard = source.indexOf(
-      restricted
-        ? "await authAttempt(request, true)"
-        : "await authAttempt(request",
-    );
-    assert.ok(guard > 0, route);
-    assert.ok(guard < source.indexOf("authService()"), route);
-    if (route === "google/callback")
-      assert.ok(guard < source.indexOf('url.searchParams.get("code")'));
+    const route = await import("../app/api/auth/" + name + "/route.ts");
+    assert.equal(route.POST().status, 410);
+    assert.equal(route.GET().status, 410);
   }
 });

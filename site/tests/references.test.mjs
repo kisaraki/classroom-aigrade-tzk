@@ -587,7 +587,7 @@ test("Phase 10 migration: atomic retry, existing chunks preserved and review reb
   const original = await db
     .prepare("SELECT * FROM ai_reference_chunks")
     .first();
-  assert.equal((await migrationPreflight(db)).pending, 5);
+  assert.equal((await migrationPreflight(db)).pending, 6);
   await assert.rejects(
     db.batch([
       ...migrations[11].sql.filter((s) => s.trim()).map((s) => db.prepare(s)),
@@ -611,10 +611,14 @@ test("Phase 10 migration: atomic retry, existing chunks preserved and review reb
     original,
   );
   const service = new ReferenceService({ db, files: {}, now: () => now });
-  assert.equal((await service.list(owner)).items[0].needsIndexReview, true);
-  await service.update(owner, "legacy", 1, meta, "active", true);
-  assert.equal((await service.retrieve(owner, search)).references.length, 1);
-  assert.equal((await service.list(owner)).items[0].needsIndexReview, false);
+  await assert.rejects(service.list(owner), { code: "ACCESS_DENIED" });
+  // The current migration revokes legacy sessions. Use a new isolated domain
+  // fixture session to test index rebuilding; this is not the production login path.
+  const current = await auth.loginVerifiedGoogle(identity("owner"));
+  assert.equal((await service.list(current)).items[0].needsIndexReview, true);
+  await service.update(current, "legacy", 1, meta, "active", true);
+  assert.equal((await service.retrieve(current, search)).references.length, 1);
+  assert.equal((await service.list(current)).items[0].needsIndexReview, false);
   assert.equal(
     (
       await db

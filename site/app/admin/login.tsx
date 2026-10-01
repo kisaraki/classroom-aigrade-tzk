@@ -1,6 +1,8 @@
 "use client";
+import { useState } from "react";
 import { ActionForm } from "./widgets";
 import type { Requester } from "./workspace";
+import { completeSitesIdentity } from "./passkey";
 export default function Login({
   request,
   message,
@@ -10,38 +12,70 @@ export default function Login({
   message: string;
   refresh: () => void;
 }) {
-  async function start(path: string, input: unknown) {
-    const r = (await request(path, input)) as { authorizationUrl: string };
-    window.location.assign(r.authorizationUrl);
-    return { message: "正在前往 Google。" };
+  const [status, setStatus] = useState("");
+  async function login() {
+    try {
+      await request("/api/auth/sites", { operation: "login" });
+      refresh();
+    } catch (error) {
+      setStatus((error as Error).message);
+    }
   }
   return (
     <section className="admin-panel login-panel">
       <p className="eyebrow">僅限已授權人員</p>
-      <h2>使用 Google 登入</h2>
-      <p>登入後依您的職務與授權班級提供管理功能。</p>
-      <a className="primary-button" href="/api/auth/google/start">
-        以 Google 帳號繼續 →
+      <h2>使用 ChatGPT 平台登入</h2>
+      <p>完成平台登入後，再進入已授權的管理工作區。</p>
+      <a
+        className="primary-button"
+        href="/signin-with-chatgpt?return_to=%2Fadmin"
+        target="_top"
+      >
+        以 ChatGPT 帳號繼續 →
       </a>
-      <p role="status">{message}</p>
-      <button onClick={refresh}>重新檢查登入</button>
+      <button onClick={() => void login()}>進入管理工作區</button>
+      <button
+        onClick={async () => {
+          try {
+            const identity = (await request("/api/auth/sites")) as {
+              subject: string;
+            };
+            setStatus("我的 Sites 使用者 ID：" + identity.subject);
+          } catch (error) {
+            setStatus((error as Error).message);
+          }
+        }}
+      >
+        取得我的 Sites 使用者 ID
+      </button>
+      <p role="status">{status || message}</p>
       <details>
         <summary>首次初始化或身分重新綁定</summary>
         <ActionForm
           title="首次初始化"
           fields={[
             { name: "secret", label: "Bootstrap 憑證", type: "password" },
+            { name: "displayName", label: "顯示名稱" },
+            { name: "contactEmail", label: "聯絡 Email" },
           ]}
-          run={(v) => start("/api/auth/bootstrap/start", v)}
-          note="僅系統尚未初始化時可使用；仍須完成 Google 驗證。"
+          run={async (v) => {
+            await request("/api/auth/sites", { operation: "bootstrap", ...v });
+            refresh();
+            return { message: "初始化完成，請設定 Passkey。" };
+          }}
+          note="須先登入 ChatGPT；僅尚未初始化的系統可使用。聯絡 Email 不授予權限。"
         />
         <ActionForm
           title="完成已核准的身分綁定"
           fields={[
             { name: "requestToken", label: "一次性核准憑證", type: "password" },
           ]}
-          run={(v) => start("/api/auth/identity/start", v)}
-          note="核准與驗證須在 5 分鐘內完成；此處不接受 Recovery Secret 直接登入。"
+          run={async (v) => {
+            await completeSitesIdentity(request, v.requestToken);
+            await login();
+            return { message: "身分與 Passkey 綁定完成，請重新驗證 Passkey。" };
+          }}
+          note="以核准的 Sites 帳號登入，再註冊新的 Passkey；5 分鐘內完成，舊 Session 與憑證會失效。"
         />
       </details>
     </section>

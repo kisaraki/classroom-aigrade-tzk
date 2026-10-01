@@ -25,7 +25,7 @@ export async function aiSettingsRoute(request: Request) {
   try {
     if (!env.DB) throw new Error("AI_UNAVAILABLE");
     return await handleAISettingsRequest(request, {
-      auth: authService(),
+      auth: authService(request),
       settings: new AISettingsService({ db: env.DB }),
     });
   } catch (error) {
@@ -48,7 +48,7 @@ export function aiJobService() {
 export async function aiJobsRoute(request: Request) {
   try {
     return await handleAIJobRequest(request, {
-      auth: authService(),
+      auth: authService(request),
       jobs: aiJobService(),
     });
   } catch (error) {

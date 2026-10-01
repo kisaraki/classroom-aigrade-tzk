@@ -949,7 +949,7 @@ test("Phase 4 HTTP: cookie auth, CSRF, strict JSON, scope and no-store responses
   );
 });
 
-test("Phase 4 migration: upgrade Phase 3B without changing its scores, snapshots or sessions", async (t) => {
+test("Migration: upgrade Phase 3B preserves scores and snapshots while revoking legacy sessions", async (t) => {
   const { mf, db } = await createIsolatedDatabase();
   t.after(() => mf.dispose());
   await run(
@@ -981,8 +981,8 @@ test("Phase 4 migration: upgrade Phase 3B without changing its scores, snapshots
     parts: await all(db, "SELECT * FROM exam_participations ORDER BY id"),
     sessions: await all(db, "SELECT * FROM admin_sessions ORDER BY id"),
   };
-  assert.equal((await migrationPreflight(db)).pending, 9);
-  assert.equal((await migrateLocalDatabase(db)).applied, 16);
+  assert.equal((await migrationPreflight(db)).pending, 10);
+  assert.equal((await migrateLocalDatabase(db)).applied, 17);
   assert.equal((await migrateLocalDatabase(db)).pending, 0);
   assert.deepEqual(
     await all(db, "SELECT * FROM score_items ORDER BY id"),
@@ -992,10 +992,23 @@ test("Phase 4 migration: upgrade Phase 3B without changing its scores, snapshots
     await all(db, "SELECT * FROM exam_participations ORDER BY id"),
     before.parts,
   );
-  assert.deepEqual(
-    await all(db, "SELECT * FROM admin_sessions ORDER BY id"),
-    before.sessions,
+  const upgradedSessions = await all(
+    db,
+    "SELECT * FROM admin_sessions ORDER BY id",
   );
+  assert.equal(upgradedSessions.length, before.sessions.length);
+  for (let i = 0; i < upgradedSessions.length; i++) {
+    assert.notEqual(upgradedSessions[i].revoked_at, null);
+    assert.deepEqual(
+      {
+        ...upgradedSessions[i],
+        revoked_at: null,
+        recent_auth_at: before.sessions[i].recent_auth_at,
+      },
+      before.sessions[i],
+    );
+    assert.equal(upgradedSessions[i].recent_auth_at, 0);
+  }
   assert.deepEqual(
     (await db.prepare("PRAGMA foreign_key_check").all()).results,
     [],

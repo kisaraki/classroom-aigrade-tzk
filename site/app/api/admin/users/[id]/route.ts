@@ -14,7 +14,11 @@ export async function PATCH(
   try {
     return await handleAuthRequest(
       request,
-      { auth: authService(), management: adminManagementService() },
+      {
+        auth: authService(request),
+        management: adminManagementService(),
+        requireSitesBinding: true,
+      },
       "update",
       (await context.params).id,
     );

@@ -11,6 +11,7 @@ import type {
 export type AuthHttpDependencies = {
   auth: AuthService;
   management: AdminManagementService;
+  requireSitesBinding?: boolean;
 };
 type Operation =
   | "bootstrap"
@@ -28,6 +29,7 @@ const keys: Record<Operation, string[]> = {
     "username",
     "displayName",
     "authorizedEmail",
+    "sitesSubject",
     "role",
     "assignments",
     "confirmed",
@@ -40,7 +42,13 @@ const keys: Record<Operation, string[]> = {
     "expectedVersion",
     "confirmed",
   ],
-  rebind: ["authorizedEmail", "reason", "expectedVersion", "confirmed"],
+  rebind: [
+    "authorizedEmail",
+    "sitesSubject",
+    "reason",
+    "expectedVersion",
+    "confirmed",
+  ],
   revoke: ["expectedVersion", "confirmed"],
   identity: ["requestToken"],
   reauth: [],
@@ -154,6 +162,12 @@ export async function handleAuthRequest(
     const session = await dependencies.auth.validateSession(token);
     if (!session) throw new AuthError("AUTHENTICATION_REQUIRED");
     const management = dependencies.management;
+    if (
+      dependencies.requireSitesBinding &&
+      ["create", "rebind"].includes(operation) &&
+      (typeof body.sitesSubject !== "string" || !body.sitesSubject)
+    )
+      throw new AuthError("SITES_SUBJECT_REQUIRED", 400);
     if (operation === "list")
       return Response.json(
         { admins: await management.listAdmins(session) },

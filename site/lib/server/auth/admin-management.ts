@@ -50,6 +50,7 @@ export type CreateAdminInput = {
   username: string;
   displayName: string;
   authorizedEmail: string;
+  sitesSubject?: string;
   role: AdminRole;
   assignments?: AssignmentInput[];
   confirmed: true;
@@ -149,6 +150,10 @@ export class AdminManagementService {
       throw new AuthError("INVALID_USERNAME", 400);
     const displayName = text(input.displayName, "INVALID_DISPLAY_NAME");
     const email = normalizeEmail(input.authorizedEmail);
+    const sitesSubject =
+      input.sitesSubject === undefined
+        ? null
+        : sitesSubjectValue(input.sitesSubject);
     this.assertRole(input.role);
     const assignments = await this.validateAssignments(input.assignments ?? []);
     if (input.role !== "super_admin" && !assignments.length)
@@ -171,6 +176,15 @@ export class AdminManagementService {
           now,
           now,
         ),
+      ...(sitesSubject
+        ? [
+            this.db
+              .prepare(
+                "INSERT INTO admin_sites_bindings(admin_user_id,subject,created_at) VALUES (?,?,?)",
+              )
+              .bind(id, sitesSubject, now),
+          ]
+        : []),
       ...assignments.map((a) => this.assignmentInsert(id, a)),
     ]);
     return { id, status: "pending_identity_binding" as const, authVersion: 1 };
@@ -283,7 +297,11 @@ export class AdminManagementService {
   async approveRebind(
     session: AuthSession,
     targetId: string,
-    input: Confirmation & { authorizedEmail: string; reason: string },
+    input: Confirmation & {
+      authorizedEmail: string;
+      reason: string;
+      sitesSubject?: string;
+    },
   ) {
     await this.authorization.assertPermission(session, "admin.rebind");
     confirmation(input);
@@ -300,6 +318,9 @@ export class AdminManagementService {
       session,
       "interactive-super-admin",
       text(input.reason),
+      input.sitesSubject === undefined
+        ? null
+        : sitesSubjectValue(input.sitesSubject),
     );
   }
   /** Maintenance-only entry point: intentionally not exposed by any HTTP route. */
@@ -307,6 +328,7 @@ export class AdminManagementService {
     input: Confirmation & {
       targetAdminId: string;
       authorizedEmail: string;
+      sitesSubject?: string;
       approvalSecret: string;
       approvedBy: string;
       evidenceReference: string;
@@ -348,6 +370,9 @@ export class AdminManagementService {
       null,
       approvedBy,
       evidence,
+      input.sitesSubject === undefined
+        ? null
+        : sitesSubjectValue(input.sitesSubject),
     );
   }
   async requestForToken(token: string): Promise<IdentityRequest> {
@@ -446,7 +471,17 @@ export class AdminManagementService {
     actor: AuthSession | null,
     approvedBy: string,
     evidence: string,
+    sitesSubject: string | null = null,
   ) {
+    if (sitesSubject) {
+      const occupied = await this.db
+        .prepare(
+          "SELECT admin_user_id FROM admin_sites_bindings WHERE subject=? AND admin_user_id<>?",
+        )
+        .bind(sitesSubject, target.id)
+        .first();
+      if (occupied) throw new AuthError("IDENTITY_ALREADY_BOUND", 409);
+    }
     const duplicate = await this.db
       .prepare(
         "SELECT id FROM admin_users WHERE lower(authorized_email) = ? AND id <> ?",
@@ -473,7 +508,7 @@ export class AdminManagementService {
         .bind(target.id),
       this.db
         .prepare(
-          "INSERT INTO auth_identity_requests (id, target_admin_id, authorized_email, approval_hash, status, expires_at, approved_at, created_at, kind, target_auth_version, actor_session_id, approved_by, evidence_reference) VALUES (?, ?, ?, ?, 'approved', ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO auth_identity_requests (id, target_admin_id, authorized_email, approval_hash, status, expires_at, approved_at, created_at, kind, target_auth_version, actor_session_id, approved_by, evidence_reference, sites_subject) VALUES (?, ?, ?, ?, 'approved', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(
           requestId,
@@ -488,6 +523,7 @@ export class AdminManagementService {
           actor?.sessionId ?? null,
           approvedBy,
           evidence,
+          sitesSubject,
         ),
     ]);
     return { requestId, requestToken: token, expiresAt };
@@ -662,4 +698,15 @@ export class AdminManagementService {
       throw new AuthError(code, 409);
     }
   }
+}
+
+function sitesSubjectValue(value: unknown): string {
+  if (
+    typeof value !== "string" ||
+    !value ||
+    value.length > 512 ||
+    /[\s,\u0000-\u001f\u007f]/u.test(value)
+  )
+    throw new AuthError("INVALID_SITES_IDENTITY", 400);
+  return value;
 }

@@ -100,9 +100,9 @@ test("Phase 1: real migrations, fictional seed and database boundaries", async (
     await t.test(
       "empty preflight, all core tables/indexes/FKs, repeat migration and seed isolation",
       async () => {
-        assert.equal((await migrationPreflight(db)).pending, 16);
+        assert.equal((await migrationPreflight(db)).pending, 17);
         assert.deepEqual(await migrateLocalDatabase(db), {
-          applied: 16,
+          applied: 17,
           pending: 0,
           foreignKeys: "ok",
           integrity: "ok",
@@ -113,8 +113,8 @@ test("Phase 1: real migrations, fictional seed and database boundaries", async (
             await db.prepare(`PRAGMA table_info('${config.name}')`).all()
           ).results;
           assert.deepEqual(
-            columns.map((column) => column.name),
-            config.columns.map((column) => column.name),
+            columns.map((column) => column.name).sort(),
+            config.columns.map((column) => column.name).sort(),
           );
           for (const idx of config.indexes)
             assert.ok(
@@ -126,7 +126,7 @@ test("Phase 1: real migrations, fictional seed and database boundaries", async (
                 .first(),
             );
         }
-        assert.equal(Object.keys(schema).length, 50);
+        assert.equal(Object.keys(schema).length, 53);
         assert.ok(
           await db
             .prepare(
@@ -1165,7 +1165,7 @@ test("migration recovery: failed DDL batch is atomic, and replay from a fresh da
         )
         .bind(first.hash, first.folderMillis),
     ]);
-    assert.equal((await migrationPreflight(db)).pending, 15);
+    assert.equal((await migrationPreflight(db)).pending, 16);
     await insert(db, "admin_users", admin("recovery-admin")).run();
     await insert(db, "ai_reference_materials", {
       id: "existing-material",

@@ -17,7 +17,7 @@ export async function publicationRoute(
     return await handlePublicationRequest(
       request,
       {
-        auth: authService(),
+        auth: authService(request),
         publication: new PublicationService({ db: env.DB }),
       },
       operation,

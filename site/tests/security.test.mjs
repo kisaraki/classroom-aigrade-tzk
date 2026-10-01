@@ -165,10 +165,31 @@ test("Phase 16 migration preserves existing data and rejects stale Google/idle c
   const db = await fixture(t, true);
   const before = (await db.prepare("SELECT * FROM students ORDER BY id").all())
     .results;
-  assert.equal((await migrationPreflight(db)).pending, 2);
+  assert.equal((await migrationPreflight(db)).pending, 3);
   const migrated = await migrateLocalDatabase(db);
-  assert.equal(migrated.applied, 16);
+  assert.equal(migrated.applied, 17);
   assert.equal((await migrationPreflight(db)).pending, 0);
+  assert.notEqual(
+    (
+      await db
+        .prepare(
+          "SELECT revoked_at FROM admin_sessions WHERE id='security-session'",
+        )
+        .first()
+    ).revoked_at,
+    null,
+  );
+  // Isolated post-upgrade authorization fixture: preserve the revoked legacy
+  // row and issue a distinct session at the current account version.
+  await sql(
+    db,
+    "INSERT INTO admin_sessions(id,admin_user_id,token_hash,auth_version,authenticated_at,recent_auth_at,last_seen_at,expires_at) SELECT 'security-current',id,?,auth_version,?,?,?,? FROM admin_users WHERE id='security-owner'",
+    "b".repeat(64),
+    now - 3600000,
+    now,
+    now,
+    now + 86400000,
+  ).run();
   assert.deepEqual(
     (await db.prepare("SELECT * FROM students ORDER BY id").all()).results,
     before,
@@ -193,7 +214,7 @@ test("Phase 16 migration preserves existing data and rejects stale Google/idle c
       ),
       sql(
         db,
-        "INSERT INTO academic_operations(id,preview_id,actor_id,auth_session_id,kind,before_revision,changes_json,result_json,created_at) VALUES (?,?,'security-owner','security-session','CREATE_CLASSES',?,'[]','{}',?)",
+        "INSERT INTO academic_operations(id,preview_id,actor_id,auth_session_id,kind,before_revision,changes_json,result_json,created_at) VALUES (?,?,'security-owner','security-current','CREATE_CLASSES',?,'[]','{}',?)",
         id,
         id,
         revision + 1,
@@ -210,7 +231,7 @@ test("Phase 16 migration preserves existing data and rejects stale Google/idle c
   ]) {
     await sql(
       db,
-      "UPDATE admin_sessions SET last_seen_at=?,recent_auth_at=? WHERE id='security-session'",
+      "UPDATE admin_sessions SET last_seen_at=?,recent_auth_at=? WHERE id='security-current'",
       seen,
       recent,
     ).run();
@@ -230,7 +251,7 @@ test("Phase 16 migration preserves existing data and rejects stale Google/idle c
   }
   await sql(
     db,
-    "UPDATE admin_sessions SET last_seen_at=?,recent_auth_at=? WHERE id='security-session'",
+    "UPDATE admin_sessions SET last_seen_at=?,recent_auth_at=? WHERE id='security-current'",
     now - 1799999,
     now - 299999,
   ).run();

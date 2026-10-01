@@ -899,7 +899,7 @@ test("Phase 2 upgrades a populated Phase 1 database without rewriting historical
     "score_items",
   ])
     before[table] = await all(db, `SELECT * FROM ${table} ORDER BY id`);
-  assert.equal((await migrationPreflight(db)).pending, 12);
+  assert.equal((await migrationPreflight(db)).pending, 13);
   await migrateLocalDatabase(db);
   for (const [table, rows] of Object.entries(before))
     assert.deepEqual(

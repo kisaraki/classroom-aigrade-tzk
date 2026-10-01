@@ -2,7 +2,7 @@
 
 > 適用專案：`classroom-aigrade-tzk`  
 > 規則版本：v1.6  
-> 最後修訂：2026-09-22
+> 最後修訂：2026-10-01
 
 本文件定義 Codex 的開發紀律。業務、資料模型、Phase 及驗收要求以 [PROJECT_SPEC.md](PROJECT_SPEC.md) 為唯一主要規格；本文件不是功能待辦清單，也不是開始任一 Phase 的授權。
 
@@ -84,7 +84,7 @@ Reason=<簡短原因>
 4. 繼續不受影響的已授權工作。
 5. 決策後同步正文、待決策表、測試要求與 CHANGELOG。
 
-[§72 的 D-01～D-11](PROJECT_SPEC.md#spec-72-2) 中的建議不是已核准規則。不得因其列於主規格就自行實作。平台文件說明、專案實測、模擬測試必須區分。管理員僅使用 Google OAuth／OIDC 已定案；D-01、D-09 僅保留 Recovery 與 Google 登入政策，不得恢復已取消的其他服務認證。
+[§72 的 D-01～D-11](PROJECT_SPEC.md#spec-72-2) 中的建議不是已核准規則。不得因其列於主規格就自行實作。平台文件說明、專案實測、模擬測試必須區分。Sites／ChatGPT 平台登入及 Passkey 已由使用者核准，依 D-01／D-09 實作；不得恢復已取消的 Google Client 要求。
 
 <a id="agents-tools"></a>
 
@@ -148,14 +148,7 @@ Secret 使用部署平台的 Secret／Environment 機制，不存一般設定表
 
 ## 身分驗證與授權
 
-Google OAuth／OIDC 是管理員唯一外部身分認證，所有管理員須符合：
-
-```text
-Google Verified (including email_verified)
-AND Authorized Email
-AND Allowed Account Status
-AND Google Binding Valid
-```
+2026-10-01 使用者取消 Google OAuth Client，核准 Sites／ChatGPT 平台登入及 Passkey 高風險重驗。可信 Sites ID、明確管理員綁定、允許狀態及應用程式 Session 必須全部成立。平台可信 gateway 未實測前預設拒絕；Email 不授予資格。一般登入不賦予近期驗證，五分鐘內 Passkey 驗證才符合高風險要求。
 
 每個管理端 API 另須 Server-side Authentication＋Permission＋Scope。前端隱藏按鈕、單看角色或持有資料 ID 均不足以授權。
 
@@ -163,13 +156,13 @@ AND Google Binding Valid
 - 任課教師限自己的任教班級，只能修改任教科目。
 - 未授權預設拒絕；報表、檔案下載、批次及背景工作同樣檢查 Scope。
 - 停權、身分重新綁定及權限縮限立即生效，依主規格撤銷相關 Sessions。
-- 已驗證 Google Email 須符合授權紀錄，Google subject 須與綁定一致；不能任意混用或合併帳號。
-- 不要求 ChatGPT／Gemini 登入、帳號資格、人工核驗或 API Key；不得保存 AI 身分驗證欄位作為管理員資料。AI 提供者、金鑰或可用性不影響管理員登入及 Session。
-- 首次初始化僅需 Google 驗證加上 Bootstrap Secret；Recovery 核准流程依 D-01，Google 平台整合與 Email 政策依 D-09。
+- 可信 Sites subject 須與明確授權綁定一致，不憑 Email 自動綁定或合併帳號。
+- Sites／ChatGPT 僅作平台身分；AI API Key、Gemini 帳號或 AI 提供者可用性不影響管理員 Session，不保存 AI 身分欄位。
+- 首次初始化需 Sites 身分與 Bootstrap Secret；新管理員／Rebind／Recovery 指定 Sites ID，Recovery 另需新 Passkey 與受控核准，依 §32–35。
 - `admin` 是保留內部帳號代號，不是登入憑證；不得 rename、delete 或建立本地密碼備援。
 - 最後一位 active super_admin 不得停權或降級。
 - Bootstrap 一次性且防止併發；Recovery 不得重新開放 Bootstrap 或繞過外部身分要求。
-- 高風險操作須 Google Recent Authentication、必要確認與 Audit；不得增加其他外部認證服務。
+- 高風險操作須五分鐘內 Passkey 驗證、必要確認與 Audit；不能以 Sites 回跳時間偽造近期驗證。
 
 必測案例見 [§67.1](PROJECT_SPEC.md#spec-67-1) 與 [§73.6](PROJECT_SPEC.md#spec-73-6)。
 

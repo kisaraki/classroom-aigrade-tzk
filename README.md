@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 19 已取得正式部署授權，部署前查核受阻。** 本機 Phase 17 整合已完成，候選 `phase18-rc1` 保留未解的驗收與平台阻擋項目，沒有正式 Release／Sites 部署。詳見 [候選紀錄](docs/RELEASE_CANDIDATE.md)、[Phase 18 紀錄](docs/PHASE_18.md) 與 [Phase 19 部署前紀錄](docs/PHASE_19.md)。
+**Phase 19：Sites 版本 1 與 D1 基礎設施已部署，業務服務尚未開放。** Sites／ChatGPT 登入及 Passkey 本機遷移已完成；300 項案例經全套與失敗項修正／隔離重驗均已有通過證據。正式可信身分／IP、Passkey 裝置與備份／復原驗收尚未完成，verified 開關保持關閉，沒有正式軟體 Release。詳見 [候選紀錄](docs/RELEASE_CANDIDATE.md)、[Phase 19 紀錄](docs/PHASE_19.md) 與 [D1 維運流程](docs/D1_OPERATIONS.md)。
 
 ## 文件入口
 
@@ -53,7 +53,7 @@ Phase 14 Admin UI 已獲核准並持續實作；管理工作區已建立，Audit
 - 學年度、班級、學生與歷史學籍管理，包含升班、轉班、轉入、轉出與畢業。
 - 檢測／段考、特殊狀態、平均及班級／全年段排名。
 - Excel／CSV 匯入、驗證、預覽、確認提交及 30 天 Rollback。
-- 管理員僅使用 Google OAuth／OIDC 認證，仍檢查授權 Email、帳號狀態與 Google 綁定，並以 Permission＋Scope 控制資料範圍。
+- 管理員使用 Sites／ChatGPT 平台登入與 Passkey 高風險重驗，檢查 Sites ID 綁定及帳號狀態，並以 Permission＋Scope 控制資料範圍。
 - AI 提供者、RAG、背景工作、版本及成績修改後重生。
 - 報表、稽核、成績歷程、封存、復原與受控 Purge。
 
@@ -61,11 +61,11 @@ Phase 14 Admin UI 已獲核准並持續實作；管理工作區已建立，Audit
 
 | 項目 | 規劃 | 狀態 |
 |---|---|---|
-| 正式執行平台 | ChatGPT Sites | 專案已建立，尚未發布 |
-| 後端 | Vinext／Cloudflare Workers | 已建立 Google-only auth、管理 API、公開查詢 API 與 health route；僅本機預覽 |
+| 正式執行平台 | ChatGPT Sites | 版本 1 已部署；沿用 custom 存取，業務開關關閉 |
+| 後端 | Vinext／Cloudflare Workers | Sites／Passkey auth、管理 API、公開查詢 API 與 health route 已建置；正式身分驗證待實測 |
 | 前端 | React／HTML／CSS | 已建立公開查詢與結果介面；正式入口關閉 |
-| 關聯式資料庫 | D1／SQLite，binding `DB` | 50 張關聯表、兩個 FTS5 索引與十六份 migration；隔離本機驗證 |
-| 檔案儲存 | R2，binding `FILES` | 本機測試；雲端尚未配置 |
+| 關聯式資料庫 | D1／SQLite，binding `DB` | 本機 53 張關聯表／兩個 FTS5／17 migrations；正式 DB 已建立，完整 history／復原待驗證 |
+| 檔案儲存 | R2，binding `FILES` | 已隨部署宣告；正式寫入／副本／復原能力未驗證 |
 | AI | OpenAI API、Google Gemini API adapter | Provider、Context 與 Jobs 核心已建立；僅 mock，正式 consumer 待驗證 |
 | 參考資料搜尋 | D1 FTS 優先 | Phase 10 上傳、分段與中文 FTS 檢索已建立 |
 | 文件與版本入口 | GitHub Repository、GitHub Pages | Repository／Pages 已部署並驗證 |
@@ -86,7 +86,7 @@ Windows PowerShell 可使用 `npm.cmd`。預覽僅監聽本機；以終端顯示
 
 驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；本輪結果見 [Phase 18 紀錄](docs/PHASE_18.md)。
 
-環境欄位見 [site/.env.example](site/.env.example)，真實值只填入忽略提交的 `.env` 或 Sites Settings；本次預覽與測試不需要真實 Secret。migration 位於 `site/drizzle/`，不由應用程式啟動時自動套用，未套用至雲端。
+環境欄位見 [site/.env.example](site/.env.example)，真實值只填入忽略提交的 `.env` 或 Sites Settings。migration 位於 `site/drizzle/`，不由應用程式啟動時自動套用；Sites 版本 1 部署已建立正式 DB 及新認證資料表，逐筆 history／hash 尚待平台工具驗證。
 
 需要安裝元件時：Windows 優先 winget；macOS 優先 Homebrew；Python 優先 uv、其次 pip。先檢查既有工具，避免不必要安裝。
 
@@ -119,7 +119,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 16 | 本機安全／隱私審查完成；正式平台實測保留 |
 | Phase 17 | 完整生命週期與分類鎖定本機整合完成 |
 | Phase 18 | 含 Audit 的目前候選全套 282 項 tests 通過；build 沿用同一 runtime 成功結果，RC 尚有驗收與正式平台阻擋，詳見候選紀錄 |
-| Phase 19 | 已取得正式部署授權；部署前查核因環境設定、正式 DB／preflight／recovery 與相依驗收受阻，尚未部署 |
+| Phase 19 | 部分完成：版本 1／D1 基礎設施部署成功；可信身分、完整 migration history、備份／復原及相依驗收保留 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
 
@@ -129,18 +129,18 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 
 | 欄位 | 狀態 |
 |---|---|
-| Local Release Candidate | phase18-rc1，本機準備／受阻；未發布 |
-| Latest Production Release | 尚無已驗證紀錄 |
-| Deployment Date | 尚無已驗證紀錄 |
-| ChatGPT Sites | 尚無已驗證正式網址 |
-| GitHub Pages | [專案文件頁](https://kisaraki.github.io/classroom-aigrade-tzk/)（HTTP 200，2026-10-01；線上 Phase 13） |
+| Local Release Candidate | phase19-sites-auth，業務驗收仍受阻 |
+| Latest Production Release | Sites 版本 1（基礎設施）；尚無正式軟體 Release |
+| Deployment Date | 2026-10-02 07:05（Asia/Taipei） |
+| ChatGPT Sites | [系統入口](https://classroom-aigrade-tzk.kisaraki.chatgpt.site)（平台 succeeded；custom 存取、業務開關關閉） |
+| GitHub Pages | [專案文件頁](https://kisaraki.github.io/classroom-aigrade-tzk/)（同步結果見 Phase 19 紀錄） |
 | Repository | [kisaraki/classroom-aigrade-tzk](https://github.com/kisaraki/classroom-aigrade-tzk) |
 
 只填入實際取得並驗證的 URL。每次 Sites 正式部署成功後，必須依 [同步流程](PROJECT_SPEC.md#spec-41-9) 更新本區、Pages、CHANGELOG／Release，完成 Commit／Push 與三網址驗證。
 
 ## ChatGPT Sites
 
-目標為正式成績系統執行平台。任何 Sites 部署，包括限制訪客範圍的部署，都須先取得使用者「確認正式部署」授權。部署前使用本機預覽或保存版本審查；本次未部署。
+正式成績系統執行平台。使用者「確認正式部署」及 D1 建置授權已取得，版本 1 部署成功；未登入的 smoke 請求均由平台以 401／no-store 阻擋，這不等同登入後業務 smoke 已通過。尚未配置正式 Secret 或開啟 verified 旗標。
 
 ## GitHub Pages
 

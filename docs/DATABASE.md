@@ -4,9 +4,9 @@
 
 ## 模型入口
 
-Phase 18 審查現況：50 張關聯表、16 份 migration（0000～0015）與兩個 FTS5；升級注意事項及未驗證的正式復原能力見 [RC Migration Summary](RELEASE_CANDIDATE.md#migration-summary)。各 Phase 段落的舊數量僅表示當時狀態。
+Phase 19 認證遷移現況：53 張關聯表、17 份 migration（0000～0016）與兩個 FTS5；升級注意事項及未驗證的正式復原能力見 [RC Migration Summary](RELEASE_CANDIDATE.md#migration-summary)。各 Phase 段落的舊數量僅表示當時狀態。
 
-- [Drizzle schema](../site/db/schema.ts)：50 張關聯表的欄位、外鍵、CHECK 與索引。
+- [Drizzle schema](../site/db/schema.ts)：53 張關聯表的欄位、外鍵、CHECK 與索引。
 - [核心 migration](../site/drizzle/0000_phase_01_core.sql)：建立關聯表及索引。
 - [跨列約束與 FTS migration](../site/drizzle/0001_phase_01_invariants.sql)：學籍、快照、管理員與版本約束，及 FTS 邏輯表 `ai_reference_chunks_fts`。FTS 內部 shadow tables 不另算業務表。
 - [Migration journal](../site/drizzle/meta/_journal.json)：Drizzle 的順序與時間戳；snapshot 記錄可生成的關聯 schema，FTS／trigger 保存在 custom migration。
@@ -251,3 +251,11 @@ HMAC 不可按學生反查，因此受控 Purge 同一交易清空限流紀錄�
 Production 未執行；程式回退保留 trigger 與 migration history，停止不相容寫入，必要修正另建 migration。正式 migration 仍須 preflight、人工確認與實測 recovery，見 [Phase 16 工作紀錄](PHASE_16.md)。
 
 [0015 migration](../site/drizzle/0015_phase_16_auth_limits.sql) 新增 `auth_rate_attempts`，合計 50 張關聯表、16 份 migration。僅保存隨機 ID、專用 IP HMAC、是否為 Bootstrap／Identity 開始及 UTC 時間；雜湊格式、旗標及時間有 CHECK，IP／限制開始與清理有索引。共用 60／5 額度由同一條件 INSERT 原子消耗。沒有學生 FK，不改寫既有資料；正式套用前仍需 preflight、人工確認及 recovery 實測。
+
+## Sites／Passkey 認證遷移
+
+[0016](../site/drizzle/0016_phase_19_sites_passkeys.sql) 新增 admin_sites_bindings、admin_passkeys、auth_sites_challenges，並在 auth_identity_requests 新增 sites_subject。升級撤銷所有舊 Session、消耗舊 OAuth state 並使既有核准失效；不以 Email 自動映射 Sites 身分，也不重開 Bootstrap。新綁定異動提升 auth_version、撤銷 Session 與 challenge，令舊背景授權失效。
+
+舊 google_subject_id 保留相容性；Sites 帳號使用不可作外部身分證據的內部 marker，正式身份以 admin_sites_bindings 為準。已有管理員的資料庫須由受控 Recovery 遷移保留 admin，再逐一 Rebind 其他帳號；空資料庫才走 Bootstrap。Passkey 只存公鑰與 metadata，challenge 僅存 hash。
+
+0016 只在隔離資料庫驗證，尚未套用 Production。正式復原須先取得平台 DB／history、備份與受控 migration 證據；程式回退不能恢復已撤銷的 Sessions，不能用回退開放舊 Google 路由。

@@ -17,7 +17,7 @@ export async function examRoute(
     if (!env.DB) throw new AuthError("AUTH_DATABASE_UNAVAILABLE", 503);
     return await handleExamRequest(
       request,
-      { auth: authService(), exams: new ExamService({ db: env.DB }) },
+      { auth: authService(request), exams: new ExamService({ db: env.DB }) },
       operation,
       id,
     );

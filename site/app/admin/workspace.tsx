@@ -1,4 +1,5 @@
 "use client";
+import { verifyAdminPasskey } from "./passkey";
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Login from "./login";
@@ -48,9 +49,16 @@ export type WorkspaceProps = {
 const messages: Record<string, string> = {
   AUDIT_SOURCE_CHANGED: "稽核保存日期已切換，請重新讀取。",
   AUTHENTICATION_REQUIRED: "登入已失效，請重新登入。",
-  AUTH_NOT_CONFIGURED: "Google 登入尚未完成平台設定。",
+  SITES_IDENTITY_NOT_VERIFIED: "Sites 登入尚未通過平台驗證。",
+  UNAUTHENTICATED: "請先完成 ChatGPT 平台登入。",
+  SITES_ADMIN_NOT_AUTHORIZED: "此 Sites 帳號尚未獲授權，請聯絡管理員。",
+  PASSKEY_NOT_REGISTERED: "請先設定 Passkey。",
+  PASSKEY_INVALID: "Passkey 驗證失敗，請重新操作。",
+  PASSKEY_CHALLENGE_INVALID: "驗證已失效，請重新操作。",
+  AUTH_CONFLICT: "帳號或憑證已變動，請重新登入。",
+  AUTH_NOT_CONFIGURED: "Sites 登入尚未完成平台設定。",
   AUTH_DATABASE_UNAVAILABLE: "管理資料庫尚未就緒。",
-  RECENT_AUTHENTICATION_REQUIRED: "請先重新驗證 Google 身分，再重新預覽。",
+  RECENT_AUTHENTICATION_REQUIRED: "請先重新驗證 Passkey，再重新預覽。",
   SCOPE_DENIED: "您的授權範圍不包含這項資料。",
   PERMISSION_DENIED: "您沒有這項操作權限。",
   STALE_PREVIEW: "資料已變動，請重新讀取及預覽。",
@@ -279,16 +287,32 @@ export default function Workspace() {
               <button
                 onClick={async () => {
                   try {
-                    const r = (await request("/api/auth/reauth/start", {})) as {
-                      authorizationUrl: string;
-                    };
-                    window.location.assign(r.authorizationUrl);
+                    await verifyAdminPasskey(request);
+                    setMessage("Passkey 已重新驗證，有效 5 分鐘。");
                   } catch (e) {
                     setMessage((e as Error).message);
                   }
                 }}
               >
-                重新驗證 Google
+                重新驗證 Passkey
+              </button>
+              <button
+                onClick={async () => {
+                  if (
+                    !window.confirm(
+                      "設定新的 Passkey？若已有憑證，必須先以原憑證重新驗證，完成後原憑證將失效。",
+                    )
+                  )
+                    return;
+                  try {
+                    await verifyAdminPasskey(request, true);
+                    setMessage("Passkey 已設定。");
+                  } catch (e) {
+                    setMessage((e as Error).message);
+                  }
+                }}
+              >
+                設定／更換 Passkey
               </button>
             </header>
             <section className="context-bar" aria-label="工作範圍">
@@ -375,7 +399,7 @@ export default function Workspace() {
                   </div>
                 </div>
                 <p className="muted">
-                  高風險操作需要 5 分鐘內 Google
+                  高風險操作需要 5 分鐘內 Passkey
                   重新驗證；資料變動時必須重新預覽。
                 </p>
               </section>

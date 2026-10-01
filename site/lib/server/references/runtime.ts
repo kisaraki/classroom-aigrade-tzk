@@ -18,7 +18,7 @@ export async function referenceRoute(
     return await handleReferenceRequest(
       request,
       {
-        auth: authService(),
+        auth: authService(request),
         references: new ReferenceService({ db: env.DB, files: env.FILES }),
       },
       operation,
