@@ -178,9 +178,10 @@ GOOGLE_OAUTH_CLIENT_SECRET
 IDENTITY_HMAC_SECRET
 IDENTITY_ENCRYPTION_KEY
 PUBLIC_LOOKUP_HMAC_SECRET
+AUTH_RATE_HMAC_SECRET
 ```
 
-Secrets 不得存入一般設定表。
+Secrets 不得存入一般設定表。`GOOGLE_OAUTH_REDIRECT_URI` 是非 Secret 的精確 callback 設定；只能於 D-09 平台路徑驗證後登錄。`AUTH_RATE_VERIFIED` 是非 Secret 的正式登入限流驗證開關，預設 false，啟用條件依 §63；`AUTH_RATE_HMAC_SECRET` 使用至少 32 字元的獨立高熵 Secret，不得與公開查詢或身分證金鑰共用。
 
 公開查詢另使用非 Secret 的 `PUBLIC_LOOKUP_VERIFIED` 開關，預設 false；可信來源 IP、平台紀錄與限流清理／備份保存能力實測完成後才能啟用。查詢 HMAC 使用獨立高熵 Secret，至少 32 字元，不得沿用身分證金鑰。
 
@@ -2746,6 +2747,10 @@ Phase 5 本機計算與授權讀取的驗證、交付邊界見 [PHASE_5.md](docs
 
 ## 65. Phase 18 — Release Candidate
 
+2026-10-01 使用者採用 D-11 復原驗收目標：RPO 最多 24 小時（最多可能失去 24 小時內資料）、RTO 最多 8 小時。這是必須以平台備份／隔離復原演練證實的目標，不是已達標承諾；未達標不得正式上線。演練須保存非敏感時間與完整性證據，涵蓋 D1、必要私有檔案、migration history 及金鑰版本；不能以新生成的金鑰或僅程式回退代替資料復原。
+
+2026-10-01 使用者明確批准啟動 Phase 18。Recommended HIGH／Minimum HIGH；沿用已確認 XHIGH，Action KEEP。本階段執行完整回歸、本機 production build、migration／Secret names／Sites config 審查與 RC 文件準備，僅保存本機候選版本；不得正式部署、Push／觸發 Pages 或把遠端較舊版本的 CI 成功當作本次驗證。候選識別為 `phase18-rc1`，以 [Phase 18 紀錄](docs/PHASE_18.md) 及 [Release Candidate](docs/RELEASE_CANDIDATE.md) 保存結果、Migration Summary、Known Issues 與 Test Summary；相關待決策、Phase 14／15 驗收及正式平台實測未解前維持部分完成／受阻，不標為正式 Release 或 frozen。
+
 ### Codex 能力提示
 
 - Recommended Effort：`HIGH`
@@ -3128,7 +3133,7 @@ Codex 不得：
 | D-08 | **已核准（2026-09-25）**：任一分類先發布為 PROVISIONAL，兩者皆明確發布才為 FINAL；Phase 17 分類鎖定補充已核准（2026-10-01） | 僅計已發布分類；全部 NOT_HELD 仍須明確發布；缺分不阻擋且不視為 0。發布／修改重算失敗整筆不生效，保留上一完整公開版本；首次發布失敗不公開 | Phase 7 |
 | D-09 | Google OAuth／OIDC 的平台 callback／Cookie 相容性、Email 正規化與允許的 Google 帳號政策 | Google sub 作綁定識別鍵已定義；Email 用於授權比對，不自行去除點號或加號別名。確認 Google-only 登入不被平台額外認證門檻阻擋；不能以訪客可偽造的 Email 標頭授權。2026-09-23 使用者指示暫緩 OAuth 設定與登入實測，尚未通過 | Phase 0 保存文件／存取選項證據；Phase 3A 前補實測與驗證契約 |
 | D-10 | **已核准（2026-09-23）**：預設角色對各項操作的權限矩陣、多任教範圍組合，以及教師異動後歷史資料 Scope | 採最小權限 Role × Permission × Scope × 時間範圍矩陣；未授權預設拒絕。導師限自己的班級但可操作全科；任課教師限任教班級與任教科目；Scope 變更立即撤銷既有 Sessions，歷史資料依有效日期與既有快照判定。 | Phase 3B |
-| D-11 | **日期已核准（2026-09-23）；認證時窗與 Phase 6 上傳門檻已核准（2026-09-24）**；Phase 10 RAG 與 Phase 11 Provider 門檻已核准（2026-09-28）；Phase 12 Job 門檻與本機核心範圍、Phase 13 查詢限流已核准（2026-09-29）；Phase 15 報表門檻已核准（2026-10-01）；Phase 16 來源容量與登入限流已核准（2026-10-01）；其餘門檻待決策 | 業務日期 Asia/Taipei；技術時間戳 UTC；含起不含迄；月／年期限依曆月／曆年，無對應日期時取該月最後一天。Google Recent Authentication 與一次性 Recovery 核准均 5 分鐘，滿時失效。CSV／XLSX：5 MiB、10 sheets、5,000 資料列、30 欄、展開 25 MiB／1,000 ZIP 項目；格式限制見 §73.4。RAG PDF／MD 與檢索限制依 §31；Provider 逾時、重試、容量依 §29；Job 租約、重試與執行範圍依 §30；公開查詢限流依 §24；Phase 15 報表每次一個評量、1,000 位學生、10 MiB，即時下載且不持久保存，依 §40；Phase 16 來源文字合計 UTF-8 10 MiB，登入限流及驗證門檻依 §63；其他查詢、容量與復原目標仍待各功能 Phase 確認 | 日期於 Phase 1；認證時窗於 Phase 3B；匯入門檻於 Phase 6；其餘最晚 Phase 18 |
+| D-11 | **日期已核准（2026-09-23）；認證時窗與 Phase 6 上傳門檻已核准（2026-09-24）**；Phase 10 RAG 與 Phase 11 Provider 門檻已核准（2026-09-28）；Phase 12 Job 門檻與本機核心範圍、Phase 13 查詢限流已核准（2026-09-29）；Phase 15 報表門檻已核准（2026-10-01）；Phase 16 來源容量與登入限流已核准（2026-10-01）；Phase 18 RPO／RTO 已核准（2026-10-01）；其餘門檻待決策 | 業務日期 Asia/Taipei；技術時間戳 UTC；含起不含迄；月／年期限依曆月／曆年，無對應日期時取該月最後一天。Google Recent Authentication 與一次性 Recovery 核准均 5 分鐘，滿時失效。CSV／XLSX：5 MiB、10 sheets、5,000 資料列、30 欄、展開 25 MiB／1,000 ZIP 項目；格式限制見 §73.4。RAG PDF／MD 與檢索限制依 §31；Provider 逾時、重試、容量依 §29；Job 租約、重試與執行範圍依 §30；公開查詢限流依 §24；Phase 15 報表每次一個評量、1,000 位學生、10 MiB，即時下載且不持久保存，依 §40；Phase 16 來源文字合計 UTF-8 10 MiB，登入限流及驗證門檻依 §63；RPO≤24 小時、RTO≤8 小時已核准為正式演練驗收目標，未達標不得上線；其他查詢、容量及正式平台實測仍待確認 | 日期於 Phase 1；認證時窗於 Phase 3B；匯入門檻於 Phase 6；其餘最晚 Phase 18 |
 
 <a id="spec-72-3"></a>
 

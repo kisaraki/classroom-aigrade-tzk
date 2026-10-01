@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 13 Public UI 已完成本機實作與驗證。** 截至 2026-09-30，六條件查詢、HMAC 限流、已發布成績／統計／趨勢與家長／學生 AI 介面已建立；235 項完整回歸通過，驗證與限制見 [Phase 13 紀錄](docs/PHASE_13.md)。正式查詢入口仍關閉，可信 IP、限流清理排程與備份保存待平台實測。正式 AI consumer 與 Production Purge 未啟用；OAuth Client／Sites callback 實測仍暫緩，沒有真實學生資料、付費 API 呼叫或 Sites Production 部署。
+**Phase 18 Release Candidate 部分完成／受阻。** 本機 Phase 17 整合已完成，候選 `phase18-rc1` 保留未解的驗收與平台阻擋項目，沒有正式 Release／Sites 部署。詳見 [候選紀錄](docs/RELEASE_CANDIDATE.md) 與 [Phase 18 紀錄](docs/PHASE_18.md)。
 
 ## 文件入口
 
@@ -36,6 +36,8 @@ Phase 14 Admin UI 已獲核准並持續實作；管理工作區已建立，Audit
 | [Phase 11 驗證紀錄](docs/PHASE_11.md) | OpenAI／Gemini Adapter、逾時／重試、Secret 與設定切換 |
 | [Phase 12 驗證紀錄](docs/PHASE_12.md) | Context、成對建議、持久化 Jobs、重生與用量 |
 | [Phase 13 驗證紀錄](docs/PHASE_13.md) | 公開查詢、限流、成績／趨勢／AI 呈現與隱私邊界 |
+| [Release Candidate](docs/RELEASE_CANDIDATE.md) | Release Notes、Migration Summary、Known Issues 與 Test Summary |
+| [Phase 18 紀錄](docs/PHASE_18.md) | RC 檢查、遠端狀態與本機保存證據 |
 | [資料模型與 ER 圖](docs/DATABASE.md) | 資料表對照、migration、加密輪替與復原方式 |
 | [Sites 開發說明](site/README.md) | 安裝、預覽、建置、測試與環境設定 |
 | [待決策清單](PROJECT_SPEC.md#spec-72-2) | 尚未定案的業務選擇與確認關卡 |
@@ -62,7 +64,7 @@ Phase 14 Admin UI 已獲核准並持續實作；管理工作區已建立，Audit
 | 正式執行平台 | ChatGPT Sites | 專案已建立，尚未發布 |
 | 後端 | Vinext／Cloudflare Workers | 已建立 Google-only auth、管理 API、公開查詢 API 與 health route；僅本機預覽 |
 | 前端 | React／HTML／CSS | 已建立公開查詢與結果介面；正式入口關閉 |
-| 關聯式資料庫 | D1／SQLite，binding `DB` | 49 張關聯表、兩個 FTS5 索引與十四份 migration；隔離本機驗證 |
+| 關聯式資料庫 | D1／SQLite，binding `DB` | 50 張關聯表、兩個 FTS5 索引與十六份 migration；隔離本機驗證 |
 | 檔案儲存 | R2，binding `FILES` | 本機測試；雲端尚未配置 |
 | AI | OpenAI API、Google Gemini API adapter | Provider、Context 與 Jobs 核心已建立；僅 mock，正式 consumer 待驗證 |
 | 參考資料搜尋 | D1 FTS 優先 | Phase 10 上傳、分段與中文 FTS 檢索已建立 |
@@ -82,7 +84,7 @@ npm run dev
 
 Windows PowerShell 可使用 `npm.cmd`。預覽僅監聽本機；以終端顯示 URL 為準。建置使用 `npm run build`，建置後本機預覽使用 `npm start`。不會自動部署。
 
-驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；最新結果見 [Phase 13 紀錄](docs/PHASE_13.md)。
+驗證命令：`npm run lint`、`npm run format:check`、`npm run typecheck`、`npm test`。根目錄另有 `node scripts/check-docs.mjs` 與 `node scripts/check-safety.mjs`。資料庫可另以 `npm run db:verify` 建立一次性本機驗證環境；本輪結果見 [Phase 18 紀錄](docs/PHASE_18.md)。
 
 環境欄位見 [site/.env.example](site/.env.example)，真實值只填入忽略提交的 `.env` 或 Sites Settings；本次預覽與測試不需要真實 Secret。migration 位於 `site/drizzle/`，不由應用程式啟動時自動套用，未套用至雲端。
 
@@ -96,7 +98,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 |---|---|
 | Markdown 文件修訂 | 規格版本 v1.6-draft；同步 Phase 2／3A 契約；D-03／D-11 日期決策維持 |
 | 管理員認證決策 | 已確認僅 Google OAuth／OIDC；取消 ChatGPT／Gemini 認證條件，AI 建議功能維持獨立 |
-| 業務待決策 | D-01／D-03／D-04／D-10 已核准；D-11 日期與 5 分鐘認證／Recovery 時窗已核准，其餘事項依各 Phase 關卡 |
+| 業務待決策 | 核准紀錄見 §72；Audit 查看角色與 D-09 仍待處理；D-11 RPO≤24 小時／RTO≤8 小時已核准，正式演練待驗證 |
 | Phase 0 | 基礎環境、預覽、測試與 Pages 完成；Google OAuth 實測依使用者指示暫緩 |
 | Phase 1 | 初版資料模型、migration、FTS、虛構 seed、加密輪替與復原驗證完成 |
 | Phase 2 | 學年度、班級、學生與學籍服務；Preview／Confirm、升班、轉出與撤銷完成隔離測試 |
@@ -112,7 +114,12 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 11 | AI Provider Layer；200 項完整回歸通過，含 16 項 Provider／設定測試 |
 | Phase 12 | 核准的本機核心範圍完成；223 項回歸通過，正式 consumer 未啟用，見 [驗證紀錄](docs/PHASE_12.md) |
 | Phase 13 | 本機實作與 235 項回歸驗證完成；正式入口關閉，見 [紀錄](docs/PHASE_13.md) |
-| Phase 14～19 | 尚未開始 |
+| Phase 14 | 管理工作區部分完成；Audit 角色及最新版瀏覽器驗收未完成 |
+| Phase 15 | 報表／匯出核心已建立；下載／列印互動驗收未完成 |
+| Phase 16 | 本機安全／隱私審查完成；正式平台實測保留 |
+| Phase 17 | 完整生命週期與分類鎖定本機整合完成 |
+| Phase 18 | 本輪 276 項 tests／build／audit 通過；RC 尚有驗收與正式平台阻擋，詳見候選紀錄 |
+| Phase 19 | 尚未啟動；正式部署另需明確授權 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |
 
@@ -122,10 +129,11 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 
 | 欄位 | 狀態 |
 |---|---|
+| Local Release Candidate | phase18-rc1，本機準備／受阻；未發布 |
 | Latest Production Release | 尚無已驗證紀錄 |
 | Deployment Date | 尚無已驗證紀錄 |
 | ChatGPT Sites | 尚無已驗證正式網址 |
-| GitHub Pages | [專案文件頁](https://kisaraki.github.io/classroom-aigrade-tzk/)（HTTP 200，2026-09-23） |
+| GitHub Pages | [專案文件頁](https://kisaraki.github.io/classroom-aigrade-tzk/)（HTTP 200，2026-10-01；線上 Phase 13） |
 | Repository | [kisaraki/classroom-aigrade-tzk](https://github.com/kisaraki/classroom-aigrade-tzk) |
 
 只填入實際取得並驗證的 URL。每次 Sites 正式部署成功後，必須依 [同步流程](PROJECT_SPEC.md#spec-41-9) 更新本區、Pages、CHANGELOG／Release，完成 Commit／Push 與三網址驗證。

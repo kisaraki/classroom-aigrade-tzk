@@ -1,0 +1,106 @@
+{
+  "candidate": "phase18-rc1",
+  "reviewDate": "2026-10-01",
+  "scope": "local-review-only",
+  "migrationCount": 16,
+  "relationalTableCount": 50,
+  "ftsIndexes": ["ai_reference_chunks_fts", "reference_search"],
+  "migrations": [
+    {
+      "index": 0,
+      "file": "site/drizzle/0000_phase_01_core.sql",
+      "journalTimestamp": 1790144393423,
+      "sha256": "64dac8ce5881fe4d53b4aeea39f4f31e1fa3802d1b6371a3626f1601a86f5477"
+    },
+    {
+      "index": 1,
+      "file": "site/drizzle/0001_phase_01_invariants.sql",
+      "journalTimestamp": 1790144410484,
+      "sha256": "763999bf344f39532f26a94e155e3c5a389b61ee6265fc12e5cb49d92fa24ded"
+    },
+    {
+      "index": 2,
+      "file": "site/drizzle/0002_phase_02_academic_commands.sql",
+      "journalTimestamp": 1790162240199,
+      "sha256": "c1bba8c906a8f7d4154edf50e69ae559e166bd80ea01344b5f34d0753cf3141d"
+    },
+    {
+      "index": 3,
+      "file": "site/drizzle/0003_phase_02_academic_guards.sql",
+      "journalTimestamp": 1790162245327,
+      "sha256": "081956dfa9ef81ed7e0d6e691bb0735c46dab172ab768a52bfbd6e149d401155"
+    },
+    {
+      "index": 4,
+      "file": "site/drizzle/0004_phase_03a_auth_states.sql",
+      "journalTimestamp": 1790164588422,
+      "sha256": "361027e9db373eb601d5407b00b00819a6a8453922d8b43fbef79cc47a2daa3a"
+    },
+    {
+      "index": 5,
+      "file": "site/drizzle/0005_phase_03a_bootstrap_state_purpose.sql",
+      "journalTimestamp": 1790165201392,
+      "sha256": "f32e88e63f172581142676fad8216733d55bc589d378825f1c28cbcab05197e1"
+    },
+    {
+      "index": 6,
+      "file": "site/drizzle/0006_phase_03b_authorization.sql",
+      "journalTimestamp": 1790182864213,
+      "sha256": "f6b6ad8ba3911ca1379ae32543413c29a7696e859c6a59cc02368c85b6d07de7"
+    },
+    {
+      "index": 7,
+      "file": "site/drizzle/0007_phase_04_exam_commands.sql",
+      "journalTimestamp": 1790203916381,
+      "sha256": "35993888b6efa0931e26c015f944237db003722fd4f309321b7b6535a655b766"
+    },
+    {
+      "index": 8,
+      "file": "site/drizzle/0008_phase_07_publication.sql",
+      "journalTimestamp": 1790327119376,
+      "sha256": "8895176662a32e5ca29610c641dfcda46870851ce7105826c0baa23528192241"
+    },
+    {
+      "index": 9,
+      "file": "site/drizzle/0009_phase_08_retention.sql",
+      "journalTimestamp": 1790328815862,
+      "sha256": "8805041e160c893706c38cb735b2a6b9ab08f49e6cef70185f89c2f8568fdee6"
+    },
+    {
+      "index": 10,
+      "file": "site/drizzle/0010_phase_09_lifecycle.sql",
+      "journalTimestamp": 1790374185849,
+      "sha256": "57c4f7f8d0093a9aa02cab1afd7bfe5b4a9c6f742145df33a5dfe2af5ea43fb7"
+    },
+    {
+      "index": 11,
+      "file": "site/drizzle/0011_phase_10_references.sql",
+      "journalTimestamp": 1790588555205,
+      "sha256": "33794356ca9b448bdb9f31abe3d548ea388718b83fef7c9821f4aaad6a2bb46e"
+    },
+    {
+      "index": 12,
+      "file": "site/drizzle/0012_phase_12_ai_jobs.sql",
+      "journalTimestamp": 1790653049769,
+      "sha256": "0e18096b65e74933914e952016ec12ab7abb00e31889200225477996869c36f2"
+    },
+    {
+      "index": 13,
+      "file": "site/drizzle/0013_phase_13_public_lookup.sql",
+      "journalTimestamp": 1790689281457,
+      "sha256": "39b8b7507cbec308c7da6df9d8ecec829d60963866fe135b4a029b6b5db37bd2"
+    },
+    {
+      "index": 14,
+      "file": "site/drizzle/0014_phase_16_security.sql",
+      "journalTimestamp": 1790812800000,
+      "sha256": "8be5c395ae5ac2a2a28f28d3b686b5e1744ff929a5f0bb539a19007e6a853648"
+    },
+    {
+      "index": 15,
+      "file": "site/drizzle/0015_phase_16_auth_limits.sql",
+      "journalTimestamp": 1790822369528,
+      "sha256": "77ebb66dd97ddb8a92709cf0d3abda920e824bb7797428f66bad0236d901707c"
+    }
+  ]
+}

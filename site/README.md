@@ -1,5 +1,9 @@
 # Sites 應用程式
 
+## Phase 18 Release Candidate（部分完成／受阻）
+
+候選 `phase18-rc1` 只保存本機版本，沒有 Sites deployment 或 Production migration。Release Notes、Migration Summary、Known Issues 與 Test Summary 見 [RC 紀錄](../docs/RELEASE_CANDIDATE.md)；Phase 14／15 驗收與平台阻擋保留。
+
 ## Phase 17 生命週期整合（本機完成）
 
 新增 `tests/full-lifecycle.test.mjs`，空白隔離 D1／R2 串接實際授權與資料服務。D-08 分類鎖定已核准，成績草稿與匯入服務可寫入尚未發布分類，提交時重驗分類與版本；276 項完整回歸與最後受影響的 39 項重驗通過。未變更 schema、套件或正式平台開啟旗標。詳見 [Phase 17 紀錄](../docs/PHASE_17.md)。
@@ -14,7 +18,7 @@
 
 伺服器重新檢查 Session／Scope／來源，不持久保存產出。疑似公式文字會加上「文字：」前綴；不輸出生日、身分證或內部 ID。原校個人成績依目前有效學籍授權並另標示來源，不進本校排名。限制與驗證見 [Phase 15 紀錄](../docs/PHASE_15.md)。
 
-此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；最新進度及限制見 [Phase 14 工作紀錄](../docs/PHASE_14.md)。
+此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；最新進度及限制見 [Phase 18 工作紀錄](../docs/PHASE_18.md)。
 
 ## Phase 14 管理工作區（進行中）
 

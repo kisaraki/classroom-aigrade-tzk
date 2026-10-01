@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-01 — Phase 18 Release Candidate（部分完成／受阻）
+
+- 使用者批准 Phase 18；Recommended／Minimum HIGH，沿用已確認 XHIGH，僅本機 RC／Save Version。
+- 本輪 276 項 tests、build、typecheck、lint、audit（0 vulnerabilities）及本機 migration 驗證通過；整理 Release Notes、Migration Summary、Known Issues、Test Summary 與 README／Pages 準備稿；修正現行 50 表／16 migrations 及 Phase 狀態。
+- 補齊 §3.3 的 AUTH_RATE_HMAC_SECRET 名稱及非 Secret callback／登入開關說明；沿用既有已核准政策，沒有改變 runtime。
+- 使用者採用 RPO≤24 小時／RTO≤8 小時，已回寫正文／D-11／驗收 gate；保留 Audit／瀏覽器驗收、D-09 與正式平台復原演練待驗證，未 Push、建立正式 Release 或部署。結果見 [Phase 18 紀錄](docs/PHASE_18.md)。
+
 ## 2026-10-01 — Phase 17 生命週期整合（本機完成）
 
 - 使用者批准 Phase 17，沿用 XHIGH；以空白隔離 D1／R2 及實際授權／資料服務建立跨模組整合測試。

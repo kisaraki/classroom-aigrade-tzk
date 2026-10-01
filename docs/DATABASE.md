@@ -4,7 +4,9 @@
 
 ## 模型入口
 
-- [Drizzle schema](../site/db/schema.ts)：48 張關聯表的欄位、外鍵、CHECK 與索引。
+Phase 18 審查現況：50 張關聯表、16 份 migration（0000～0015）與兩個 FTS5；升級注意事項及未驗證的正式復原能力見 [RC Migration Summary](RELEASE_CANDIDATE.md#migration-summary)。各 Phase 段落的舊數量僅表示當時狀態。
+
+- [Drizzle schema](../site/db/schema.ts)：50 張關聯表的欄位、外鍵、CHECK 與索引。
 - [核心 migration](../site/drizzle/0000_phase_01_core.sql)：建立關聯表及索引。
 - [跨列約束與 FTS migration](../site/drizzle/0001_phase_01_invariants.sql)：學籍、快照、管理員與版本約束，及 FTS 邏輯表 `ai_reference_chunks_fts`。FTS 內部 shadow tables 不另算業務表。
 - [Migration journal](../site/drizzle/meta/_journal.json)：Drizzle 的順序與時間戳；snapshot 記錄可生成的關聯 schema，FTS／trigger 保存在 custom migration。
@@ -12,7 +14,7 @@
 
 ## Phase 2 擴充
 
-Phase 2 擴充學籍命令表；目前含 Phase 10 共 48 張關聯表加兩個 FTS5 索引。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
+Phase 2 擴充學籍命令表；現行 Phase 16～18 共 50 張關聯表、16 份 migration 與兩個 FTS5 索引。新增 [0002](../site/drizzle/0002_phase_02_academic_commands.sql)／[0003](../site/drizzle/0003_phase_02_academic_guards.sql)，原 0000／0001 保持不變。`academic_state` 保存目前年度與 revision；`academic_previews` 保存 actor、範圍及待確認計畫；`academic_operations` 保存 receipt／撤銷關聯；`academic_operation_students` 以 FK 追蹤受影響學生。
 
 ```mermaid
 erDiagram
@@ -25,7 +27,7 @@ erDiagram
     academic_operations o|--o| academic_operations : undoes
 ```
 
-內部服務只接受 server-created Preview；Confirm 在同一 batch 保存變更、操作與 Audit，並清空已提交 Preview 的建檔 payload。未確認資料的保存／Purge、真實授權 adapter 及雲端部署依後續 Phase 關卡；詳細欄位與限制見 [Phase 2 紀錄](PHASE_2.md)。`npm run db:verify` 現在套用十一份 migration；下文的既有 Phase 1 模型與安全契約仍適用。
+內部服務只接受 server-created Preview；Confirm 在同一 batch 保存變更、操作與 Audit，並清空已提交 Preview 的建檔 payload。未確認資料的保存／Purge、真實授權 adapter 及雲端部署依後續 Phase 關卡；詳細欄位與限制見 [Phase 2 紀錄](PHASE_2.md)。`npm run db:verify` 現在套用十六份 migration；下文的既有 Phase 1 模型與安全契約仍適用。
 
 ## Phase 3A 認證狀態
 
@@ -202,7 +204,7 @@ Preflight 比對完整已套用 journal 前綴與 SHA-256、確認應存在的 s
 
 Phase 7 新增 [0008 publication migration](../site/drizzle/0008_phase_07_publication.sql)，共九份 migration。`publication_previews` 保存版本化預覽與成功結果連結；`publication_snapshots` 保存不可變完整發布內容及首次發布固定的統計母體。發布使用既有結果表、History、Audit、AI Jobs，全部同一 D1 batch；升級與復原限制見 [Phase 7 紀錄](PHASE_7.md)。
 
-D-01／D-03／D-04／D-05／D-06／D-07／D-08／D-10 已核准；D-11 日期、5 分鐘認證時窗、匯入及 RAG 門檻已定案。D-02、D-09 與 D-11 其餘閾值依 [待決策表](../PROJECT_SPEC.md#spec-72-2) 處理。匯入原子性及發布狀態機已實作；Purge 政策已定案，正式副本／備份能力與 AI 重試上限仍待平台驗證／後續 Phase；狀態／版本欄位提供 migration 擴充點。
+D-01／D-03／D-04／D-05／D-06／D-07／D-08／D-10 已核准；D-11 日期、5 分鐘認證時窗、匯入及 RAG 門檻已定案。D-02 已核准一般失敗／校方協助政策；D-09 與 D-11 其餘閾值依 [待決策表](../PROJECT_SPEC.md#spec-72-2) 處理。匯入原子性及發布狀態機已實作；Purge 政策已定案，正式副本／備份能力仍待平台驗證，AI 重試門檻已於 Phase 11／12 核准並完成本機驗證；狀態／版本欄位提供 migration 擴充點。
 
 Phase 8 新增 [0009 retention migration](../site/drizzle/0009_phase_08_retention.sql)，共十份 migration。students.archived_at 與身分／刪除分開；retention_events 保存 D-05 有效承諾及撤銷，archive_previews／archive_state 保護 Preflight 與原子提交。原有期限以 LEGACY 事件回填，未新增永久刪除。詳見 [Phase 8 紀錄](PHASE_8.md)。
 
@@ -216,7 +218,7 @@ Purge 開始後鎖住業務寫入；外部副本逐一刪除並驗證，再以�
 
 ## Phase 10 RAG 文件與搜尋
 
-[0011 migration](../site/drizzle/0011_phase_10_references.sql) 新增 `reference_uploads`、片段 `search_tokens` 及 `reference_search` FTS5；目前 48 張關聯表、12 份 migration、兩個 FTS5 索引。既有 `ai_reference_chunks_fts` 保留，舊 migration 不改寫。
+[0011 migration](../site/drizzle/0011_phase_10_references.sql) 新增 `reference_uploads`、片段 `search_tokens` 及 `reference_search` FTS5；Phase 10 當時共 48 張關聯表、12 份 migration、兩個 FTS5 索引。既有 `ai_reference_chunks_fts` 保留，舊 migration 不改寫。
 
 `reference_uploads` 保存隨機 ID、操作者、私有物件 key、pending／ready／cleanup 與建立時間。只有 pending 可提交材料；已提交物件不能被清理。cleanup 記錄保留，讓失敗或晚到的 Object Storage 寫入仍有可重試索引。新表沿用 Purge 寫入鎖；正式副本 adapter 仍未啟用。
 
@@ -228,7 +230,7 @@ Purge 開始後鎖住業務寫入；外部副本逐一刪除並驗證，再以�
 
 ## Phase 12 AI 工作執行
 
-[0012 migration](../site/drizzle/0012_phase_12_ai_jobs.sql) 在既有 ai_jobs 增加成對去重、啟動者／授權版本、前次來源版本、Provider／model／prompt 設定及用量／耗時欄位，並建立 pair／audience unique index 與執行資料守衛。仍為 48 張關聯表，合計 13 份 migration、兩個 FTS5 索引。
+[0012 migration](../site/drizzle/0012_phase_12_ai_jobs.sql) 在既有 ai_jobs 增加成對去重、啟動者／授權版本、前次來源版本、Provider／model／prompt 設定及用量／耗時欄位，並建立 pair／audience unique index 與執行資料守衛。Phase 12 當時仍為 48 張關聯表，合計 13 份 migration、兩個 FTS5 索引。
 
 既有 regeneration requests 保留原狀，新增欄位為 NULL，不能被 consumer 自動領取；首次手動啟動時建立完整授權與設定的工作。這避免 migration 自行授權生成或啟動付費 API。成對內容沿用 ai_advices 的 audience／version，兩筆及引用與完成狀態以同一 D1 batch 寫入；歷史內容不可改寫。
 
