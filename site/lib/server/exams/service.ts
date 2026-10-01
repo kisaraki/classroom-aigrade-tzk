@@ -10,11 +10,17 @@ import {
   scoreDisplay,
   SUBJECTS,
   SUBJECT_SETTINGS,
+  type ExamType,
 } from "../../domain/scores.ts";
 import { AuthorizationService } from "../auth/authorization.ts";
 import { sha256Hex } from "../auth/google-oidc.ts";
 import { SESSION_IDLE_TIMEOUT_MS } from "../auth/policy.ts";
 import type { AuthSession, ScopeResource } from "../auth/types.ts";
+import {
+  canWriteComponents,
+  componentWritePredicate,
+  readPublishedComponents,
+} from "./component-lock.ts";
 
 type Row = Record<string, string | number | null>;
 type State = { revision: number; current_year_id: string | null };
@@ -25,6 +31,9 @@ type Exam = Row & {
   starts_on: string;
   ends_on: string;
   version: number;
+  published_at: number | null;
+  locked_at: number | null;
+  archived_at: number | null;
 };
 type Command = {
   operationId: string;
@@ -171,6 +180,7 @@ export class ExamService {
       result: Omit<Receipt, "operationId" | "replayed">;
     }>,
     previewId: string | null = null,
+    scoreComponents?: readonly ExamType[],
   ): Promise<Receipt> {
     const operationId = text(input.operationId);
     if (!/^[A-Za-z0-9][A-Za-z0-9._-]{7,127}$/u.test(operationId))
@@ -189,7 +199,12 @@ export class ExamService {
     if (exam) {
       if (version(input.expectedVersion) !== exam.version)
         fail("EXAM_VERSION_CONFLICT", 409);
-      this.draft(exam, state);
+      if (scoreComponents) {
+        if (exam.academic_year_id !== state.current_year_id)
+          fail("HISTORICAL_EXAM_READ_ONLY", 409);
+        if (!(await canWriteComponents(this.db, exam, scoreComponents)))
+          fail("EXAM_NOT_DRAFT", 409);
+      } else this.draft(exam, state);
     }
     const { writes, result } = await prepare();
     const now = this.now();
@@ -208,10 +223,14 @@ export class ExamService {
       now,
     ];
     if (exam) {
+      const writeState = scoreComponents
+        ? componentWritePredicate(scoreComponents)
+        : "e.published_at IS NULL AND e.locked_at IS NULL AND NOT EXISTS (SELECT 1 FROM exam_result_versions v WHERE v.exam_id=e.id AND v.published_at IS NOT NULL)";
       predicates.push(
-        "EXISTS (SELECT 1 FROM exams e JOIN academic_terms t ON t.id=e.academic_term_id JOIN academic_state a ON a.id=1 WHERE e.id=? AND e.version=? AND t.academic_year_id=a.current_year_id AND e.published_at IS NULL AND e.locked_at IS NULL AND e.archived_at IS NULL AND NOT EXISTS (SELECT 1 FROM exam_result_versions v WHERE v.exam_id=e.id AND v.published_at IS NOT NULL))",
+        `EXISTS (SELECT 1 FROM exams e JOIN academic_terms t ON t.id=e.academic_term_id JOIN academic_state a ON a.id=1 WHERE e.id=? AND e.version=? AND t.academic_year_id=a.current_year_id AND e.archived_at IS NULL AND (${writeState}))`,
       );
       values.push(exam.id, exam.version);
+      if (scoreComponents) values.push(...scoreComponents);
     }
     const statements = [
       this.sql(
@@ -815,6 +834,8 @@ export class ExamService {
           writes: [...writes, ...transactionStatements],
         };
       },
+      null,
+      [...new Set(entries.map((entry) => entry.setting.exam_type as ExamType))],
     );
   }
   async readExam(
@@ -834,6 +855,8 @@ export class ExamService {
       false,
       this.scope(exam, { classId, subject: input.subject }),
     );
+    const publishedComponents = await readPublishedComponents(this.db, exam.id);
+    if (publishedComponents === null) fail("PUBLICATION_SNAPSHOT_INVALID", 409);
     const settings = (
       await this.sql(
         "SELECT id,exam_type,subject,held,version FROM exam_subject_settings WHERE exam_id=? AND (? IS NULL OR subject=?) ORDER BY exam_type,subject",
@@ -867,6 +890,7 @@ export class ExamService {
       fail("EXAM_VERSION_CONFLICT", 409);
     return {
       exam,
+      publishedComponents,
       settings,
       participants: parts.map((p) => ({
         ...p,

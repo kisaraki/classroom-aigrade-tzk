@@ -21,6 +21,7 @@ import { SESSION_IDLE_TIMEOUT_MS } from "../auth/policy.ts";
 import type { AuthSession } from "../auth/types.ts";
 import { AcademicService } from "../academic/service.ts";
 import { ExamService } from "../exams/service.ts";
+import { canWriteComponents } from "../exams/component-lock.ts";
 
 type Row = Record<string, string | number | null>;
 export type ImportTarget =
@@ -411,9 +412,16 @@ export class ImportService {
     try {
       if (
         mapping.target.kind === "SCORES" &&
-        (context.published_at !== null ||
-          context.locked_at !== null ||
-          context.archived_at !== null)
+        !(await canWriteComponents(
+          this.db,
+          {
+            id: mapping.target.examId,
+            published_at: context.published_at,
+            locked_at: context.locked_at,
+            archived_at: context.archived_at,
+          },
+          [mapping.target.examType],
+        ))
       )
         fail("IMPORT_TARGET_READ_ONLY");
       const object = await this.files.get(String(job.object_key));

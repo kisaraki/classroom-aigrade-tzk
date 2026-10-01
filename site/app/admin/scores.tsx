@@ -18,7 +18,12 @@ type Participant = {
   seat_number_snapshot: number;
   scores: Score[];
 };
-type ExamData = { exam: Item; settings: Item[]; participants: Participant[] };
+type ExamData = {
+  exam: Item;
+  publishedComponents: string[];
+  settings: Item[];
+  participants: Participant[];
+};
 const marks: Record<string, string> = {
   UNENTERED: "",
   NOT_HELD: "N",
@@ -92,12 +97,19 @@ export default function Scores(p: WorkspaceProps) {
           : [];
       }),
     ) ?? [];
+  const publishedChanges = changes.filter((c) =>
+    data?.publishedComponents.includes(c.examType),
+  );
+  const mixedChanges =
+    publishedChanges.length > 0 && publishedChanges.length !== changes.length;
   async function prepare() {
     setBusy(true);
     setMessage("");
     setApproved(false);
     try {
-      if (data?.exam.published_at) {
+      if (mixedChanges)
+        throw new Error("請分開提交已發布與尚未發布分類的變更。");
+      if (data && publishedChanges.length) {
         setPreview(
           (await p.request(
             `/api/admin/exams/${encodeURIComponent(p.examId)}/publication/preview`,
@@ -191,7 +203,9 @@ export default function Scores(p: WorkspaceProps) {
           <>
             <p>
               評量版本 {String(data.exam.version)}・
-              {data.exam.published_at ? "已發布，修改須預覽及近期驗證" : "草稿"}
+              {data.publishedComponents.length
+                ? "已發布分類修改須原因及近期驗證；尚未發布分類可保存草稿"
+                : "草稿"}
             </p>
             <div className="admin-table-wrap">
               <table className="admin-table">
@@ -265,7 +279,7 @@ export default function Scores(p: WorkspaceProps) {
                   disabled={
                     busy ||
                     !changes.length ||
-                    (!reason.trim() && !!data.exam.published_at)
+                    (!reason.trim() && publishedChanges.length > 0)
                   }
                   onClick={() => void prepare()}
                 >

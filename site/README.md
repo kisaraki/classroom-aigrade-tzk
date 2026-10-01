@@ -1,5 +1,9 @@
 # Sites 應用程式
 
+## Phase 17 生命週期整合（本機完成）
+
+新增 `tests/full-lifecycle.test.mjs`，空白隔離 D1／R2 串接實際授權與資料服務。D-08 分類鎖定已核准，成績草稿與匯入服務可寫入尚未發布分類，提交時重驗分類與版本；276 項完整回歸與最後受影響的 39 項重驗通過。未變更 schema、套件或正式平台開啟旗標。詳見 [Phase 17 紀錄](../docs/PHASE_17.md)。
+
 ## Phase 16 安全／隱私（本機完成）
 
 已修補依賴及 Session／Scope／HTTP 邊界，新增學籍交易安全 migration 與跨模組測試；270 項已逐項驗證通過（完整回歸 268 通過，2 項數量斷言修正後重驗通過）。登入限流與報表來源容量已核准並實作。動態頁面／API 使用隱私回應標頭，build 明確關閉 request logs／traces；正式平台仍待 preflight 實測。見 [Phase 16 工作紀錄](../docs/PHASE_16.md)。

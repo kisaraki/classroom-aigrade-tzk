@@ -221,6 +221,8 @@ export class PublicationService {
         const part = parts.results.find((p) => p.id === item.participationId),
           setting = settings.results.find((s) => s.id === item.settingId);
         if (!part || !setting) return fail("SCORE_TARGET_NOT_FOUND", 404);
+        if (!components.includes(setting.exam_type as ExamType))
+          fail("COMPONENT_NOT_PUBLISHED");
         const student = await this.sql(
           "SELECT deleted_at,archived_at FROM students WHERE id=?",
           part.student_id,

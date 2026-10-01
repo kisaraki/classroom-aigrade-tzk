@@ -663,7 +663,7 @@ test("Phase 4 draft gates: published components, locked, archived, historical an
     "INSERT INTO exam_result_versions (id,exam_id,version,source_version,calculation_version,provisional,published_at) VALUES ('published-component','exam-1',1,1,'fictional',1,?)",
     now,
   );
-  await rejects(s.writeDraftScores(owner, "exam-1", input()), "EXAM_CONFLICT");
+  await rejects(s.writeDraftScores(owner, "exam-1", input()), "EXAM_NOT_DRAFT");
   await run(
     db,
     "DELETE FROM exam_result_versions WHERE id='published-component'",
