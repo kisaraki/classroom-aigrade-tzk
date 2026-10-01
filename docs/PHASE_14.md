@@ -68,3 +68,7 @@ Recommended／Minimum MEDIUM；Current XHIGH（沿用確認）；KEEP，無額�
 Phase 18 的 276 全套結果為補做前基底證據。本輪只執行受影響的 26 項回歸與新增後的 6 項 Audit 重驗，沒有宣稱完整 282 項已執行。SSR 是程式渲染檢查，沒有繞過 browser 政策，不能當作手機／點擊／翻頁的實際瀏覽器驗收。
 
 最終 npm run format:check、git diff --check 通過；check-docs 驗證 28 份文件／482 個本機連結，check-safety 掃描 345 份原始檔未發現指定 Secret／身分證模式（非完整安全稽核）。check-client-bundle 檢查 24 個 client 檔案通過，check-build-config 確認 request logs／traces 關閉；Migration／正式 OAuth／正式 smoke 不適用。RC-01 的本機實作阻擋可解除，新增 Audit 互動與其他 UI／平台 gates 保留，不把 Phase 14 或 18 標成全部完成。
+
+## 使用者驗收回覆
+
+2026-10-01，Audit 補做完成回報（本機 commit `850aa9d`）後，使用者回覆「驗收完成，批准執行」。記錄為使用者確認本次 Audit 補做驗收完成；未提供個別瀏覽器／手機／下載／列印步驟結果，不冒稱工具實測或全部 RC gates 通過。後續執行範圍另待確認；此回覆不視為「確認正式部署」，也不自動啟動下一 Phase 或遠端同步。
