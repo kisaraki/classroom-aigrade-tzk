@@ -55,6 +55,6 @@ Migration Manifest 另以 journal 檔名／timestamp 與 SQL 全文 SHA-256 核�
 
 所有測試資料皆虛構，Google／AI 為 mock；沒有真實 Secret、學生資料、付費 API、Production migration／Purge、Sites deployment 或正式 smoke test。
 
-Audit 查看角色、D-11 復原演練（已核准 RPO≤24 小時／RTO≤8 小時）、D-09 真實 Google 平台政策／流程、最新版 UI／Print 驗收、正式 DB／備份、可信 IP／清理、consumer／用量、Purge 副本及 1,000 人報表容量保留阻擋。使用者已採用 RPO≤24 小時／RTO≤8 小時，已回寫正文／D-11／RC，但平台演練未通過，gate 不解除；Audit 問題仍待回答。
+Audit 介面及授權驗收（角色已定案為僅 active super_admin）、D-11 復原演練（已核准 RPO≤24 小時／RTO≤8 小時）、D-09 真實 Google 平台政策／流程、最新版 UI／Print 驗收、正式 DB／備份、可信 IP／清理、consumer／用量、Purge 副本及 1,000 人報表容量保留阻擋。使用者已採用 RPO≤24 小時／RTO≤8 小時，已回寫正文／D-11／RC，但平台演練未通過，gate 不解除；使用者後續同意 Audit 僅 super_admin 查看，已同步 §38／D-10／驗收要求與 RC；介面及授權驗收仍未完成，gate 不解除。本次為純文件政策同步，不重跑未受影響的 runtime／migration tests。
 
 Phase 18 不能標為完成或請求進入正式部署；繼續可完成的本機準備，本輪保存可審查的本機 commit，沒有遠端同步或正式 Release。下一 Phase 19 仍須解除適用 gates，並另取得明確「確認正式部署」。

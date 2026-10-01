@@ -2,6 +2,8 @@
 
 ## 2026-10-01 — Phase 18 Release Candidate（部分完成／受阻）
 
+- 使用者後續同意 Audit 僅 active super_admin 查看；同步 §38／D-10／驗收要求及候選文件。介面及授權驗收仍未完成，本次僅文件修改，不解除 RC gate。
+
 - 使用者批准 Phase 18；Recommended／Minimum HIGH，沿用已確認 XHIGH，僅本機 RC／Save Version。
 - 本輪 276 項 tests、build、typecheck、lint、audit（0 vulnerabilities）及本機 migration 驗證通過；整理 Release Notes、Migration Summary、Known Issues、Test Summary 與 README／Pages 準備稿；修正現行 50 表／16 migrations 及 Phase 狀態。
 - 補齊 §3.3 的 AUTH_RATE_HMAC_SECRET 名稱及非 Secret callback／登入開關說明；沿用既有已核准政策，沒有改變 runtime。

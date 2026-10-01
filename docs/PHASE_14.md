@@ -6,7 +6,7 @@
 
 Recommended／Minimum：MEDIUM。模型切換後 Current 無法由工具直接讀取；使用者於 2026-10-01 確認目前為 MEDIUM 或更高，Action：KEEP。沒有宣稱自動切換或精確強度。
 
-建立 `/admin` 管理工作區，整合既有服務。Reports 只提供入口，匯出實作屬 Phase 15。Audit 的指定高權限角色未定案，入口保留說明，不回傳稽核資料。
+建立 `/admin` 管理工作區，整合既有服務。Reports 只提供入口，匯出實作屬 Phase 15。Audit 查看政策已於 2026-10-01 定案為僅 active super_admin；介面及授權驗收仍未完成，入口保留說明，不回傳稽核資料。
 
 ## 已建立項目
 
@@ -36,7 +36,7 @@ Recommended／Minimum：MEDIUM。模型切換後 Current 無法由工具直接�
 
 ## 未完成與限制
 
-1. Audit 查看角色須由使用者定案；主規格 §38 只有「指定高權限管理者」，不能自行選擇 super_admin 政策。
+1. Audit 查看角色已由使用者定案為僅 active super_admin；待完成讀取介面、伺服器 Session／Permission／Scope 與未登入／其他角色／撤權測試。本次僅文件同步，未新增 Audit API。
 2. 最新操作流程與手機版視覺驗證尚未完成，瀏覽器工具存取受限。
 3. 正式 Google callback、可信 IP、限流清理、AI consumer 與副本／備份能力仍沿用既有平台待驗證事項。
 4. Production Purge 停用。沒有真實學生資料、付費 API 呼叫、正式 Release 或 Sites 部署。

@@ -14,7 +14,7 @@ Phase 16 本機安全／隱私審查已完成；270 項已逐項驗證通過（�
 
 Phase 15 報表／匯出已獲核准並持續驗證，支援六種報表、Excel／CSV／PDF 與列印；狀態及限制見 [Phase 15 工作紀錄](docs/PHASE_15.md)。
 
-Phase 14 Admin UI 已獲核准並持續實作；管理工作區已建立，Audit 角色與最新版視覺驗證仍未完成。見 [Phase 14 工作紀錄](docs/PHASE_14.md)。
+Phase 14 Admin UI 已獲核准並持續實作；管理工作區已建立，Audit 介面／授權及最新版視覺驗證仍未完成；查看政策已定案為僅 active super_admin。見 [Phase 14 工作紀錄](docs/PHASE_14.md)。
 
 | 文件 | 用途 |
 |---|---|
@@ -98,7 +98,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 |---|---|
 | Markdown 文件修訂 | 規格版本 v1.6-draft；同步 Phase 2／3A 契約；D-03／D-11 日期決策維持 |
 | 管理員認證決策 | 已確認僅 Google OAuth／OIDC；取消 ChatGPT／Gemini 認證條件，AI 建議功能維持獨立 |
-| 業務待決策 | 核准紀錄見 §72；Audit 查看角色與 D-09 仍待處理；D-11 RPO≤24 小時／RTO≤8 小時已核准，正式演練待驗證 |
+| 業務待決策 | 核准紀錄見 §72；Audit 僅 super_admin 查看已核准；介面／授權驗收及 D-09 仍待處理；D-11 RPO≤24 小時／RTO≤8 小時已核准，正式演練待驗證 |
 | Phase 0 | 基礎環境、預覽、測試與 Pages 完成；Google OAuth 實測依使用者指示暫緩 |
 | Phase 1 | 初版資料模型、migration、FTS、虛構 seed、加密輪替與復原驗證完成 |
 | Phase 2 | 學年度、班級、學生與學籍服務；Preview／Confirm、升班、轉出與撤銷完成隔離測試 |
@@ -114,7 +114,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 11 | AI Provider Layer；200 項完整回歸通過，含 16 項 Provider／設定測試 |
 | Phase 12 | 核准的本機核心範圍完成；223 項回歸通過，正式 consumer 未啟用，見 [驗證紀錄](docs/PHASE_12.md) |
 | Phase 13 | 本機實作與 235 項回歸驗證完成；正式入口關閉，見 [紀錄](docs/PHASE_13.md) |
-| Phase 14 | 管理工作區部分完成；Audit 角色及最新版瀏覽器驗收未完成 |
+| Phase 14 | 管理工作區部分完成；Audit 介面／授權及最新版瀏覽器驗收未完成，查看政策已定案 |
 | Phase 15 | 報表／匯出核心已建立；下載／列印互動驗收未完成 |
 | Phase 16 | 本機安全／隱私審查完成；正式平台實測保留 |
 | Phase 17 | 完整生命週期與分類鎖定本機整合完成 |
