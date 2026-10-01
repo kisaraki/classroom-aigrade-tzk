@@ -15,6 +15,13 @@ const managedLinux = readExecutionProfile() === "managed-linux";
 
 const localBindingConfig = {
   main: "vinext/server/fetch-handler",
+  // Invocation metadata can include OAuth callback URLs. Keep platform request
+  // logging disabled; application audit evidence remains in its protected store.
+  observability: {
+    enabled: false,
+    logs: { enabled: false, invocation_logs: false },
+    traces: { enabled: false },
+  },
   compatibility_flags: ["nodejs_compat"],
   d1_databases: d1
     ? [

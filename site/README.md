@@ -1,6 +1,20 @@
 # Sites 應用程式
 
-此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；進度及限制見 [Phase 13 驗證紀錄](../docs/PHASE_13.md)。
+## Phase 16 安全／隱私（本機完成）
+
+已修補依賴及 Session／Scope／HTTP 邊界，新增學籍交易安全 migration 與跨模組測試；270 項已逐項驗證通過（完整回歸 268 通過，2 項數量斷言修正後重驗通過）。登入限流與報表來源容量已核准並實作。動態頁面／API 使用隱私回應標頭，build 明確關閉 request logs／traces；正式平台仍待 preflight 實測。見 [Phase 16 工作紀錄](../docs/PHASE_16.md)。
+
+## Phase 15 報表／匯出（驗收中）
+
+`POST /api/admin/reports` 接受 `kind`、`examId`、相應的 `classId`／`grade`／`studentId`、可選 `expectedVersion` 與 `format=preview|csv|xlsx|pdf`。每次一個評量，最多 1,000 人及 10 MiB。只讀取已發布快照，AI 只輸出匹配版本的有效成對內容。介面位於 `/admin` 報表頁，提供 Excel／CSV／PDF／列印。
+
+伺服器重新檢查 Session／Scope／來源，不持久保存產出。疑似公式文字會加上「文字：」前綴；不輸出生日、身分證或內部 ID。原校個人成績依目前有效學籍授權並另標示來源，不進本校排名。限制與驗證見 [Phase 15 紀錄](../docs/PHASE_15.md)。
+
+此目錄是 `classroom-aigrade-tzk` 的 Sites 原始碼。業務規格以 [PROJECT_SPEC.md](../PROJECT_SPEC.md) 為準；最新進度及限制見 [Phase 14 工作紀錄](../docs/PHASE_14.md)。
+
+## Phase 14 管理工作區（進行中）
+
+本機 `/admin` 提供 Google 登入與管理功能。`POST /api/admin/workspace` 以 Session、同源 Origin、操作／欄位白名單及伺服器 Permission／Scope 提供選單、名冊、學籍 Preview／Confirm 與排名計算；回應禁止快取。其他管理功能沿用各模組 API。Audit 查看角色未定案，Reports 匯出屬 Phase 15，Production Purge 停用。
 
 ## 本機開發
 
@@ -37,7 +51,7 @@ Windows PowerShell 可使用 `npm.cmd`。若 npm shim 找不到自身模組，�
 
 ## 學籍服務
 
-[AcademicService](lib/server/academic/service.ts) 提供學年度、班級、新生／轉入、學籍、轉班／座號、升班、轉出、撤銷與歷史查詢。所有業務寫入先取得 Preview，再明確 Confirm；來源 revision、actor、Session 與 Scope 會重驗。授權 adapter 預設拒絕，目前只有隔離測試，尚未接管理路由；後續 API 串接時必須使用伺服器授權並在 Confirm 交易重驗，不得把 request body 直接當作授權結果。
+[AcademicService](lib/server/academic/service.ts) 提供學年度、班級、新生／轉入、學籍、轉班／座號、升班、轉出、撤銷與歷史查詢。所有業務寫入先取得 Preview，再明確 Confirm；來源 revision、actor、Session 與 Scope 會重驗。授權 adapter 預設拒絕；Phase 14 管理路由使用伺服器授權並在 Confirm 交易重驗，不把 request body 當作授權結果。
 
 詳細輸入、錯誤與限制見 [Phase 2 紀錄](../docs/PHASE_2.md)。Excel／CSV 上傳與完整 Import 流程見下方 Phase 6，沒有新增貼上表格介面。
 
@@ -62,7 +76,7 @@ Recovery 核准只有 [AdminManagementService.approveRecovery](lib/server/auth/a
 
 ## Phase 4 草稿評量 API
 
-[ExamService](lib/server/exams/service.ts) 與 [HTTP 邊界](lib/server/exams/http.ts) 使用真實 Session／Permission／Scope，伺服器從評量、名單快照及學籍解析資源。所有寫入要求同源 Origin、JSON 及欄位允許清單，回應皆 no-store。未登入不回傳成績。管理 UI 尚未建立。
+[ExamService](lib/server/exams/service.ts) 與 [HTTP 邊界](lib/server/exams/http.ts) 使用真實 Session／Permission／Scope，伺服器從評量、名單快照及學籍解析資源。所有寫入要求同源 Origin、JSON 及欄位允許清單，回應皆 no-store。未登入不回傳成績。Phase 14 管理 UI 已接上既有 API，完整驗收仍進行中。
 
 | 方法／路徑                                | 輸入及作用                                                                                                        |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -109,7 +123,7 @@ Phase 4 測試使用隔離 Miniflare、虛構資料及 stub OIDC；真實 Google
 | POST /api/admin/imports/[id]/rollback/preview | JSON `{}`；列示可回復項目或衝突及版本差異                                                                                         |
 | POST /api/admin/imports/[id]/rollback/confirm | JSON `{ previewVersion, confirmed: true }`；在期限內整批回復                                                                      |
 
-所有入口驗證應用 Session；Job 限建立者且必須仍具有目前 Permission／Scope，下載亦相同。寫入須同源 Origin；回應 no-store。表單 UI 尚未建立，不代表能從公開頁面上傳。
+所有入口驗證應用 Session；Job 限建立者且必須仍具有目前 Permission／Scope，下載亦相同。寫入須同源 Origin；回應 no-store。Phase 14 匯入表單只供已授權管理員使用，公開頁面不能上傳。
 
 上傳遵守 [§73.4](../PROJECT_SPEC.md#spec-73-4)：5 MiB、5,000 筆資料列、每列 30 欄；XLSX 展開總量 25 MiB／1,000 ZIP 項目，實際串流展開量與宣告大小都檢查。拒絕公式、巨集、外部連結、加密檔及 .xls；目前也拒絕隱藏 sheet、合併儲存格及非支援儲存格型別。CSV 使用 UTF-8（可含 BOM），保留前導零與原始文字；日期填 YYYY-MM-DD，不推測 Excel 日期序號或已遺失的識別碼前導零。
 
@@ -212,3 +226,5 @@ Starter 原有第三方程式與授權檔保留；MIT 專案授權見 [LICENSE](
 `PUBLIC_LOOKUP_VERIFIED=false` 為預設；正式平台可信 IP、請求紀錄、清理排程與備份保存尚未實測，入口維持關閉。必須提供獨立 `PUBLIC_LOOKUP_HMAC_SECRET`（至少 32 字元）；無可信 IP 或限流儲存不可用時拒絕查詢。10 分鐘內每 IP 30 次、每完整條件 5 次，成功與失敗均計入。
 
 `cleanupLookupLimits(db, now)` 必須由正式平台至少每小時呼叫，刪除滿 23 小時紀錄；請求時另清除滿 24 小時紀錄。只有核心函式，尚未配置正式排程。Purge 同一交易清除共用 HMAC 紀錄；歷史快照清理後不重算殘缺群體資料。完整驗證與殘餘風險見 [Phase 13](../docs/PHASE_13.md)。
+
+`AUTH_RATE_VERIFIED=false` 為預設；只有正式可信 `CF-Connecting-IP` 傳遞、紀錄／備份保存與清理排程實測通過後才可開啟。`AUTH_RATE_HMAC_SECRET` 須為至少 32 字元的獨立高熵 Secret，不與公開查詢或身分證金鑰共用。登入／reauth／callback 共用 60 次／IP／10 分鐘，Bootstrap／Identity 開始另共用 5 次；拒絕不消耗部分額度。`cleanupAuthLimits(db, now)` 須至少每小時清除滿 23 小時紀錄，請求另清除滿 24 小時紀錄；目前只有核心函式，沒有正式排程。紀錄不含學生參照，不屬個別學生 Purge，但所有副本仍須符合 24 小時上限。

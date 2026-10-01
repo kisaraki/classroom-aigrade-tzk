@@ -138,6 +138,7 @@ export class AdminManagementService {
         )
         .all()
     ).results;
+    await this.authorization.assertPermission(session, "admin.read");
     return admins;
   }
   async createAdmin(session: AuthSession, input: CreateAdminInput) {

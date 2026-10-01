@@ -2,25 +2,29 @@ import {
   clearOAuthStateCookie,
   clearSessionCookie,
 } from "../../../../../lib/server/auth/cookies.ts";
-import { authService } from "../../../../../lib/server/auth/runtime.ts";
+import {
+  authService,
+  authAttempt,
+} from "../../../../../lib/server/auth/runtime.ts";
 import { AuthError } from "../../../../../lib/server/auth/types.ts";
 
 export async function GET(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
-  if (!code || !state)
-    return Response.json(
-      { error: "OAUTH_CALLBACK_INVALID" },
-      {
-        status: 400,
-        headers: {
-          "Set-Cookie": clearOAuthStateCookie(),
-          "Cache-Control": "no-store",
-        },
-      },
-    );
   try {
+    await authAttempt(request);
+    const url = new URL(request.url);
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    if (!code || !state)
+      return Response.json(
+        { error: "OAUTH_CALLBACK_INVALID" },
+        {
+          status: 400,
+          headers: {
+            "Set-Cookie": clearOAuthStateCookie(),
+            "Cache-Control": "no-store",
+          },
+        },
+      );
     const service = authService();
     const result = await service.completeGoogleLogin({
       code,

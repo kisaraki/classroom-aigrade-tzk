@@ -13,8 +13,16 @@ export type AuthHttpDependencies = {
   management: AdminManagementService;
 };
 type Operation =
-  "list" | "create" | "update" | "rebind" | "revoke" | "identity" | "reauth";
+  | "bootstrap"
+  | "list"
+  | "create"
+  | "update"
+  | "rebind"
+  | "revoke"
+  | "identity"
+  | "reauth";
 const keys: Record<Operation, string[]> = {
+  bootstrap: ["secret"],
   list: [],
   create: [
     "username",
@@ -55,6 +63,10 @@ export async function handleAuthRequest(
   targetId?: string,
 ): Promise<Response> {
   try {
+    const method =
+      operation === "list" ? "GET" : operation === "update" ? "PATCH" : "POST";
+    if (request.method !== method)
+      throw new AuthError("METHOD_NOT_ALLOWED", 405);
     let body: Record<string, unknown> = {};
     if (operation !== "list") {
       if (request.headers.get("Origin") !== new URL(request.url).origin)
@@ -89,7 +101,9 @@ export async function handleAuthRequest(
         offset += chunk.length;
       }
       try {
-        body = JSON.parse(new TextDecoder().decode(bytes));
+        body = JSON.parse(
+          new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+        );
       } catch {
         throw new AuthError("INVALID_JSON", 400);
       }
@@ -103,13 +117,31 @@ export async function handleAuthRequest(
     }
     const token =
       parseCookieHeader(request.headers.get("Cookie"))[SESSION_COOKIE] ?? null;
-    if (operation === "identity" || operation === "reauth") {
+    if (
+      operation === "identity" ||
+      operation === "reauth" ||
+      operation === "bootstrap"
+    ) {
       const start =
-        operation === "identity"
-          ? await dependencies.auth.beginIdentityVerification(
-              body.requestToken as string,
-            )
-          : await dependencies.auth.beginGoogleReauthentication(token);
+        operation === "bootstrap"
+          ? await dependencies.auth.beginGoogleBootstrap({
+              secret: body.secret as string,
+            })
+          : operation === "identity"
+            ? await dependencies.auth.beginIdentityVerification(
+                body.requestToken as string,
+              )
+            : await dependencies.auth.beginGoogleReauthentication(token);
+      if (request.headers.get("Accept") === "application/json")
+        return Response.json(
+          { authorizationUrl: start.authorizationUrl },
+          {
+            headers: {
+              "Set-Cookie": start.stateCookie,
+              "Cache-Control": "no-store",
+            },
+          },
+        );
       return new Response(null, {
         status: 302,
         headers: {

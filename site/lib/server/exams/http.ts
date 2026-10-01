@@ -51,6 +51,13 @@ export async function handleExamRequest(
 ): Promise<Response> {
   try {
     const read = operation === "read" || operation === "participation";
+    const method = read
+      ? "GET"
+      : ["schedule", "subject"].includes(operation)
+        ? "PATCH"
+        : "POST";
+    if (request.method !== method)
+      throw new AuthError("METHOD_NOT_ALLOWED", 405);
     if (!read && request.headers.get("Origin") !== new URL(request.url).origin)
       throw new AuthError("CSRF_ORIGIN_MISMATCH", 403);
     const token =

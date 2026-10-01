@@ -11,6 +11,8 @@ export async function handleArchiveRequest(
   id = "",
 ) {
   try {
+    if (request.method !== (operation === "read" ? "GET" : "POST"))
+      throw new AuthError("METHOD_NOT_ALLOWED", 405);
     if (
       operation !== "read" &&
       request.headers.get("Origin") !== new URL(request.url).origin

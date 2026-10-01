@@ -15,6 +15,7 @@ export type Resources = {
   classIds: string[];
   studentIds: string[];
   historicalYearIds: string[];
+  scopeContexts?: { termId: string; classId: string; onDate: string }[];
 };
 export type AccessRequest = {
   action: AcademicKind | "READ_YEARS" | "READ_ROSTER";

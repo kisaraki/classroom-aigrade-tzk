@@ -80,7 +80,9 @@ export class AISettingsService {
   }
   async read(session: AuthSession) {
     await this.access(session);
-    return readAISettings(this.db);
+    const settings = await readAISettings(this.db);
+    await this.access(session);
+    return settings;
   }
   async update(
     session: AuthSession,

@@ -6,6 +6,10 @@ import {
 } from "../../domain/dates.ts";
 import { maskIdentity, sealIdentity, type IdentityKeys } from "../identity.ts";
 import {
+  RECENT_AUTH_WINDOW_MS,
+  SESSION_IDLE_TIMEOUT_MS,
+} from "../auth/policy.ts";
+import {
   retentionDeadlines,
   type RetentionEvent,
 } from "../../domain/retention.ts";
@@ -137,9 +141,15 @@ export class AcademicService {
   private async validateSession(grant: AccessGrant): Promise<Row> {
     const row = await this.db
       .prepare(
-        "SELECT a.id, a.role FROM admin_users a JOIN admin_sessions s ON s.admin_user_id = a.id WHERE a.id = ? AND s.id = ? AND a.status = 'active' AND a.google_subject_id IS NOT NULL AND s.revoked_at IS NULL AND s.auth_version = a.auth_version AND s.expires_at > ?",
+        "SELECT a.id, a.role, s.recent_auth_at FROM admin_users a JOIN admin_sessions s ON s.admin_user_id = a.id WHERE a.id = ? AND s.id = ? AND a.status = 'active' AND a.google_subject_id IS NOT NULL AND s.revoked_at IS NULL AND s.auth_version = a.auth_version AND s.expires_at > ? AND s.last_seen_at > ? AND s.last_seen_at <= ?",
       )
-      .bind(grant.adminId, grant.sessionId, this.now())
+      .bind(
+        grant.adminId,
+        grant.sessionId,
+        this.now(),
+        this.now() - SESSION_IDLE_TIMEOUT_MS,
+        this.now(),
+      )
       .first<Row>();
     return row ?? fail("ACCESS_DENIED");
   }
@@ -161,6 +171,8 @@ export class AcademicService {
       resources.historicalYearIds.length &&
       (account.role !== "super_admin" ||
         !grant.recentGoogleAuthentication ||
+        Number(account.recent_auth_at) <= this.now() - RECENT_AUTH_WINDOW_MS ||
+        Number(account.recent_auth_at) > this.now() ||
         !historyReason?.trim())
     )
       return fail("HISTORICAL_YEAR_LOCKED");
@@ -290,6 +302,82 @@ export class AcademicService {
           .length
       )
         plan.resources.historicalYearIds.push(id);
+    // Persist only the domain-derived scope coordinates so replay rechecks the same scope after PII previews are cleared.
+    const enrollmentChanges: { row: Row; dates: string[] }[] = [];
+    for (const change of plan.changes.filter(
+      (c) => c.table === "student_enrollments",
+    )) {
+      const existing =
+        change.before === null
+          ? {}
+          : await this.one(
+              "SELECT * FROM student_enrollments WHERE id=?",
+              change.key.id,
+            );
+      const row = { ...existing, ...change.after };
+      const dates =
+        change.before === null
+          ? [String(row.effective_from)]
+          : ["effective_from", "effective_to"].flatMap((key) =>
+              Object.hasOwn(change.after, key) &&
+              change.after[key] !== change.before?.[key]
+                ? ([change.before?.[key], change.after[key]].filter(
+                    (v) => typeof v === "string",
+                  ) as string[])
+                : [],
+            );
+      enrollmentChanges.push({
+        row,
+        dates: dates.length ? dates : [String(row.effective_from)],
+      });
+    }
+    const undoContexts =
+      plan.kind === "UNDO" ? (plan.resources.scopeContexts ?? []) : [];
+    plan.resources.scopeContexts = [];
+    for (const { row } of enrollmentChanges) {
+      const term = await this.term(String(row.academic_term_id));
+      const display = plan.display.find((d) => d.studentId === row.student_id);
+      const operationDate = display?.effectiveFrom ?? display?.effectiveOn;
+      const dates =
+        typeof operationDate === "string"
+          ? [operationDate]
+          : enrollmentChanges
+              .filter(
+                (r) =>
+                  r.row.student_id === row.student_id &&
+                  r.row.academic_term_id === row.academic_term_id,
+              )
+              .flatMap((r) => r.dates);
+      // A copied future end date is not the date of this operation. Term ends
+      // are exclusive, so a source class at that boundary uses its last day.
+      const end = String(term.ends_on);
+      const lastDay = new Date(Date.parse(end + "T00:00:00Z") - 86400000)
+        .toISOString()
+        .slice(0, 10);
+      const onDate =
+        dates
+          .map((d) => (d === end ? lastDay : d))
+          .filter(
+            (d) => d >= String(term.starts_on) && d < String(term.ends_on),
+          )
+          .sort()
+          .at(0) ?? String(row.effective_from);
+      const context = {
+        termId: String(term.id),
+        classId: String(row.class_id),
+        onDate,
+      };
+      if (
+        !plan.resources.scopeContexts.some(
+          (c) =>
+            c.termId === context.termId &&
+            c.classId === context.classId &&
+            c.onDate === context.onDate,
+        )
+      )
+        plan.resources.scopeContexts.push(context);
+    }
+    if (undoContexts.length) plan.resources.scopeContexts = undoContexts;
     const reason = options.historyReason ? string(options.historyReason) : null;
     const grant = await this.access(
       plan.kind,
@@ -851,6 +939,12 @@ export class AcademicService {
     const changes: Change[] = JSON.parse(String(original.changes_json));
     const plan = newPlan("UNDO");
     plan.undoOf = String(original.id);
+    const originalPreview = await this.one(
+      "SELECT resources_json FROM academic_previews WHERE id=?",
+      original.preview_id,
+    );
+    plan.resources.scopeContexts =
+      JSON.parse(String(originalPreview.resources_json)).scopeContexts ?? [];
     // Phase 2 receipts predate event rows; the migration preserves that single old promise as LEGACY.
     if (
       original.kind === "TRANSFER_OUT" &&

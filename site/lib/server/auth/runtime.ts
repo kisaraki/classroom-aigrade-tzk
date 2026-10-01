@@ -4,6 +4,19 @@ import { AuthorizationService } from "./authorization.ts";
 import { AuthService } from "./service.ts";
 import { GoogleOidcClient } from "./google-oidc.ts";
 import { AuthError } from "./types.ts";
+import { guardAuthAttempt } from "./limit.ts";
+
+export async function authAttempt(request: Request, restricted = false) {
+  await guardAuthAttempt(
+    request,
+    {
+      db: env.DB,
+      secret: env.AUTH_RATE_HMAC_SECRET,
+      verified: env.AUTH_RATE_VERIFIED,
+    },
+    restricted,
+  );
+}
 
 export function authService(): AuthService {
   if (!env.DB) throw new AuthError("AUTH_DATABASE_UNAVAILABLE", 503);

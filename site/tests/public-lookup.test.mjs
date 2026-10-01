@@ -405,7 +405,7 @@ test("Phase 13 migration failure rolls back limiter table and retry preserves sc
       .run();
   }
   await seedFictional(db, fictionalKeys());
-  assert.equal((await migrationPreflight(db)).pending, 1);
+  assert.equal((await migrationPreflight(db)).pending, 3);
   await assert.rejects(
     db.batch([
       ...migrations[13].sql.filter((s) => s.trim()).map((s) => db.prepare(s)),

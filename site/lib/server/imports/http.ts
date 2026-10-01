@@ -71,6 +71,8 @@ export async function handleImportRequest(
 ) {
   try {
     const read = operation === "read" || operation === "errors";
+    if (request.method !== (read ? "GET" : "POST"))
+      throw new AuthError("METHOD_NOT_ALLOWED", 405);
     if (!read && request.headers.get("Origin") !== new URL(request.url).origin)
       throw new AuthError("CSRF_ORIGIN_MISMATCH", 403);
     const token =

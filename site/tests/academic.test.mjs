@@ -39,13 +39,14 @@ async function setup(t) {
     ).run();
     await sql(
       db,
-      "INSERT INTO admin_sessions (id, admin_user_id, token_hash, auth_version, authenticated_at, last_seen_at, expires_at) VALUES (?, ?, ?, 1, ?, ?, ?)",
+      "INSERT INTO admin_sessions (id, admin_user_id, token_hash, auth_version, authenticated_at, last_seen_at, expires_at, recent_auth_at) VALUES (?, ?, ?, 1, ?, ?, ?, ?)",
       `session-${id}`,
       id,
       hash.repeat(64),
       now - 1000,
       now - 1000,
       now + 86400000,
+      now - 1000,
     ).run();
   }
   const keys = fictionalKeys();
@@ -898,7 +899,7 @@ test("Phase 2 upgrades a populated Phase 1 database without rewriting historical
     "score_items",
   ])
     before[table] = await all(db, `SELECT * FROM ${table} ORDER BY id`);
-  assert.equal((await migrationPreflight(db)).pending, 10);
+  assert.equal((await migrationPreflight(db)).pending, 12);
   await migrateLocalDatabase(db);
   for (const [table, rows] of Object.entries(before))
     assert.deepEqual(

@@ -468,7 +468,7 @@ test("Phase 8 migration upgrades Phase 7 and backfills existing retention withou
     "UPDATE students SET status='transferred_out',transferred_out_on='2026-09-24',retention_until='2029-09-24',public_query_until='2029-09-24' WHERE id='fictional-a'",
   );
   const scores = await all(db, "SELECT * FROM score_items ORDER BY id");
-  assert.equal((await migrationPreflight(db)).pending, 5);
+  assert.equal((await migrationPreflight(db)).pending, 7);
   const migration = migrations[9];
   await assert.rejects(
     db.batch([

@@ -672,7 +672,7 @@ test("Phase 3B HTTP handlers reject CSRF, identity forgery, unknown fields and p
   const user = await f.user("http-user");
   const request = (body, headers = {}, cookie = f.owner.token) =>
     new Request("https://admin.example.test/api/admin/users", {
-      method: "POST",
+      method: "PATCH",
       headers: {
         Origin: "https://admin.example.test",
         "Content-Type": "application/json",
@@ -792,7 +792,7 @@ test("Phase 3B migration upgrades Phase 3A in place and preserves outstanding OA
     ),
     /INVALID_OAUTH_STATE_PURPOSE/,
   );
-  assert.equal((await migrationPreflight(db)).applied, 14);
+  assert.equal((await migrationPreflight(db)).applied, 16);
   assert.equal(
     (
       await one(

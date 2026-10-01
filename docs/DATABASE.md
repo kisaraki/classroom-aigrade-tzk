@@ -241,3 +241,11 @@ Purge 開始後鎖住業務寫入；外部副本逐一刪除並驗證，再以�
 計數與條件 INSERT 在 D1 batch 中執行，併發超額不寫入。隔離測試涵蓋 migration 重跑、失敗 batch 回復與原資料保留。查詢時清除滿 24 小時紀錄；正式至少每小時呼叫清理函式，提早清除滿 23 小時紀錄。排程與備份保存能力未實測前禁止啟用公開入口。
 
 HMAC 不可按學生反查，因此受控 Purge 同一交易清空限流紀錄，短期額度會重設；不影響學生復原承諾。程式回退不回退 schema，必要復原先關閉公開入口、保留 migration history，再依平台實測備份方案處理。未套用 Production migration，詳見 [Phase 13 紀錄](PHASE_13.md)。
+
+## Phase 16 學籍交易安全
+
+[0014 migration](../site/drizzle/0014_phase_16_security.sql) 增加 `academic_operation_session_security` trigger；49 張關聯表不變，合計 15 份 migration。交易提交時重驗 Google binding／Session／auth_version、30 分鐘閒置時限及歷史年度修改的 5 分鐘 Google 驗證時窗，不改寫既有資料。隔離資料庫測試含升級、精確時限、未來時間與失敗整批回復。
+
+Production 未執行；程式回退保留 trigger 與 migration history，停止不相容寫入，必要修正另建 migration。正式 migration 仍須 preflight、人工確認與實測 recovery，見 [Phase 16 工作紀錄](PHASE_16.md)。
+
+[0015 migration](../site/drizzle/0015_phase_16_auth_limits.sql) 新增 `auth_rate_attempts`，合計 50 張關聯表、16 份 migration。僅保存隨機 ID、專用 IP HMAC、是否為 Bootstrap／Identity 開始及 UTC 時間；雜湊格式、旗標及時間有 CHECK，IP／限制開始與清理有索引。共用 60／5 額度由同一條件 INSERT 原子消耗。沒有學生 FK，不改寫既有資料；正式套用前仍需 preflight、人工確認及 recovery 實測。

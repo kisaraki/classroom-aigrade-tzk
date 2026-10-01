@@ -906,6 +906,12 @@ export class LifecycleService {
       text(id),
     ).first<Row>();
     if (!row) fail("PURGE_JOB_NOT_FOUND", 404);
+    await this.authorization.assertPermission(
+      session,
+      "archive.manage",
+      undefined,
+      true,
+    );
     return row;
   }
   async list(session: AuthSession) {
@@ -914,6 +920,7 @@ export class LifecycleService {
       "SELECT e.*,s.version FROM recycle_entries e JOIN students s ON s.id=e.student_id WHERE e.restored_at IS NULL AND s.deleted_at=e.deleted_at ORDER BY e.deleted_at DESC",
     );
     const visible: Row[] = [];
+    const visiblePlans: Plan[] = [];
     for (const row of rows) {
       const p = await this.base({
         action: "RESTORE",
@@ -932,7 +939,9 @@ export class LifecycleService {
         restore_until: row.restore_until,
         restorable: this.now() < Number(row.restore_until) ? 1 : 0,
       });
+      visiblePlans.push(p);
     }
+    for (const plan of visiblePlans) await this.access(session, plan, true);
     return { items: visible };
   }
 }

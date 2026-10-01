@@ -1,6 +1,21 @@
 # Changelog
 
+## 2026-10-01 — Phase 16 安全／隱私審查（本機完成）
+
+- 使用者批准 Phase 16 並確認 XHIGH；修正 HTTP 方法／UTF-8／Cookie／Session race 與讀取授權重驗，補學籍異動日期 Scope 與 Undo／Replay 邊界。
+- 0014 migration 增加學籍交易閒置／Google recent authentication guard；只在隔離資料庫驗證。
+- 更新同系列依賴與 transitive overrides，當次 npm audit 為 0；CI 增加 dependency audit／client bundle 檢查；補 security regression tests 及 middleware headers。
+- 使用者接受報表來源 UTF-8 10 MiB 與登入／callback 60 次、Bootstrap／身分驗證另 5 次的 10 分鐘限流，實作及 270 項逐項驗證完成（268 完整回歸通過、2 項數量斷言修正後重驗通過）；Phase 14／15 驗收維持未完成，不宣稱正式部署或進入 Phase 17。見 [Phase 16 工作紀錄](docs/PHASE_16.md)。
+
 記錄文件與軟體的變更。文件版本與軟體 Release 分開；以下文件版本不是應用程式正式版本，也不是任何 Phase 或部署完成聲明。歷史條目保留當時變更，現行規則以 PROJECT_SPEC.md 為準。
+
+## Phase 15 Reporting／Export（驗收中）— 2026-10-01
+
+Phase 15 Reporting／Export 於 2026-10-01 獲准啟動，採用 §40／D-11 的一評量、1,000 人、10 MiB 與即時私有下載政策。新增六種報表、原校個人成績、Excel／CSV／PDF、列印 CSS、公式防護與 Scope／版本／撤權重驗；瀏覽器互動驗收待補，尚未標示完成。見 [Phase 15 紀錄](docs/PHASE_15.md)。
+
+## Phase 14 Admin UI（進行中）— 2026-10-01
+
+新增管理工作區與必要的學籍／排名／選單 HTTP 授權介面，整合既有評量、成績、匯入、AI、參考資料、封存、使用者及設定 API。Audit 角色尚未定案，Phase 14 尚未完成。沒有 schema 變更或正式部署；驗證與限制見 [工作紀錄](docs/PHASE_14.md)。
 
 ## Phase 13 Public UI — 2026-09-30
 

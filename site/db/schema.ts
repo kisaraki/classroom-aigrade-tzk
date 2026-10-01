@@ -10,6 +10,34 @@ import {
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 
+export const authRateAttempts = sqliteTable(
+  "auth_rate_attempts",
+  {
+    id: text("id").primaryKey().notNull(),
+    ipHash: text("ip_hash").notNull(),
+    restrictedStart: integer("restricted_start").notNull(),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [
+    index("auth_rate_ip_window").on(t.ipHash, t.createdAt),
+    index("auth_rate_restricted_window").on(
+      t.ipHash,
+      t.restrictedStart,
+      t.createdAt,
+    ),
+    index("auth_rate_expiry").on(t.createdAt),
+    check(
+      "auth_rate_hash",
+      sql`length(${t.ipHash})=64 AND ${t.ipHash} NOT GLOB '*[^0-9a-f]*'`,
+    ),
+    check("auth_rate_restricted", sql`${t.restrictedStart} IN (0,1)`),
+    check(
+      "auth_rate_time",
+      sql`typeof(${t.createdAt})='integer' AND ${t.createdAt}>=0`,
+    ),
+  ],
+);
+
 export const publicLookupAttempts = sqliteTable(
   "public_lookup_attempts",
   {

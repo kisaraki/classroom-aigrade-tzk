@@ -19,13 +19,15 @@ export function clearOAuthStateCookie(): string {
 export function parseCookieHeader(
   header: string | null,
 ): Record<string, string> {
-  const result: Record<string, string> = {};
+  const result: Record<string, string> = Object.create(null);
   for (const part of (header ?? "").split(";")) {
     const separator = part.indexOf("=");
     if (separator <= 0) continue;
     const name = part.slice(0, separator).trim();
     const value = part.slice(separator + 1).trim();
-    if (name && !(name in result)) result[name] = value;
+    if (name && !Object.hasOwn(result, name)) result[name] = value;
+    else if (name === SESSION_COOKIE || name === OAUTH_STATE_COOKIE)
+      result[name] = ""; // Ambiguous security cookies must fail closed.
   }
   return result;
 }

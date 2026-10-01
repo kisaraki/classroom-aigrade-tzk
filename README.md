@@ -8,6 +8,12 @@
 
 ## 文件入口
 
+Phase 16 本機安全／隱私審查已完成；270 項已逐項驗證通過（完整回歸 268 通過、2 項數量斷言修正後重驗通過）。來源容量與登入限流已核准並實作，正式入口仍待平台實測。見 [Phase 16 工作紀錄](docs/PHASE_16.md)。
+
+Phase 15 報表／匯出已獲核准並持續驗證，支援六種報表、Excel／CSV／PDF 與列印；狀態及限制見 [Phase 15 工作紀錄](docs/PHASE_15.md)。
+
+Phase 14 Admin UI 已獲核准並持續實作；管理工作區已建立，Audit 角色與最新版視覺驗證仍未完成。見 [Phase 14 工作紀錄](docs/PHASE_14.md)。
+
 | 文件 | 用途 |
 |---|---|
 | [PROJECT_SPEC.md](PROJECT_SPEC.md) | 唯一主要業務與技術規格，版本 v1.6-draft |

@@ -253,9 +253,11 @@ export class AuthService {
     await this.db.batch([
       this.db
         .prepare(
-          "UPDATE admin_sessions SET recent_auth_at = CASE WHEN revoked_at IS NULL AND expires_at > ? AND auth_version = ? AND EXISTS (SELECT 1 FROM admin_users WHERE id = admin_sessions.admin_user_id AND status = 'active' AND auth_version = ? AND google_subject_id = ? AND lower(authorized_email) = ?) THEN ? ELSE NULL END, last_seen_at = ? WHERE id = ?",
+          "UPDATE admin_sessions SET recent_auth_at = CASE WHEN revoked_at IS NULL AND expires_at > ? AND last_seen_at > ? AND last_seen_at <= ? AND auth_version = ? AND EXISTS (SELECT 1 FROM admin_users WHERE id = admin_sessions.admin_user_id AND status = 'active' AND auth_version = ? AND google_subject_id = ? AND lower(authorized_email) = ?) THEN ? ELSE NULL END, last_seen_at = ? WHERE id = ?",
         )
         .bind(
+          now,
+          now - this.idleTimeoutMs,
           now,
           row.auth_version,
           row.auth_version,
@@ -477,12 +479,13 @@ export class AuthService {
       return null;
     }
     const lastSeenAt = Math.min(now, Number(row.expires_at));
-    await this.db
+    const touched = await this.db
       .prepare(
-        "UPDATE admin_sessions SET last_seen_at = ? WHERE id = ? AND revoked_at IS NULL",
+        "UPDATE admin_sessions SET last_seen_at = ? WHERE id = ? AND revoked_at IS NULL AND expires_at > ? AND last_seen_at > ? AND last_seen_at <= ? AND EXISTS (SELECT 1 FROM admin_users a WHERE a.id=admin_sessions.admin_user_id AND a.status='active' AND a.google_subject_id IS NOT NULL AND a.auth_version=admin_sessions.auth_version)",
       )
-      .bind(lastSeenAt, row.id)
+      .bind(lastSeenAt, row.id, now, now - this.idleTimeoutMs, now)
       .run();
+    if (touched.meta.changes !== 1) return null;
     return {
       adminId: row.admin_user_id,
       sessionId: row.id,

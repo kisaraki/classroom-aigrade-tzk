@@ -1,8 +1,12 @@
-import { authService } from "../../../../../lib/server/auth/runtime.ts";
+import {
+  authService,
+  authAttempt,
+} from "../../../../../lib/server/auth/runtime.ts";
 import { AuthError } from "../../../../../lib/server/auth/types.ts";
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
   try {
+    await authAttempt(request, false);
     const result = await authService().beginGoogleLogin();
     return new Response(null, {
       status: 302,

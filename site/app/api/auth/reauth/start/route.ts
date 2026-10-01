@@ -1,5 +1,6 @@
 import {
   adminManagementService,
+  authAttempt,
   authService,
 } from "../../../../../lib/server/auth/runtime.ts";
 import {
@@ -8,6 +9,7 @@ import {
 } from "../../../../../lib/server/auth/http.ts";
 export async function POST(request: Request): Promise<Response> {
   try {
+    await authAttempt(request, false);
     return await handleAuthRequest(
       request,
       { auth: authService(), management: adminManagementService() },

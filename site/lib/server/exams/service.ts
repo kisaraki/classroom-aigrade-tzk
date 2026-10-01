@@ -858,6 +858,13 @@ export class ExamService {
         input.subject ?? null,
       ).all<Row>()
     ).results;
+    await this.access(
+      session,
+      false,
+      this.scope(exam, { classId, subject: input.subject }),
+    );
+    if ((await this.exam(examId)).version !== exam.version)
+      fail("EXAM_VERSION_CONFLICT", 409);
     return {
       exam,
       settings,
@@ -924,6 +931,13 @@ export class ExamService {
         subject ?? null,
       ).all<Row>()
     ).results;
+    await this.access(
+      session,
+      false,
+      await this.participationResource(exam, part, subject),
+    );
+    if ((await this.exam(String(part.exam_id))).version !== exam.version)
+      fail("EXAM_VERSION_CONFLICT", 409);
     return {
       participation: part,
       examVersion: exam.version,
