@@ -98,7 +98,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 |---|---|
 | Markdown 文件修訂 | 規格版本 v1.6-draft；同步 Phase 2／3A 契約；D-03／D-11 日期決策維持 |
 | 管理員認證決策 | 已確認僅 Google OAuth／OIDC；取消 ChatGPT／Gemini 認證條件，AI 建議功能維持獨立 |
-| 業務待決策        | 核准紀錄見 §72；Audit 僅 super_admin 查看已核准並完成本機實作；最新瀏覽器互動及 D-09 仍待處理；D-11 RPO≤24 小時／RTO≤8 小時已核准，正式演練待驗證 |
+| 業務待決策        | 核准紀錄見 §72；Audit 僅 super_admin 查看已核准並完成本機實作，使用者已回報驗收完成；其他 UI 驗收及 D-09 仍待處理；D-11 RPO≤24 小時／RTO≤8 小時已核准，正式演練待驗證 |
 | Phase 0 | 基礎環境、預覽、測試與 Pages 完成；Google OAuth 實測依使用者指示暫緩 |
 | Phase 1 | 初版資料模型、migration、FTS、虛構 seed、加密輪替與復原驗證完成 |
 | Phase 2 | 學年度、班級、學生與學籍服務；Preview／Confirm、升班、轉出與撤銷完成隔離測試 |
@@ -118,7 +118,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Phase 15 | 報表／匯出核心已建立；下載／列印互動驗收未完成 |
 | Phase 16 | 本機安全／隱私審查完成；正式平台實測保留 |
 | Phase 17 | 完整生命週期與分類鎖定本機整合完成 |
-| Phase 18 | 本輪 276 項 tests／build／audit 通過；RC 尚有驗收與正式平台阻擋，詳見候選紀錄 |
+| Phase 18 | 含 Audit 的目前候選全套 282 項 tests 通過；build 沿用同一 runtime 成功結果，RC 尚有驗收與正式平台阻擋，詳見候選紀錄 |
 | Phase 19 | 尚未啟動；正式部署另需明確授權 |
 | 測試 | D1／R2、migration、資料邊界、日期與身分加密測試；文件與敏感資料檢查 |
 | 本地 Git | 已初始化，遠端為 kisaraki/classroom-aigrade-tzk |

@@ -59,6 +59,37 @@ Audit 本機介面／API／授權驗證已於使用者另行核准的 Phase 14 �
 
 Phase 18 不能標為完成或請求進入正式部署；繼續可完成的本機準備，本輪保存可審查的本機 commit，沒有遠端同步或正式 Release。下一 Phase 19 仍須解除適用 gates，並另取得明確「確認正式部署」。
 
-## 後續 Phase 14 Audit 補做
+## 後續 Phase 14 Audit 補做（當時驗證紀錄）
 
-使用者明確核准 Audit 介面、API 與授權測試後，僅補做該功能，沒有啟動 Phase 19。26 項相關回歸及新增午夜邊界後最終 6 項 Audit 重驗通過；typecheck／lint／build／bundle／config 通過，沒有 schema 或 dependency 變更。RC-01 本機實作阻擋解除，RC-02 最新瀏覽器互動及其他平台 gates 保留。上表的 276 全套結果是補做前基底，不宣稱補做後完整 282 項已執行。詳細檔案、命令與限制見 [Phase 14 紀錄](PHASE_14.md)。
+使用者明確核准 Audit 介面、API 與授權測試後，僅補做該功能，沒有啟動 Phase 19。26 項相關回歸及新增午夜邊界後最終 6 項 Audit 重驗通過；typecheck／lint／build／bundle／config 通過，沒有 schema 或 dependency 變更。RC-01 本機實作阻擋解除，RC-02 最新瀏覽器互動及其他平台 gates 保留。上表的 276 全套結果是補做前基底，該時點尚未執行完整 282 項；最新全套結果另見本紀錄下節。詳細檔案、命令與限制見 [Phase 14 紀錄](PHASE_14.md)。
+
+## 2026-10-01 接續剩餘驗收準備
+
+使用者於範圍確認中選擇「接續 Phase 18 剩餘驗收準備」。Recommended HIGH／Minimum HIGH／Current XHIGH（沿用確認）、KEEP，無風險升級；僅本機 RC 準備及唯讀查核，未啟動 Phase 19。開始時 HEAD 3dbfe19，工作目錄乾淨；runtime／tests 基底為 Audit 補做 commit 850aa9d。
+
+新增本輪證據的目的：Audit 已加入六項測試，舊基底 276 全套不涵蓋這些變更；依 §65 對目前候選重新跑全套。沒有再次修改程式、schema、migration、dependency、Secret 或平台旗標。Git 比對 850aa9d 至目前的 app／lib／db／drizzle／tests／package／config 無差異，沿用 Audit 最終已通過的 typecheck／lint／build，不重跑未受影響建置。最新產物另通過 client-bundle（24 檔）及 build-config（logs／traces 關閉）檢查。
+
+### 唯讀結果與平台驗收準備
+
+2026-10-01 18:56（Asia/Taipei）Sites get_site／list_site_versions／read_database_overview：既有專案 active、目前使用者 owner、存取 custom、版本 0／空列表、live／preview URL null、D1 bindings／tables 空，無省略／截斷，automations 空。沒有建立或修改外部資源；Secret 值／學生列／Worker logs 不讀取、不記錄。此結果不能證明平台不存在備份能力，只證明尚無可驗收的部署／DB；本次可用工具也沒有提供備份／還原或正式 migration 執行能力，不能虛構已通過演練。
+
+gh api 唯讀 Repository／main commit／Actions：Public、main、遠端 HEAD 19017e8；Verify project 與 Publish project documentation 仍 completed／success、僅對應 Phase 13。沒有 Push 或觸發 workflow，不將遠端舊 CI 當成新候選證據。
+
+Migration Manifest 以 journal filename／timestamp／SHA-256 重新核對，16 項全部一致；沒有 SQL 改寫，沿用原本 db:verify 與 migration tests 的既有證據，本輪完整 tests 也包含 migration 測試。不是正式 preflight／migration／備份演練。
+
+已在既有 [Release Candidate](RELEASE_CANDIDATE.md) 整理逐 gate 的前置條件、驗收步驟及非敏感證據；沒有建立平行規格或自行決定 D-09／D-11 未決政策。Audit 使用者驗收回覆沿用 [Phase 14 紀錄](PHASE_14.md)，其他 Admin／手機／下載／列印步驟尚缺個別結果，平台 gates 保留。
+
+### 本輪實際驗證結果
+
+| 指令／查核                                                                         | 結果                                                                                                                                         |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| npm test（site）                                                                   | 282 通過、0 失敗／skip／取消／todo，441,023.4626 ms；完整含 Audit、migration、生命週期、授權、成績／排名、匯入、報表、安全與復原／Purge 測試 |
+| npm run format:check（site）                                                       | 通過；最後文件整理後再檢查格式                                                                                                               |
+| node scripts/check-client-bundle.mjs（根）                                         | 24 個 client 檔案通過；不是完整 Secret／PII 稽核                                                                                             |
+| node scripts/check-build-config.mjs（根）                                          | 生成 config logs／traces 關閉，正式平台未實測                                                                                                |
+| Manifest 對 journal／SQL SHA-256 唯讀核對（根，Node）                              | 16 項全部相符；不是正式 schema drift／preflight                                                                                              |
+| node scripts/check-docs.mjs、node scripts/check-safety.mjs、git diff --check（根） | 最終文件與本機連結／指定敏感模式／差異檢查通過；安全掃描不是完整安全稽核                                                                     |
+| Sites get_site／list_site_versions／read_database_overview                         | 成功唯讀；未發布、版本／雲端 DB 空，平台 gates 保留                                                                                          |
+| gh api repos/kisaraki/classroom-aigrade-tzk、commits/main、actions/runs?per_page=4 | 成功唯讀；遠端 19017e8 舊 CI，不屬目前候選                                                                                                   |
+
+Production migration／Purge／正式 Google／付費 API／正式容量／備份復原演練與 smoke 未執行：本輪只準備，尚無雲端部署／DB 與相依驗證環境。未因使用者批准準備就開啟 verified 或跳過 D-09 暫緩；沒有新檔案、程式／schema／dependency 變更、Push、Release／tag 或部署。修改主規格 §65 與驗收狀態、RC／Phase 18 紀錄、README／Pages 本機準備內容與 CHANGELOG。沒有宣稱整體 Phase 18 完成；後續仍須依 gate 提供所缺環境、完成適用實作及平台證據，再處理 Phase 19。

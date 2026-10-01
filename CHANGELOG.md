@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-01 — Phase 18 接續驗收準備（候選仍受阻）
+
+- 使用者確認接續 Phase 18 剩餘驗收準備；含 Audit 的目前候選全套 282 項測試通過（0 失敗／skip／取消），runtime 基底 850aa9d，沒有新增程式、schema、dependency 或平台旗標變更。
+- 唯讀 Sites 仍版本 0／無部署網址／D1 空；GitHub 仍 Phase 13 的 19017e8 與舊 CI。核對 16 項 migration manifest，更新候選測試摘要及逐 gate 的平台驗收步驟／非敏感證據。
+- Audit 使用者驗收回覆已記錄；其他 UI、Google、DB／備份復原、限流清理、consumer、Purge 副本與容量驗收保留。只保存本機，沒有 Push、Release 或部署。詳見 [Phase 18 紀錄](docs/PHASE_18.md)。
+
 ## 2026-10-01 — Phase 14 Audit 補做（本機完成）
 
 - 使用者確認批准 Audit 介面、API 與授權測試，僅補做此功能。新增 audit.read 及工作區 audit 入口，限制 active super_admin 全校 Scope，讀取與回傳前重驗。

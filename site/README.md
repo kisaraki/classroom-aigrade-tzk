@@ -6,7 +6,7 @@ POST /api/admin/workspace 的 audit 操作接受可選 cursor（createdAt／id�
 
 ## Phase 18 Release Candidate（部分完成／受阻）
 
-候選 `phase18-rc1` 只保存本機版本，沒有 Sites deployment 或 Production migration。Release Notes、Migration Summary、Known Issues 與 Test Summary 見 [RC 紀錄](../docs/RELEASE_CANDIDATE.md)；Phase 14／15 驗收與平台阻擋保留。
+候選 `phase18-rc1` 含 Audit 的最新 282 項全套測試通過；Sites 唯讀查核仍為版本 0／未部署／D1 空。只保存本機版本，沒有 Sites deployment 或 Production migration。Release Notes、Migration Summary、Known Issues 與 Test Summary 見 [RC 紀錄](../docs/RELEASE_CANDIDATE.md)；Phase 14／15 驗收與平台阻擋保留。
 
 ## Phase 17 生命週期整合（本機完成）
 

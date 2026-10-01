@@ -2,7 +2,7 @@
 
 日期：2026-10-01。狀態：**BLOCKED／僅本機保存，尚未取得正式發布資格**。
 
-基底程式 commit：`cc83fb5`（Phase 17）。初次 Phase 18 檢查未變更 runtime；使用者其後另核准 Phase 14 Audit 補做，已完成本機 API／介面及授權驗證。dependency／schema 沒有變更。候選識別不是正式軟體版本；private package 保持 `0.0.0`，主規格仍是 `v1.6-draft`，沒有 frozen、tag、GitHub Release 或 Sites deployment。
+初次基底程式 commit：`cc83fb5`（Phase 17）；目前 runtime／tests 基底為 `850aa9d`（Audit 補做），驗證起點 HEAD `3dbfe19`。初次 Phase 18 檢查未變更 runtime；使用者其後另核准 Phase 14 Audit 補做，已完成本機 API／介面及授權驗證。dependency／schema 沒有變更。候選識別不是正式軟體版本；private package 保持 `0.0.0`，主規格仍是 `v1.6-draft`，沒有 frozen、tag、GitHub Release 或 Sites deployment。
 
 ## Release Notes
 
@@ -56,25 +56,44 @@ hosting.json 的 DB／FILES 是邏輯 binding；本機生成 config 的 placehol
 
 ## Known Issues／Release Gates
 
-| ID    | 阻擋項目                                                                                     | 解除所需證據                                                                                    |
-| ----- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| RC-01 | 本機已通過：Audit API／介面及授權測試                                                        | 26 項相關回歸及最終 6 項 Audit 重驗通過；最新瀏覽器互動歸 RC-02，其他 gates 保留。              |
-| RC-02 | 最新 Admin／手機 UI、下載／列印瀏覽器驗收未完成                                              | 可用且獲准的工具完成最新流程／Print CSS 驗收；不繞過既有 browser 安全阻擋。                     |
-| RC-03 | D-09 Google OAuth／Sites callback／Cookie／帳號政策未驗證，依既有指示暫緩                    | 真實 Google-only 流程、精確 callback、Secure／HttpOnly／SameSite Cookie 與授權 Email 政策驗收。 |
-| RC-04 | 正式 DB／migration／backup restore／Secret 復原未驗證；D-11 復原目標已定案，演練尚未驗證達標 | 達成 RPO≤24 小時／RTO≤8 小時，平台 preflight 與隔離演練，確認資料／密文／history／FTS 一致性。  |
-| RC-05 | 正式可信 IP、平台 logs、限流清理與備份保存未驗證                                             | 驗證傳遞及保存／清理承諾後才可開啟 verified；目前維持關閉。                                     |
-| RC-06 | 正式 durable AI consumer／排程與用量限制未驗證                                               | 持久 claim／重試／去重／撤權與工作版本實測；mock 不作正式證據。                                 |
-| RC-07 | Production Purge 副本／備份清點及刪除能力未驗證                                              | 完整 copy adapter、共享副本承諾與逐項刪除／缺失驗證；全部驗證前保持停用。                       |
-| RC-08 | 1,000 人 PDF／Excel 的正式 CPU／記憶體／時間容量未驗證                                       | 在正式平台能力下的合成資料容量驗收，不能以受控 1,001 人查詢模擬代替。                           |
-| RC-09 | 本機候選未同步 GitHub／Pages；本次 RC 沒有遠端 CI 結果                                       | 取得對應範圍授權後同步，等待同一候選 commit 的 CI／Pages，驗證版本與 URL。                      |
-| RC-10 | 沒有正式部署授權或已驗證 Sites URL                                                           | 使用者明確「確認正式部署」，且先解除上述適用阻擋，再依 §66 執行。                               |
-| RC-11 | D-11 其餘查詢／容量門檻與正式服務能力尚未定案或驗證                                          | 依實際平台量測與使用者決策完成；不能以本機測試或程式暫時上限宣稱正式容量。                      |
+| ID    | 阻擋項目                                                                                     | 解除所需證據                                                                                         |
+| ----- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| RC-01 | 本機已通過：Audit API／介面及授權測試                                                        | 26 項相關回歸及最終 6 項 Audit 重驗通過；使用者已回報 Audit 補做驗收完成，其他 UI／平台 gates 保留。 |
+| RC-02 | 最新 Admin／手機 UI、下載／列印瀏覽器驗收未完成                                              | 可用且獲准的工具完成最新流程／Print CSS 驗收；不繞過既有 browser 安全阻擋。                          |
+| RC-03 | D-09 Google OAuth／Sites callback／Cookie／帳號政策未驗證，依既有指示暫緩                    | 真實 Google-only 流程、精確 callback、Secure／HttpOnly／SameSite Cookie 與授權 Email 政策驗收。      |
+| RC-04 | 正式 DB／migration／backup restore／Secret 復原未驗證；D-11 復原目標已定案，演練尚未驗證達標 | 達成 RPO≤24 小時／RTO≤8 小時，平台 preflight 與隔離演練，確認資料／密文／history／FTS 一致性。       |
+| RC-05 | 正式可信 IP、平台 logs、限流清理與備份保存未驗證                                             | 驗證傳遞及保存／清理承諾後才可開啟 verified；目前維持關閉。                                          |
+| RC-06 | 正式 durable AI consumer／排程與用量限制未驗證                                               | 持久 claim／重試／去重／撤權與工作版本實測；mock 不作正式證據。                                      |
+| RC-07 | Production Purge 副本／備份清點及刪除能力未驗證                                              | 完整 copy adapter、共享副本承諾與逐項刪除／缺失驗證；全部驗證前保持停用。                            |
+| RC-08 | 1,000 人 PDF／Excel 的正式 CPU／記憶體／時間容量未驗證                                       | 在正式平台能力下的合成資料容量驗收，不能以受控 1,001 人查詢模擬代替。                                |
+| RC-09 | 本機候選未同步 GitHub／Pages；本次 RC 沒有遠端 CI 結果                                       | 取得對應範圍授權後同步，等待同一候選 commit 的 CI／Pages，驗證版本與 URL。                           |
+| RC-10 | 沒有正式部署授權或已驗證 Sites URL                                                           | 使用者明確「確認正式部署」，且先解除上述適用阻擋，再依 §66 執行。                                    |
+| RC-11 | D-11 其餘查詢／容量門檻與正式服務能力尚未定案或驗證                                          | 依實際平台量測與使用者決策完成；不能以本機測試或程式暫時上限宣稱正式容量。                           |
 
-使用者已採用 RPO≤24 小時／RTO≤8 小時的復原目標；最多可能失去 24 小時內資料。這是驗收目標，尚未完成平台演練，不宣稱已達標。使用者後續同意 Audit 僅 super_admin 查看，政策及本機介面／API／授權驗證已完成，最新瀏覽器互動仍待驗收。即使決策定案，必要實作／平台驗收仍須完成，不能只更新文字就解除 gate。
+使用者已採用 RPO≤24 小時／RTO≤8 小時的復原目標；最多可能失去 24 小時內資料。這是驗收目標，尚未完成平台演練，不宣稱已達標。使用者後續同意 Audit 僅 super_admin 查看，政策及本機介面／API／授權驗證已完成，使用者已回報 Audit 補做驗收完成；其他 Admin／手機／報表流程仍缺完整步驟結果。即使決策定案，必要實作／平台驗收仍須完成，不能只更新文字就解除 gate。
+
+## 剩餘驗收的執行準備（未執行平台操作）
+
+2026-10-01 18:56（Asia/Taipei）唯讀查核既有 Sites project：active、目前使用者 owner、access_mode=custom；latest_version_number=0、版本列表空、live／preview URL 皆 null、D1 bindings／tables 皆空（無省略或截斷），automations 空。這是專案目前狀態，不能推論已支援備份、排程、刪除或任何正式服務容量。未讀取環境 Secret 值、學生列或 Worker logs，未改變 Site、存取設定或版本。
+
+同時唯讀 GitHub：Public／main、HEAD 19017e8db6fd25e844c6ef9acfd59d4e57373f61；最近 Verify project 及 Publish project documentation 均 completed／success，仍只對應 Phase 13，沒有目前 Audit 候選的遠端 CI。
+
+下表整理既有規格要求的驗收執行順序與證據，並非新增政策或已完成聲明。平台相關操作須先取得適用環境與授權；在本專案任何 Sites 部署皆屬 Production，不能先私有部署來繞過正式部署關卡。Google 真實整合仍依 D-09 暫緩；consumer／copy adapter 等缺少的實作也不能只靠填表解除。
+
+| 順序／gate      | 前置條件及驗收步驟                                                                                                                                   | 僅保存的非敏感證據／完成條件                                                                                                                                                                                           |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1／RC-02        | 可用且獲准的 UI 工具或使用者逐項驗收；以虛構資料測 Admin 權限、選取範圍切換、Audit 分頁／失效、手機操作、報表下載／列印。                            | 記候選 commit、驗收人角色、裝置／viewport、步驟與結果。Audit 整體使用者驗收回覆已記錄，但不得代替未回報的所有 Admin／報表步驟或工具實測。                                                                              |
+| 2／RC-03        | D-09 解凍及已核准的 Google Client／精確 callback；Google-only 登入、email_verified／授權 Email／subject 綁定、Recent Authentication、瀏覽器 Cookie。 | 保留設定名稱、callback 及狀態／安全屬性結果；不留 code、token、Cookie、真實 Email 或 Secret。政策未決部分先取得決策，不能自行選擇。                                                                                    |
+| 3／RC-04        | 確認實際 DB／FILES 身分、正式 migrator／history、備份及隔離復原能力；先備份與 preflight，再以平台允許的隔離演練驗證 D1／檔案／金鑰版本。             | 記備份時間、最新一致性復原點、模擬中斷開始及服務驗證完成時間；計算 RPO≤24 小時、RTO≤8 小時。核對 journal hash／timestamp、FK／完整性、FTS、筆數／快照／檔案及密文可解讀。只存統計與結果，不提交 dump／金鑰／真實資料。 |
+| 4／RC-05        | 可信來源 IP 傳遞、同源及平台 logs 實測；配置並驗證登入／公開 HMAC 限流清理，以及所有備份副本的 24 小時保存承諾。                                     | 保留來源 header 契約、成功／拒絕測試、排程清理時間、非敏感筆數及平台設定結果；不留 IP／查詢條件。全部相依驗收通過才可依授權啟用 verified，範本仍 false。                                                               |
+| 5／RC-06        | 有已授權且可持久執行的 AI consumer／排程實作與用量限制；在受控合成資料下測重啟、租約、重試、去重、過期／撤權／版本競爭。                             | 記工作狀態轉移、版本、嘗試次數及結果。正式 Provider／用量證據不能以 mock 替代；付費 API 另依授權，沒有此證據不宣稱正式背景能力。                                                                                       |
+| 6／RC-07        | 副本清點與可用 copy adapter；共享物件／備份／所有復原承諾可驗證，平台備份刪除能力已實測。                                                            | 對合成資料逐項驗證 Preflight、阻擋條件、部分失敗／重試、全部清除；只存隨機作業號、時間、數量及結果。不保存原始 Manifest 或學生識別；本輪不執行 Purge。                                                                 |
+| 7／RC-08、RC-11 | 取得正式平台 CPU／記憶體／時間／查詢限制與未決容量門檻的使用者決策；以一評量 1,000 位虛構學生生成 PDF／Excel。                                       | 記輸入人數／文字位元組、輸出大小、時間／資源、完整性、版本／撤權拒絕及超限全拒絕。不得用本機成功宣稱正式容量。                                                                                                         |
+| 8／RC-09、RC-10 | 前項適用 gates 完成，再另取得遠端同步與正式部署授權，遵循 §66 的 migration preflight／人工確認／recovery。                                           | 記同一候選 commit 的 CI／Pages、Sites 成功狀態及實際網址，完成三網址與 smoke 驗證；沒有真實成功結果不填正式版本／日期／URL。                                                                                           |
 
 ## Test Summary
 
-Audit 補做前的 Phase 18 基底全套 276 項 tests 通過（0 失敗／skip／取消）；本機 production build、typecheck、lint、audit（0 vulnerabilities）及 disposable db:verify 通過。格式、文件／安全／bundle／config 的最終結果見 [Phase 18 紀錄](PHASE_18.md)。這些是 Phase 18 初次檢查的實際結果。Audit 補做後另通過 26 項相關回歸、最終 6 項 Audit 重驗及 typecheck／lint／build／bundle／config；未重跑完整 282 項，詳見 [Phase 14 補做紀錄](PHASE_14.md)。
+2026-10-01 接續 Phase 18，對目前含 Audit 的 runtime／tests 基底 `850aa9d` 執行 `npm test`：282 項通過、0 失敗／skip／取消／todo，441,023.4626 ms。先前 276 基底全套與 Audit 的 26 項相關回歸／6 項最終重驗仍為歷史證據；本次不再以舊全套數代表目前候選。typecheck／lint／build 沿用同一份未變更 runtime／dependency／config 的 Audit 最終成功結果；本輪重新核對 bundle／config 及 16 項 migration manifest，格式／文件／安全／diff 檢查通過。原本 audit（0 vulnerabilities）及 disposable db:verify 的證據仍適用未變更的 lockfile／SQL，未宣稱正式平台能力，詳細命令見 [Phase 18 紀錄](PHASE_18.md)。
 
 ## GitHub／Pages 與發布準備
 
