@@ -90,8 +90,12 @@ Release／正式版本：無。Sites URL：無。沒有 Sites 成功部署，因
 - 對 `/`、`/api/health`、`/api/auth/google/start`、`/api/auth/sites` 的無憑證 smoke 均 HTTP 401／`Cache-Control: no-store`，由平台存取層拒絕；未讀取回應本文或記錄 Cookie。這只能證明存取防護，不能取代登入後 application smoke、裝置 Passkey、可信標頭或直連隔離實測。
 - R2 已在部署 manifest 宣告，正式物件寫入／備份／刪除能力未驗證；RPO≤24 小時／RTO≤8 小時尚未實測。AI consumer、Purge、副本及容量 gates 不因本次部署解除。
 
-此為基礎設施正式部署，並非業務正式上線或 Phase 19 完成；不建立正式 Release／tag。README／Pages／CHANGELOG 已更新，GitHub／Pages 同步結果待下節記錄。
+此為基礎設施正式部署，並非業務正式上線或 Phase 19 完成；不建立正式 Release／tag。README／Pages／CHANGELOG 已更新，GitHub／Pages 同步結果見下節。
 
 ### 文件同步驗證
 
 發布後本機 `npm run format:check`、`npm audit --audit-level=high`（0 vulnerabilities）、`git diff --check` 通過；文件檢查為 30 份／499 個本機連結，安全指定模式檢查 356 份來源檔通過。逐位元組核對 315 份 Site 來源與實際發布 checkout 全部相同，17 份 migration hash 與 manifest 一致。Source commit 不含 runtime Secret、備份或真實資料。
+
+GitHub 主庫 commit `b8feb2dfcbeddc2383ebe8b01d660ba8553c6a8f` 已推送。2026-10-02 07:16（Asia/Taipei）[Verify project](https://github.com/kisaraki/classroom-aigrade-tzk/actions/runs/36939360314) 全部成功：`npm test` 一次全套 300 通過，0 失敗／跳過／取消，281,859.142 ms；install、audit、lint、format、typecheck、文件／安全檢查、build、client bundle 與 logs config 檢查均成功。這是新認證方案的完整遠端回歸證據，補足前述本機分次重驗的限制。
+
+[Pages workflow](https://github.com/kisaraki/classroom-aigrade-tzk/actions/runs/36939360295) 對同一 commit 完成 success。[Repository](https://github.com/kisaraki/classroom-aigrade-tzk) 與 [Pages](https://kisaraki.github.io/classroom-aigrade-tzk/) 均 HTTP 200，Pages 本文已核對 Phase 19 及正式 Sites URL；Sites 原生 deployment status 為 succeeded，無憑證 HTTP 401 符合目前 custom 存取限制。三網址均有實際驗證，沒有文件同步錯誤；應用程式登入後 smoke 及業務 gates 仍未通過。

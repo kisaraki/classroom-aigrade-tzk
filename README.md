@@ -4,7 +4,7 @@
 
 供國中使用的學生成績查詢與 AI 學習建議系統。規劃支援學籍、評量、平均與排名、批次匯入、管理權限、AI 建議及資料保存生命週期。
 
-**Phase 19：Sites 版本 1 與 D1 基礎設施已部署，業務服務尚未開放。** Sites／ChatGPT 登入及 Passkey 本機遷移已完成；300 項案例經全套與失敗項修正／隔離重驗均已有通過證據。正式可信身分／IP、Passkey 裝置與備份／復原驗收尚未完成，verified 開關保持關閉，沒有正式軟體 Release。詳見 [候選紀錄](docs/RELEASE_CANDIDATE.md)、[Phase 19 紀錄](docs/PHASE_19.md) 與 [D1 維運流程](docs/D1_OPERATIONS.md)。
+**Phase 19：Sites 版本 1 與 D1 基礎設施已部署，業務服務尚未開放。** Sites／ChatGPT 登入及 Passkey 本機遷移已完成；遠端 CI 已一次通過全套 300 項測試（0 失敗／跳過／取消）。正式可信身分／IP、Passkey 裝置與備份／復原驗收尚未完成，verified 開關保持關閉，沒有正式軟體 Release。詳見 [候選紀錄](docs/RELEASE_CANDIDATE.md)、[Phase 19 紀錄](docs/PHASE_19.md) 與 [D1 維運流程](docs/D1_OPERATIONS.md)。
 
 ## 文件入口
 
@@ -133,7 +133,7 @@ Secret 名稱見 [主規格 §3.3](PROJECT_SPEC.md#spec-3-3)。真實值由部�
 | Latest Production Release | Sites 版本 1（基礎設施）；尚無正式軟體 Release |
 | Deployment Date | 2026-10-02 07:05（Asia/Taipei） |
 | ChatGPT Sites | [系統入口](https://classroom-aigrade-tzk.kisaraki.chatgpt.site)（平台 succeeded；custom 存取、業務開關關閉） |
-| GitHub Pages | [專案文件頁](https://kisaraki.github.io/classroom-aigrade-tzk/)（同步結果見 Phase 19 紀錄） |
+| GitHub Pages | [專案文件頁](https://kisaraki.github.io/classroom-aigrade-tzk/)（2026-10-02 HTTP 200；Phase 19 內容已核對） |
 | Repository | [kisaraki/classroom-aigrade-tzk](https://github.com/kisaraki/classroom-aigrade-tzk) |
 
 只填入實際取得並驗證的 URL。每次 Sites 正式部署成功後，必須依 [同步流程](PROJECT_SPEC.md#spec-41-9) 更新本區、Pages、CHANGELOG／Release，完成 Commit／Push 與三網址驗證。

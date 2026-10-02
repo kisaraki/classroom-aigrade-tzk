@@ -2,7 +2,7 @@
 
 更新日期：2026-10-02。狀態：**業務 Release 仍 BLOCKED；Sites 版本 1／D1 基礎設施已部署，詳見 Phase 19**。
 
-初次基底程式 commit：`cc83fb5`（Phase 17）；目前 runtime／tests 基底為 `850aa9d`（Audit 補做），驗證起點 HEAD `3dbfe19`。初次 Phase 18 檢查未變更 runtime；使用者其後另核准 Phase 14 Audit 補做，已完成本機 API／介面及授權驗證。其後核准 Sites／Passkey 遷移，已變更 dependency／schema；本次驗證見 Phase 19。候選識別不是正式軟體版本；private package 保持 `0.0.0`，主規格仍是 `v1.6-draft`，沒有 frozen、tag、GitHub Release 或 Sites deployment。
+初次基底程式 commit：`cc83fb5`（Phase 17）；目前 runtime／tests 基底為 `850aa9d`（Audit 補做），驗證起點 HEAD `3dbfe19`。初次 Phase 18 檢查未變更 runtime；使用者其後另核准 Phase 14 Audit 補做，已完成本機 API／介面及授權驗證。其後核准 Sites／Passkey 遷移，已變更 dependency／schema；本次驗證見 Phase 19。候選識別不是正式軟體版本；private package 保持 `0.0.0`，主規格仍是 `v1.6-draft`，沒有 frozen、tag 或 GitHub Release；後續 Sites 版本 1 僅完成基礎設施部署，業務 gates 保留。
 
 ## Release Notes
 
