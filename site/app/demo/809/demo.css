@@ -1,0 +1,185 @@
+.demo-shell {
+  max-width: 1160px;
+  margin: auto;
+  padding: 40px 24px 60px;
+}
+.demo-heading,
+.demo-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.demo-heading h1 {
+  font-size: 36px;
+}
+.demo-heading p {
+  margin: 4px 0 12px;
+}
+.demo-heading a,
+.demo-student {
+  color: #176b5a;
+}
+.demo-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #58726a;
+}
+.demo-notice {
+  background: #fff6df;
+  border: 1px solid #e5cb8b;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 24px 0;
+}
+.demo-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.demo-metrics > div {
+  background: #e4eee8;
+  border-radius: 16px;
+  padding: 20px;
+}
+.demo-metrics span,
+.demo-metrics strong {
+  display: block;
+}
+.demo-metrics strong {
+  font-size: 32px;
+  margin-top: 6px;
+}
+.demo-metrics small {
+  font-size: 14px;
+  font-weight: 400;
+}
+.demo-panel {
+  background: #fff;
+  border: 1px solid #dbe5df;
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+.demo-toolbar label {
+  font-size: 13px;
+  min-width: 220px;
+}
+.demo-toolbar h2 small {
+  font-size: 16px;
+  font-weight: 400;
+}
+.demo-toolbar select {
+  padding: 10px;
+  border: 1px solid #b7c9c1;
+  border-radius: 8px;
+  background: white;
+}
+.demo-summary {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  background: #f0f6f2;
+  padding: 18px 22px;
+  margin: 22px 0;
+  border-radius: 12px;
+}
+.demo-summary strong {
+  font-size: 23px;
+  margin-left: 8px;
+}
+.demo-table-wrap {
+  overflow-x: auto;
+}
+.demo-shell table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.demo-shell th,
+.demo-shell td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e6ede8;
+}
+.demo-shell thead {
+  background: #f3f7f4;
+  color: #536b64;
+}
+.demo-caption {
+  text-align: left;
+  color: #536b64;
+  margin-bottom: 12px;
+}
+.demo-fail {
+  color: #b03d38;
+  font-weight: 700;
+}
+.demo-absent {
+  color: #93610e;
+  font-weight: 700;
+}
+.demo-score-note {
+  font-size: 11px;
+}
+.demo-footnote {
+  font-size: 13px;
+  color: #61756d;
+  margin: 16px 0 0;
+}
+.demo-student {
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  padding: 0;
+  font-weight: 600;
+}
+.demo-selected {
+  background: #f0f7f1;
+}
+.demo-tag {
+  display: inline-block;
+  border-radius: 5px;
+  background: #fff0c9;
+  color: #805512;
+  padding: 2px 7px;
+  font-size: 12px;
+  margin: 2px;
+}
+.demo-tag-fail {
+  background: #fdece9;
+  color: #a53e38;
+}
+@media (max-width: 700px) {
+  .demo-shell {
+    padding: 24px 14px;
+  }
+  .demo-heading,
+  .demo-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .demo-heading h1 {
+    font-size: 29px;
+  }
+  .demo-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .demo-metrics > div {
+    padding: 14px;
+  }
+  .demo-panel {
+    padding: 18px;
+  }
+  .demo-summary {
+    gap: 12px;
+    flex-direction: column;
+  }
+  .demo-toolbar label {
+    width: 100%;
+  }
+}

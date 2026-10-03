@@ -1,5 +1,21 @@
 # Phase 19 — 正式部署前紀錄
 
+## 2026-10-03：809 班模擬展示
+
+依使用者要求新增獨立 `/demo/809` 頁與首頁入口，25 位「模擬學生」，3 位含缺考紀錄（其中 1 位全科缺考）、不及格與 0 分案例。提供個人切換、檢測／段考明細、班級總覽、缺考／不及格篩選。以既有 domain 函式計算平均／總分與共同名次，未寫入正式 D1、未新增 migration、未生成 AI 建議或修改正式業務驗收開關。資料隨 Site source 版本保存。
+
+Recommended／Minimum XHIGH；Current XHIGH（沿用使用者確認），KEEP。`node --test tests/demo-809.test.mjs` 三項通過；typecheck 通過；lint 發現首頁導覽需使用 Next Link，修正後該檔 ESLint 重驗通過；本輪其餘 lint 無問題。格式檢查通過。本機 `/demo/809` HTTP 200，本文核對 809 標題、模擬學生 25 與虛構資料標示。正式結果待下方補錄。
+
+本次唯讀平台檢查發現 audience 已為 public，沿用現有狀態，未呼叫任何存取設定修改工具。既有版本 1 的 custom 狀態屬當時歷史紀錄。
+
+### 模擬展示發布結果
+
+2026-10-03 09:48（Asia/Taipei）版本 2 部署 succeeded。Site source `91a5a793437533702a95295ed4756f4839e0bb06`；version `appgprj_6ab31085ee6481918d7a5dd51124b085~appgver_9c6ebd2d7fe48191ae737d66022c58e1`；deployment `appgdep_6ac05ec4eb9081918b379645308f9a54`。Archive SHA-256 `2fd906b4c40e7ff91de1b8ee15e78b14a4c435e2633edacbd958559920d6dd32`。
+
+[模擬頁](https://classroom-aigrade-tzk.kisaraki.chatgpt.site/demo/809) 與首頁皆實測 HTTP 200；模擬頁本文含 809 標題、模擬學生 25、缺考、不及格及虛構標示，首頁含展示入口。25 人中有 3 人含缺考、22 人至少一科不及格（兩者可重疊），1 人全科缺考。最終 build 通過，26 個 client 檔指定敏感模式檢查通過、logs／traces 停用。320 份 Site source 與發布 checkout 一致。既有 300 項 CI 為上一版基底，本次新增三項測試通過，不冒稱本機重新跑過全套 303 項。
+
+本輪只是模擬展示完成發布；正式 D1 學籍未塞入模擬資料，正式登入／查詢／備份與其他 Phase 19 gates 保留。
+
 更新日期：2026-10-02（Asia/Taipei）。狀態：**部分完成，Sites 版本 1／D1 建置成功，業務上線 gates 尚未通過**。以下保留各次查核的時間與適用範圍；最新結果見文末。業務規則仍以 [主規格 §66](../PROJECT_SPEC.md#spec-66) 為準。
 
 ## 零、授權與模型

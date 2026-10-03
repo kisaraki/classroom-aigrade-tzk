@@ -48,6 +48,11 @@ export default function Lookup() {
           <h1>成績與學習建議</h1>
         </div>
       </header>
+      <aside className="lookup-card">
+        <h2>809 班模擬展示</h2>
+        <p>25 位虛構學生，包含缺考、不及格與 0 分案例。</p>
+        <a href="/demo/809">開啟模擬成績與班級總覽 →</a>
+      </aside>
       <section className="lookup-card" aria-labelledby="lookup-title">
         <h2 id="lookup-title">查詢成績</h2>
         <p className="muted">請填寫評量當時的班級與學生資料。</p>
